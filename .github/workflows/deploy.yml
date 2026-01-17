@@ -186,12 +186,12 @@ jobs:
             EOF
 
             echo "[5/7] docker compose up (db + traefik) then build/run all"
-            sudo docker compose down || true
-            sudo docker compose up -d traefik db
+            docker compose down || true
+            docker compose up -d traefik db
 
             echo "[5b/7] wait MariaDB healthy"
             for i in {1..60}; do
-              state=$(sudo docker inspect --format='{{json .State.Health.Status}}' mariadb 2>/dev/null || echo "null")
+              state=$(docker inspect --format='{{json .State.Health.Status}}' mariadb 2>/dev/null || echo "null")
               echo "Health mariadb: $state"
               [ "$state" = "\"healthy\"" ] && break
               sleep 2
@@ -199,11 +199,11 @@ jobs:
 
             echo "[6/7] Prisma migrate deploy"
             # Important: le container web doit contenir prisma + npx
-            sudo docker compose run --rm web npx prisma migrate deploy
+            docker compose run --rm web npx prisma migrate deploy
 
             echo "[6b/7] Start parser + web (build)"
-            sudo docker compose up -d --build parser web
+            docker compose up -d --build parser web
 
             echo "[7/7] Status"
-            sudo docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+            docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
 
