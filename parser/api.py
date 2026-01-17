@@ -1,17 +1,24 @@
 import os
 import subprocess
+import logging
+import traceback
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
+
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+log = logging.getLogger("parser-api")
 
 app = FastAPI()
 
 WORKDIR = Path(os.getenv("PARSER_WORKDIR", "/workspace")).resolve()
 COMBAT_DIR = Path(os.getenv("COMBATLOG_DIR", str(WORKDIR / "combat.log"))).resolve()
 
-# Optionnel : uniquement si tu fournis un fichier env dans le conteneur
+# Optionnel : si tu veux encore supporter un env-file (Option B),
+# tu peux définir PARSER_ENV_FILE. Sinon, Option A = on ignore.
 ENV_FILE_RAW = os.getenv("PARSER_ENV_FILE", "").strip()
 ENV_FILE = Path(ENV_FILE_RAW).resolve() if ENV_FILE_RAW else None
 
@@ -21,10 +28,9 @@ MAX_TIMEOUT_S = int(os.getenv("PARSER_TIMEOUT_S", "600"))
 
 class ParseReq(BaseModel):
     fileName: str
-    guildId: str | None = None
-    uploaderAccountId: str | None = None
-    date: str | None = Field(default=None, description="YYYY-MM-DD, sinon date du serveur")
-    dryRun: bool | None = False
+    guildId: str
+    uploaderAccountId: str
+    date: Optional[str] = Field(default=None, description="YYYY-MM-DD; si absent => date serveur")
 
 
 @app.get("/health")
@@ -34,6 +40,7 @@ def health():
         "workdir": str(WORKDIR),
         "combat_dir": str(COMBAT_DIR),
         "env_file": str(ENV_FILE) if ENV_FILE else None,
+        "database_url_present": bool(os.getenv("DATABASE_URL")),
         "timeout_s": MAX_TIMEOUT_S,
     }
 
@@ -44,7 +51,9 @@ def _safe_log_path(file_name: str) -> tuple[str, Path]:
         raise HTTPException(status_code=400, detail="Only .txt allowed")
 
     p = (COMBAT_DIR / cleaned).resolve()
-    if COMBAT_DIR not in p.parents and p != COMBAT_DIR:
+
+    # empêche traversal
+    if COMBAT_DIR not in p.parents:
         raise HTTPException(status_code=400, detail="Invalid file path")
 
     if not p.exists():
@@ -53,16 +62,14 @@ def _safe_log_path(file_name: str) -> tuple[str, Path]:
     return cleaned, p
 
 
-def _parse_int_str(name: str, v: str | None) -> int:
-    if not v:
-        raise HTTPException(status_code=400, detail=f"Missing {name}")
+def _parse_int(name: str, v: str) -> int:
     try:
         return int(v)
     except Exception:
-        raise HTTPException(status_code=400, detail=f"Invalid {name}")
+        raise HTTPException(status_code=400, detail=f"Invalid {name}: {v}")
 
 
-def _parse_date_str(v: str | None) -> str:
+def _parse_date(v: Optional[str]) -> str:
     if not v:
         return datetime.now().date().isoformat()
     try:
@@ -72,72 +79,45 @@ def _parse_date_str(v: str | None) -> str:
         raise HTTPException(status_code=400, detail="Invalid date format (expected YYYY-MM-DD)")
 
 
-def _stat_path(p: Path) -> dict:
-    try:
-        st = p.stat()
-        return {
-            "exists": True,
-            "size": st.st_size,
-            "mode": oct(st.st_mode),
-            "uid": st.st_uid,
-            "gid": st.st_gid,
-        }
-    except FileNotFoundError:
-        return {"exists": False}
-    except Exception as e:
-        return {"exists": True, "stat_error": str(e)}
-
-
 @app.post("/parse")
 def parse(req: ParseReq):
-    file_name, file_path = _safe_log_path(req.fileName)
-
-    guild_id = _parse_int_str("guildId", req.guildId)
-    uploader_id = _parse_int_str("uploaderAccountId", req.uploaderAccountId)
-    date_str = _parse_date_str(req.date)
-
-    if not WORKDIR.exists():
-        raise HTTPException(status_code=500, detail=f"WORKDIR does not exist: {WORKDIR}")
-
-    cmd = [
-        PYTHON_BIN, "-m", "parser.import_runs",
-        str(file_path),                 # IMPORTANT: path absolu (volume OK)
-        "--date", date_str,
-        "--guild-id", str(guild_id),
-        "--uploader-id", str(uploader_id),
-    ]
-
-    if req.dryRun:
-        cmd.append("--dry-run")
-
-    # --env-file optionnel
-    if ENV_FILE is not None:
-        if not ENV_FILE.exists():
-            raise HTTPException(status_code=500, detail=f"PARSER_ENV_FILE set but missing: {ENV_FILE}")
-        cmd += ["--env-file", str(ENV_FILE)]
-
-    debug = {
-        "cwd": str(WORKDIR),
-        "cmd": cmd,
-        "combat_dir": str(COMBAT_DIR),
-        "file_name": file_name,
-        "file_path": str(file_path),
-        "file_stat": _stat_path(file_path),
-        "workdir_stat": _stat_path(WORKDIR),
-        "combatdir_stat": _stat_path(COMBAT_DIR),
-        "env_file": str(ENV_FILE) if ENV_FILE else None,
-        "env": {
-            # on expose juste ce qui sert au diag
-            "DATABASE_URL_set": bool(os.getenv("DATABASE_URL")),
-            "PARSER_WORKDIR": os.getenv("PARSER_WORKDIR"),
-            "COMBATLOG_DIR": os.getenv("COMBATLOG_DIR"),
-            "PARSER_ENV_FILE": os.getenv("PARSER_ENV_FILE"),
-            "PARSER_TIMEOUT_S": os.getenv("PARSER_TIMEOUT_S"),
-        },
-        "proc": {"uid": os.getuid(), "gid": os.getgid()},
-    }
-
     try:
+        file_name, file_path = _safe_log_path(req.fileName)
+        guild_id = _parse_int("guildId", req.guildId)
+        uploader_id = _parse_int("uploaderAccountId", req.uploaderAccountId)
+        date_str = _parse_date(req.date)
+
+        if not WORKDIR.exists():
+            raise HTTPException(status_code=500, detail=f"WORKDIR does not exist: {WORKDIR}")
+
+        # Option A: on s’appuie sur DATABASE_URL en env
+        if not os.getenv("DATABASE_URL"):
+            raise HTTPException(
+                status_code=500,
+                detail="DATABASE_URL is missing in environment (Option A requires it).",
+            )
+
+        # IMPORTANT: chemin ABSOLU (plus besoin de /workspace/combat.log)
+        logfile_arg = str(file_path)
+
+        cmd = [
+            PYTHON_BIN, "-m", "parser.import_runs",
+            logfile_arg,
+            "--date", date_str,
+            "--guild-id", str(guild_id),
+            "--uploader-id", str(uploader_id),
+        ]
+
+        # Support optionnel env-file (si tu le définis)
+        env_file_used = None
+        if ENV_FILE is not None:
+            if not ENV_FILE.exists():
+                raise HTTPException(status_code=500, detail=f"PARSER_ENV_FILE set but file not found: {ENV_FILE}")
+            cmd += ["--env-file", str(ENV_FILE)]
+            env_file_used = str(ENV_FILE)
+
+        log.info("Running import_runs: %s", " ".join(cmd))
+
         p = subprocess.run(
             cmd,
             cwd=str(WORKDIR),
@@ -145,27 +125,45 @@ def parse(req: ParseReq):
             stderr=subprocess.PIPE,
             text=True,
             timeout=MAX_TIMEOUT_S,
-            env=os.environ.copy(),  # IMPORTANT: garde DATABASE_URL docker
         )
+
+        stdout_tail = (p.stdout or "")[-12000:]
+        stderr_tail = (p.stderr or "")[-12000:]
+
+        # On ne renvoie PAS 500 si le parser échoue: on renvoie ok=false + détails
+        # (ça évite les “500 muets” côté Next)
+        return {
+            "ok": p.returncode == 0,
+            "code": p.returncode,
+            "workdir": str(WORKDIR),
+            "combat_dir": str(COMBAT_DIR),
+            "logfile": logfile_arg,
+            "fileName": file_name,
+            "env_file_used": env_file_used,
+            "import": {"guildId": guild_id, "uploaderId": uploader_id, "date": date_str},
+            "stdout_tail": stdout_tail,
+            "stderr_tail": stderr_tail,
+        }
+
     except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=504, detail={"error": "Parser timeout", "debug": debug})
+        raise HTTPException(status_code=504, detail=f"Parser timeout after {MAX_TIMEOUT_S}s")
 
-    payload = {
-        "ok": p.returncode == 0,
-        "code": p.returncode,
-        "stdout_tail": (p.stdout or "")[-12000:],
-        "stderr_tail": (p.stderr or "")[-12000:],
-        "import": {
-            "guildId": guild_id,
-            "uploaderId": uploader_id,
-            "date": date_str,
-            "dryRun": bool(req.dryRun),
-        },
-        "debug": debug,
-    }
+    except HTTPException:
+        # on laisse FastAPI renvoyer l’erreur telle quelle
+        raise
 
-    # Si tu préfères TOUJOURS 200, remplace ce bloc par: return payload
-    if p.returncode != 0:
-        raise HTTPException(status_code=422, detail=payload)
-
-    return payload
+    except Exception as e:
+        # vraie exception non prévue -> 500 avec trace utile
+        tb = traceback.format_exc()[-12000:]
+        log.exception("Unhandled error in /parse: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": str(e),
+                "trace_tail": tb,
+                "workdir": str(WORKDIR),
+                "combat_dir": str(COMBAT_DIR),
+                "env_file": str(ENV_FILE) if ENV_FILE else None,
+                "database_url_present": bool(os.getenv("DATABASE_URL")),
+            },
+        )
