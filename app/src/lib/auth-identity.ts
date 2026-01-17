@@ -1,61 +1,52 @@
 // src/lib/auth-identity.ts
 import type { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { getToken } from "next-auth/jwt";
 import { authOptions } from "@/lib/auth-options";
 
-function inferProviderFromIss(iss?: string): "google" | "discord" | "oauth" | undefined {
-  if (!iss) return undefined;
-  const s = iss.toLowerCase();
-  if (s.includes("google")) return "google";
-  if (s.includes("discord")) return "discord";
-  return "oauth";
-}
+// NextAuth v4 (souvent)
+import { getServerSession } from "next-auth/next";
+// Si tu es en NextAuth v5, remplace la ligne au-dessus par :
+// import { getServerSession } from "next-auth";
 
-export async function requireAuthIdentity(req: NextRequest) {
+export type AuthProvider = "google" | "discord";
+
+export type AuthIdentity = {
+  provider: AuthProvider;
+  providerAccountId: string;
+  pseudo: string;
+  email: string | null;
+  image: string | null;
+};
+
+export type AuthResult =
+  | { ok: true; status: 200; identity: AuthIdentity }
+  | { ok: false; status: 401 | 403; message: string };
+
+export async function requireAuthIdentity(_req: NextRequest): Promise<AuthResult> {
   const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return { ok: false as const, status: 401 as const, message: "UNAUTHORIZED" };
+
+  const user = session?.user as any;
+  if (!user) return { ok: false, status: 401, message: "Not authenticated" };
+
+  const provider = user.provider as AuthProvider | undefined;
+  const providerAccountId = user.providerAccountId as string | undefined;
+
+  if (!provider || (provider !== "google" && provider !== "discord")) {
+    return { ok: false, status: 401, message: "Missing/invalid provider in session" };
   }
 
-  const token = await getToken({
-    req,
-    secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
-  });
-
-  const provider =
-    (session.user as any).provider ??
-    (token as any)?.provider ??
-    inferProviderFromIss((token as any)?.iss);
-
-  const providerAccountId =
-    (session.user as any).providerAccountId ??
-    (token as any)?.providerAccountId ??
-    token?.sub;
-
-  const pseudo =
-    (session.user as any).pseudo ??
-    (token as any)?.pseudo ??
-    session.user.name ??
-    session.user.email ??
-    "User";
-
-  if (!provider || !providerAccountId) {
-    return {
-      ok: false as const,
-      status: 500 as const,
-      message: "AUTH_IDENTITY_MISSING (set NEXTAUTH_SECRET and re-login)",
-    };
+  if (!providerAccountId) {
+    return { ok: false, status: 401, message: "Missing providerAccountId in session" };
   }
 
   return {
-    ok: true as const,
+    ok: true,
+    status: 200,
     identity: {
-      provider: provider as "google" | "discord" | "oauth",
-      providerAccountId: String(providerAccountId),
-      pseudo: String(pseudo),
-      email: session.user.email ?? null,
-      image: (session.user as any).image ?? null,
+      provider,
+      providerAccountId,
+      pseudo: (user.pseudo || user.name || user.email || "User").slice(0, 128),
+      email: user.email ?? null,
+      image: user.image ?? null,
     },
   };
 }

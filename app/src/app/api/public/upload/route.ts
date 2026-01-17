@@ -1,3 +1,4 @@
+// src/app/api/public/upload/route.ts
 export const runtime = "nodejs";
 
 import { NextResponse, type NextRequest } from "next/server";
@@ -12,6 +13,13 @@ import { getOrCreateWebAccount } from "@/lib/account";
 import { requireAuthIdentity } from "@/lib/auth-identity";
 
 const MAX_BYTES = 200 * 1024 * 1024;
+
+// Minimal Busboy file info type (avoids relying on exact @types/busboy exports)
+type BusboyFileInfo = {
+  filename: string;
+  encoding: string;
+  mimeType: string;
+};
 
 function headersToObject(headers: Headers): Record<string, string> {
   const obj: Record<string, string> = {};
@@ -31,11 +39,33 @@ function sanitizeFileName(name: string) {
   return `${cleaned}.txt`;
 }
 
+function normalizeProvider(p: unknown): "google" | "discord" | null {
+  if (p === "google" || p === "discord") return p;
+  // Some auth setups may yield "oauth" → refuse unless you map it properly in requireAuthIdentity()
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   const auth = await requireAuthIdentity(req);
-  if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.message }, { status: auth.status });
+  }
 
-  const account = await getOrCreateWebAccount(auth.identity);
+  // Normalize identity to match your DB enum (google/discord only)
+  const provider = normalizeProvider((auth.identity as any)?.provider);
+  if (!provider) {
+    return NextResponse.json(
+      { error: "BAD_REQUEST", message: "Unsupported auth provider." },
+      { status: 400 }
+    );
+  }
+
+  const identityForAccount = {
+    ...(auth.identity as any),
+    provider,
+  };
+
+  const account = await getOrCreateWebAccount(identityForAccount);
 
   const baseDir =
     process.env.COMBATLOG_DIR || path.join(process.cwd(), "..", "combat.log"); // dev: /prancingpika/combat.log
@@ -56,62 +86,119 @@ export async function POST(req: NextRequest) {
   });
 
   const done = new Promise<NextResponse>((resolve) => {
-    bb.on("field", (name, value) => {
+    bb.on("field", (name: string, value: string) => {
       if (name === "guildId") guildIdRaw = String(value || "").trim();
     });
 
-    bb.on("file", (name, file, info) => {
-      if (name !== "file") {
-        file.resume();
-        return;
+    bb.on(
+      "file",
+      (name: string, file: NodeJS.ReadableStream, info: BusboyFileInfo) => {
+        if (name !== "file") {
+          file.resume();
+          return;
+        }
+
+        hadFile = true;
+
+        const original = info.filename || "combat.log.txt";
+        storedName = sanitizeFileName(original);
+
+        // Authorized format: .txt (we enforce storedName ends with .txt)
+        if (!storedName.toLowerCase().endsWith(".txt")) {
+          file.resume();
+          resolve(
+            NextResponse.json(
+              { error: "BAD_REQUEST", message: "Only .txt files are allowed." },
+              { status: 400 }
+            )
+          );
+          return;
+        }
+
+        const id = crypto.randomUUID();
+        tmpPath = path.join(tmpDir, `${id}.upload`);
+
+        const ws = createWriteStream(tmpPath);
+
+        file.on("data", (chunk: Buffer) => {
+          fileSize += chunk.length;
+        });
+
+        file.on("limit", async () => {
+          ws.end();
+          try {
+            await rm(tmpPath, { force: true });
+          } catch {}
+          resolve(
+            NextResponse.json(
+              { error: "BAD_REQUEST", message: "Max size is 200MB." },
+              { status: 400 }
+            )
+          );
+        });
+
+        file.on("error", async () => {
+          ws.end();
+          try {
+            await rm(tmpPath, { force: true });
+          } catch {}
+          resolve(
+            NextResponse.json(
+              { error: "BAD_REQUEST", message: "Upload stream error." },
+              { status: 400 }
+            )
+          );
+        });
+
+        ws.on("error", async () => {
+          try {
+            await rm(tmpPath, { force: true });
+          } catch {}
+          resolve(
+            NextResponse.json(
+              { error: "BAD_REQUEST", message: "Cannot write file." },
+              { status: 400 }
+            )
+          );
+        });
+
+        file.pipe(ws);
       }
+    );
 
-      hadFile = true;
-
-      const original = info.filename || "combat.log.txt";
-      storedName = sanitizeFileName(original);
-
-      // IMPORTANT: rules
-      // - Authorized format: .txt (we enforce storedName ends with .txt)
-      // - We tolerate "combat.log" & ".log" as input but we store as .txt
-      if (!storedName.toLowerCase().endsWith(".txt")) {
-        file.resume();
-        resolve(NextResponse.json({ error: "BAD_REQUEST", message: "Only .txt files are allowed." }, { status: 400 }));
-        return;
-      }
-
-      const id = crypto.randomUUID();
-      tmpPath = path.join(tmpDir, `${id}.upload`);
-
-      const ws = createWriteStream(tmpPath);
-
-      file.on("data", (chunk) => {
-        fileSize += chunk.length;
-      });
-
-      file.on("limit", async () => {
-        ws.end();
-        try { await rm(tmpPath, { force: true }); } catch {}
-        resolve(NextResponse.json({ error: "BAD_REQUEST", message: "Max size is 200MB." }, { status: 400 }));
-      });
-
-      file.pipe(ws);
-    });
-
-    bb.on("error", async () => {
-      try { if (tmpPath) await rm(tmpPath, { force: true }); } catch {}
-      resolve(NextResponse.json({ error: "BAD_REQUEST", message: "Upload parse error." }, { status: 400 }));
+    bb.on("error", async (_err: unknown) => {
+      try {
+        if (tmpPath) await rm(tmpPath, { force: true });
+      } catch {}
+      resolve(
+        NextResponse.json(
+          { error: "BAD_REQUEST", message: "Upload parse error." },
+          { status: 400 }
+        )
+      );
     });
 
     bb.on("finish", async () => {
       if (!hadFile || !tmpPath) {
-        resolve(NextResponse.json({ error: "BAD_REQUEST", message: "Missing file." }, { status: 400 }));
+        resolve(
+          NextResponse.json(
+            { error: "BAD_REQUEST", message: "Missing file." },
+            { status: 400 }
+          )
+        );
         return;
       }
 
       if (!guildIdRaw) {
-        try { await rm(tmpPath, { force: true }); } catch {}
-        resolve(NextResponse.json({ error: "BAD_REQUEST", message: "Missing guildId." }, { status: 400 }));
+        try {
+          await rm(tmpPath, { force: true });
+        } catch {}
+        resolve(
+          NextResponse.json(
+            { error: "BAD_REQUEST", message: "Missing guildId." },
+            { status: 400 }
+          )
+        );
         return;
       }
 
@@ -120,8 +207,15 @@ export async function POST(req: NextRequest) {
       try {
         guildIdBig = BigInt(guildIdRaw);
       } catch {
-        try { await rm(tmpPath, { force: true }); } catch {}
-        resolve(NextResponse.json({ error: "BAD_REQUEST", message: "Invalid guildId." }, { status: 400 }));
+        try {
+          await rm(tmpPath, { force: true });
+        } catch {}
+        resolve(
+          NextResponse.json(
+            { error: "BAD_REQUEST", message: "Invalid guildId." },
+            { status: 400 }
+          )
+        );
         return;
       }
 
@@ -131,8 +225,15 @@ export async function POST(req: NextRequest) {
       });
 
       if (!membership) {
-        try { await rm(tmpPath, { force: true }); } catch {}
-        resolve(NextResponse.json({ error: "FORBIDDEN", message: "You must be a member of that guild." }, { status: 403 }));
+        try {
+          await rm(tmpPath, { force: true });
+        } catch {}
+        resolve(
+          NextResponse.json(
+            { error: "FORBIDDEN", message: "You must be a member of that guild." },
+            { status: 403 }
+          )
+        );
         return;
       }
 
@@ -151,7 +252,7 @@ export async function POST(req: NextRequest) {
 
       // Trigger parser service (best effort)
       const parserUrl = process.env.PARSER_URL; // ex: http://parser:8080
-      let parser: any = null;
+      let parser: unknown = null;
 
       if (parserUrl) {
         try {
@@ -165,7 +266,7 @@ export async function POST(req: NextRequest) {
             }),
           });
 
-          parser = await r.json().catch(() => null);
+          parser = await r.json().catch(() => ({ ok: false, error: "BAD_JSON" }));
         } catch {
           parser = { ok: false, error: "PARSER_UNREACHABLE" };
         }
@@ -191,6 +292,13 @@ export async function POST(req: NextRequest) {
   });
 
   // Pipe request body to busboy
+  if (!req.body) {
+    return NextResponse.json(
+      { error: "BAD_REQUEST", message: "Missing request body." },
+      { status: 400 }
+    );
+  }
+
   const { Readable } = await import("node:stream");
   Readable.fromWeb(req.body as any).pipe(bb);
 
