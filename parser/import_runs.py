@@ -7,6 +7,7 @@ import sys
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_ROOT = os.path.dirname(_SCRIPT_DIR)
 
+# Ensure "parser.*" imports work when launched as a module or as a script
 if sys.path:
     p0 = os.path.abspath(sys.path[0])
     if p0 == os.path.abspath(_SCRIPT_DIR):
@@ -17,7 +18,6 @@ if _PROJECT_ROOT not in sys.path:
 
 import argparse
 import hashlib
-import re
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
@@ -34,6 +34,9 @@ except Exception:
     DEFAULT_CLASS = "Unknown"
 
 
+# -----------------------------
+# ENV / DB helpers
+# -----------------------------
 def load_dotenv(dotenv_path: Path) -> None:
     if not dotenv_path.exists():
         return
@@ -95,6 +98,7 @@ def db_config_from_env() -> DbConfig:
 
 
 def connect_mysql(cfg: DbConfig):
+    # Prefer PyMySQL if present, else mysql-connector
     try:
         import pymysql  # type: ignore
 
@@ -111,6 +115,7 @@ def connect_mysql(cfg: DbConfig):
         pass
 
     import mysql.connector  # type: ignore
+
     return mysql.connector.connect(
         host=cfg.host,
         port=cfg.port,
@@ -126,6 +131,9 @@ def fetch_one(cur, sql: str, params: Tuple):
     return cur.fetchone()
 
 
+# -----------------------------
+# DB "ensure" helpers
+# -----------------------------
 def ensure_boss(cur, name: str) -> int:
     row = fetch_one(cur, "SELECT id FROM bosses WHERE name=%s", (name,))
     if row:
@@ -173,6 +181,9 @@ def run_exists(cur, boss_id: int, group_id: int, started_at: datetime, ended_at:
     return int(row[0]) if row else None
 
 
+# -----------------------------
+# Stats helpers
+# -----------------------------
 DAMAGE_CODES = {3, 4, 23, 29}
 HEAL_CODES = {5, 28}
 
@@ -190,6 +201,7 @@ def duration_between_secs(start_sec: int, end_sec: int) -> int:
 def sum_damage(events: Iterable[Event], start_sec: int, end_sec: int, boss_filter: str | None) -> Dict[str, int]:
     out: Dict[str, int] = {}
     boss_low = boss_filter.lower() if boss_filter else None
+
     for ev in events:
         if ev.ts_sec < start_sec or ev.ts_sec > end_sec:
             continue
@@ -210,6 +222,9 @@ def sum_heal(events: Iterable[Event], start_sec: int, end_sec: int) -> Dict[str,
     return out
 
 
+# -----------------------------
+# Segments builder
+# -----------------------------
 @dataclass(frozen=True)
 class RunSegment:
     boss_name: str
@@ -225,17 +240,33 @@ def _norm(s: str) -> str:
 
 
 def build_segments(fight: Fight) -> List[RunSegment]:
+    """
+    Règle générale:
+      - Un segment = un "run" écrit en DB
+      - On peut créer des segments par phase (ex: Isiel: Vengeur + Isiel)
+    """
     total_dur = max(1, duration_between_secs(fight.start_sec, fight.end_sec))
     enc = _norm(fight.encounter)
     phases = fight.phases or []
 
+    # Titan X: on stocke un run unique "Titan X"
+    # On garde durationTotal = total du combat, et bossDuration = durée de la phase boss si trouvée.
     if enc == _norm("Titan X") and phases:
         boss_phase = next((p for p in phases if _norm(p.name) == _norm("Boss")), None) or phases[0]
         boss_dur = max(1, duration_between_secs(boss_phase.start_sec, boss_phase.end_sec))
+        boss_name = (boss_phase.boss_name or fight.encounter or "Titan X")
         return [
-            RunSegment("Titan X", fight.start_sec, fight.end_sec, None, total_dur, boss_dur)
+            RunSegment(
+                boss_name=boss_name,
+                start_sec=fight.start_sec,
+                end_sec=fight.end_sec,
+                boss_filter=boss_name,          # ✅ boss-only par défaut
+                duration_total_s=total_dur,
+                boss_duration_s=boss_dur,
+            )
         ]
 
+    # Commandant Isiel: 2 segments (Vengeur phase + Isiel phase)
     if enc == _norm("Commandant Isiel") and phases:
         def is_phase(p: Phase, key: str) -> bool:
             pn = _norm(p.name)
@@ -249,29 +280,53 @@ def build_segments(fight: Fight) -> List[RunSegment]:
 
         if vengeur:
             v_dur = max(1, duration_between_secs(vengeur.start_sec, vengeur.end_sec))
+            v_name = (vengeur.boss_name or vengeur.name or "Vengeur")
             segs.append(
                 RunSegment(
-                    "Vengeur",
-                    vengeur.start_sec,
-                    vengeur.end_sec,
-                    (vengeur.boss_name or vengeur.name),
-                    v_dur,
-                    None,
+                    boss_name=v_name,
+                    start_sec=vengeur.start_sec,
+                    end_sec=vengeur.end_sec,
+                    boss_filter=v_name,          # ✅ boss-only
+                    duration_total_s=v_dur,
+                    boss_duration_s=None,
                 )
             )
 
-        boss_dur = None
-        if isiel:
-            boss_dur = max(1, duration_between_secs(isiel.start_sec, isiel.end_sec))
+        # Segment Isiel = run "Commandant Isiel" :
+        # - bornes = combat total (pour l'unicité / visibilité)
+        # - mais boss_duration_s = durée de la phase Isiel => utilisée pour les DPS/HPS
+        is_name = (isiel.boss_name or isiel.name or fight.encounter or "Commandant Isiel") if isiel else (fight.encounter or "Commandant Isiel")
+        is_dur = max(1, duration_between_secs(isiel.start_sec, isiel.end_sec)) if isiel else None
 
         segs.append(
-            RunSegment("Commandant Isiel", fight.start_sec, fight.end_sec, None, total_dur, boss_dur)
+            RunSegment(
+                boss_name=is_name,
+                start_sec=fight.start_sec,
+                end_sec=fight.end_sec,
+                boss_filter=is_name,              # ✅ IMPORTANT: sinon tu comptes les adds / autre
+                duration_total_s=total_dur,
+                boss_duration_s=is_dur,
+            )
         )
+
         return segs
 
-    return [RunSegment(fight.encounter, fight.start_sec, fight.end_sec, None, total_dur, None)]
+    # Par défaut: 1 segment, boss-only (filtre = encounter)
+    return [
+        RunSegment(
+            boss_name=fight.encounter,
+            start_sec=fight.start_sec,
+            end_sec=fight.end_sec,
+            boss_filter=fight.encounter,  # ✅ boss-only par défaut
+            duration_total_s=total_dur,
+            boss_duration_s=None,
+        )
+    ]
 
 
+# -----------------------------
+# Main import
+# -----------------------------
 def import_log_file(
     conn,
     log_path: Path,
@@ -296,6 +351,7 @@ def import_log_file(
     seg_expected = 0
 
     for fight in fights:
+        # roster = union(degats_total, heals_total)
         dmg_all = sum_damage(fight.events, fight.start_sec, fight.end_sec, None)
         heal_all = sum_heal(fight.events, fight.start_sec, fight.end_sec)
         roster = sorted(set(dmg_all.keys()) | set(heal_all.keys()), key=lambda s: s.casefold())
@@ -316,10 +372,25 @@ def import_log_file(
                 skipped += 1
                 continue
 
-            dmg_seg = sum_damage(fight.events, seg.start_sec, seg.end_sec, seg.boss_filter)
-            heal_seg = sum_heal(fight.events, seg.start_sec, seg.end_sec)
-
+            # -----------------------------
+            # Fenêtre de stats:
+            # - par défaut = segment complet
+            # - si boss_duration_s existe => on calcule sur la fenêtre boss (fin - boss_duration)
+            # -----------------------------
+            stats_start = seg.start_sec
+            stats_end = seg.end_sec
             duration_s = int(max(1, seg.duration_total_s))
+
+            if seg.boss_duration_s:
+                duration_s = int(max(1, seg.boss_duration_s))
+                # stats_end = fin du combat (ou fin de segment)
+                stats_end = seg.end_sec
+                # stats_start = stats_end - duration_s
+                stats_start = max(seg.start_sec, seg.end_sec - duration_s)
+
+            dmg_seg = sum_damage(fight.events, stats_start, stats_end, seg.boss_filter)
+            heal_seg = sum_heal(fight.events, stats_start, stats_end)
+
             total_damage = int(sum(dmg_seg.values()))
             total_healing = int(sum(heal_seg.values()))
             dps_group = float(total_damage) / float(duration_s)
@@ -327,8 +398,11 @@ def import_log_file(
 
             if dry_run:
                 print(
-                    f"[DRY] boss='{seg.boss_name}' start={started_at} end={ended_at} "
-                    f"durTotal={duration_s}s bossDur={seg.boss_duration_s} roster={len(roster)}"
+                    f"[DRY] boss='{seg.boss_name}' "
+                    f"seg=[{started_at}->{ended_at}] durTotal={int(seg.duration_total_s)} "
+                    f"stats=[{stats_start}->{stats_end}] durStats={duration_s} "
+                    f"bossDur={seg.boss_duration_s} bossFilter={seg.boss_filter!r} roster={len(roster)} "
+                    f"DMG={total_damage} DPS={dps_group:.1f}"
                 )
                 continue
 
@@ -360,7 +434,7 @@ def import_log_file(
                         int(uploader_id),
                         started_at,
                         ended_at,
-                        duration_s,
+                        int(seg.duration_total_s),
                         seg.boss_duration_s,
                         total_damage,
                         total_healing,
@@ -388,8 +462,20 @@ def import_log_file(
 
                 conn.commit()
                 inserted += 1
-            except Exception:
+            except Exception as e:
                 conn.rollback()
+                # Donne un maximum de contexte pour debug
+                print("❌ Import failed for segment:", file=sys.stderr)
+                print(
+                    f"  boss={seg.boss_name!r} startedAt={started_at} endedAt={ended_at}\n"
+                    f"  seg.start_sec={seg.start_sec} seg.end_sec={seg.end_sec}\n"
+                    f"  seg.durationTotalS={seg.duration_total_s} seg.bossDurationS={seg.boss_duration_s}\n"
+                    f"  stats_start={stats_start} stats_end={stats_end} duration_s={duration_s}\n"
+                    f"  boss_filter={seg.boss_filter!r} logFile={log_path.name}\n"
+                    f"  totals: damage={total_damage} healing={total_healing}\n"
+                    f"  error: {type(e).__name__}: {e}",
+                    file=sys.stderr,
+                )
                 raise
 
     cur.close()
