@@ -10,12 +10,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # Emplacement sur le serveur
   TARGET_BASE: /opt/prancingpika
   TARGET_SRC: /opt/prancingpika/src
   TARGET_DATA: /opt/prancingpika/data
-
-  # Nom de projet Docker Compose (évite les collisions de noms)
   COMPOSE_PROJECT: ptpika
 
 jobs:
@@ -33,10 +30,39 @@ jobs:
           test -n "${SERVER_HOST}" || (echo "Missing SERVER_HOST" && exit 1)
           test -n "${SERVER_USER}" || (echo "Missing SERVER_USER" && exit 1)
           test -n "${SERVER_SSH_KEY}" || (echo "Missing SERVER_SSH_KEY" && exit 1)
+          test -n "${DB_ROOT_PASSWORD}" || (echo "Missing DB_ROOT_PASSWORD" && exit 1)
+          test -n "${DB_PASSWORD}" || (echo "Missing DB_PASSWORD" && exit 1)
+          test -n "${NEXTAUTH_SECRET}" || (echo "Missing NEXTAUTH_SECRET" && exit 1)
+          test -n "${GOOGLE_CLIENT_ID}" || (echo "Missing GOOGLE_CLIENT_ID" && exit 1)
+          test -n "${GOOGLE_CLIENT_SECRET}" || (echo "Missing GOOGLE_CLIENT_SECRET" && exit 1)
+          test -n "${DISCORD_CLIENT_ID}" || (echo "Missing DISCORD_CLIENT_ID" && exit 1)
+          test -n "${DISCORD_CLIENT_SECRET}" || (echo "Missing DISCORD_CLIENT_SECRET" && exit 1)
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
           SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          DB_ROOT_PASSWORD: ${{ secrets.DB_ROOT_PASSWORD }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
+          DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+
+      - name: Check required vars
+        run: |
+          set -e
+          test -n "${APP_DOMAIN}" || (echo "Missing vars.APP_DOMAIN" && exit 1)
+          test -n "${TRAEFIK_ACME_EMAIL}" || (echo "Missing vars.TRAEFIK_ACME_EMAIL" && exit 1)
+          test -n "${DB_USER}" || (echo "Missing vars.DB_USER" && exit 1)
+          test -n "${DB_NAME}" || (echo "Missing vars.DB_NAME" && exit 1)
+          test -n "${NEXTAUTH_URL}" || (echo "Missing vars.NEXTAUTH_URL" && exit 1)
+        env:
+          APP_DOMAIN: ${{ vars.APP_DOMAIN }}
+          TRAEFIK_ACME_EMAIL: ${{ vars.TRAEFIK_ACME_EMAIL }}
+          DB_USER: ${{ vars.DB_USER }}
+          DB_NAME: ${{ vars.DB_NAME }}
+          NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
 
       - name: Write SSH key file (normalize)
         run: |
@@ -66,7 +92,6 @@ jobs:
             SRC="${{ env.TARGET_SRC }}"
             DATA="${{ env.TARGET_DATA }}"
 
-            # /opt structure (needs sudo)
             sudo -n mkdir -p "${SRC}" "${DATA}"
             sudo -n chown -R "$USER":"$USER" "${BASE}" || true
 
@@ -80,13 +105,12 @@ jobs:
             # Clean SRC
             rm -rf "${SRC:?}/"* "${SRC}"/.[!.]* "${SRC}"/..?* || true
 
-            # Restore ACME into SRC (compose expects ./traefik/acme.json)
+            # Restore ACME into SRC
             mkdir -p "${SRC}/traefik"
             if [ -f "${DATA}/traefik/acme.json" ]; then
               cp "${DATA}/traefik/acme.json" "${SRC}/traefik/acme.json"
               chmod 600 "${SRC}/traefik/acme.json" || true
             else
-              # Create empty acme if none exists yet
               install -m 600 /dev/null "${SRC}/traefik/acme.json" || { touch "${SRC}/traefik/acme.json"; chmod 600 "${SRC}/traefik/acme.json"; }
             fi
 
@@ -114,14 +138,13 @@ jobs:
             DATA="${{ env.TARGET_DATA }}"
             PROJECT="${{ env.COMPOSE_PROJECT }}"
 
-            echo "[1/8] Go to project"
             cd "${SRC}"
 
-            echo "[2/8] Ensure shared networks exist (proxy/internal)"
+            echo "[1/9] Ensure shared networks exist (proxy/internal)"
             sudo -n docker network create proxy >/dev/null 2>&1 || true
             sudo -n docker network create internal >/dev/null 2>&1 || true
 
-            echo "[3/8] Ensure Traefik ACME is persistent"
+            echo "[2/9] Ensure Traefik ACME is persistent"
             sudo -n mkdir -p "${DATA}/traefik"
             if [ ! -f "${DATA}/traefik/acme.json" ]; then
               sudo -n install -m 600 /dev/null "${DATA}/traefik/acme.json" || true
@@ -132,91 +155,102 @@ jobs:
             cp "${DATA}/traefik/acme.json" traefik/acme.json
             chmod 600 traefik/acme.json || true
 
-            echo "[4/8] Write ENV files"
-
-            # Root .env for compose (includes APP_DOMAIN to avoid warnings)
+            echo "[3/9] Write .env (single source of truth)"
             rm -f .env
-            {
-              echo "############################################################"
-              echo "# Traefik / Domain"
-              echo "############################################################"
-              echo "APP_DOMAIN=${{ vars.APP_DOMAIN }}"
-              echo "TRAEFIK_ACME_EMAIL=${{ vars.TRAEFIK_ACME_EMAIL }}"
-              echo
-              echo "############################################################"
-              echo "# Database"
-              echo "############################################################"
-              echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
-              echo "DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}"
-              echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
-              echo "MARIADB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}"
-              echo "MARIADB_PASSWORD=${{ secrets.DB_PASSWORD }}"
-              echo "MARIADB_USER=${{ vars.DB_USER }}"
-              echo "MARIADB_DATABASE=${{ vars.DB_NAME }}"
-              echo
-            } >> .env
 
-            # app/.env (Next)
-            mkdir -p app
-            rm -f app/.env
-            {
-              echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
-              echo
-              echo "NEXTAUTH_URL=${{ vars.NEXTAUTH_URL }}"
-              echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}"
-              echo "NEXTAUTH_TRUST_HOST=true"
-              echo "AUTH_TRUST_HOST=true"
-              echo
-              echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}"
-              echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}"
-              echo
-              echo "DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}"
-              echo "DISCORD_CLIENT_SECRET=${{ secrets.DISCORD_CLIENT_SECRET }}"
-              echo
-              # In docker: use shared volume mount path
-              echo "COMBATLOG_DIR=/data/combat.log"
-              # Call the parser service by docker DNS name
-              echo "PARSER_URL=http://parser:8080"
-              echo
-            } >> app/.env
+            APP_DOMAIN="${{ vars.APP_DOMAIN }}"
+            TRAEFIK_ACME_EMAIL="${{ vars.TRAEFIK_ACME_EMAIL }}"
 
-            # parser/.env (Python parser)
-            mkdir -p parser
-            rm -f parser/.env
-            {
-              echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
-              echo
-              echo "PARSER_WORKDIR=/workspace"
-              echo "COMBATLOG_DIR=/data/combat.log"
-              echo "PARSER_ENV_FILE=/workspace/parser/.env"
-              echo "PARSER_TIMEOUT_S=600"
-              echo
-            } >> parser/.env
+            DB_USER="${{ vars.DB_USER }}"
+            DB_NAME="${{ vars.DB_NAME }}"
+            DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            DB_ROOT_PASSWORD="${{ secrets.DB_ROOT_PASSWORD }}"
 
-            echo "[5/8] Stop previous stack (avoid container name conflicts)"
+            NEXTAUTH_URL="${{ vars.NEXTAUTH_URL }}"
+            NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}"
+
+            GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
+            GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
+            DISCORD_CLIENT_ID="${{ secrets.DISCORD_CLIENT_ID }}"
+            DISCORD_CLIENT_SECRET="${{ secrets.DISCORD_CLIENT_SECRET }}"
+
+            [ -n "$DB_USER" ] || { echo "Missing vars.DB_USER"; exit 1; }
+            [ -n "$DB_NAME" ] || { echo "Missing vars.DB_NAME"; exit 1; }
+            [ -n "$DB_PASSWORD" ] || { echo "Missing secrets.DB_PASSWORD"; exit 1; }
+            [ -n "$DB_ROOT_PASSWORD" ] || { echo "Missing secrets.DB_ROOT_PASSWORD"; exit 1; }
+
+            DATABASE_URL="mysql://${DB_USER}:${DB_PASSWORD}@db:3306/${DB_NAME}"
+
+            cat > .env <<EOF
+            ############################################################
+            # Traefik / Domain
+            ############################################################
+            APP_DOMAIN=${APP_DOMAIN}
+            TRAEFIK_ACME_EMAIL=${TRAEFIK_ACME_EMAIL}
+
+            ############################################################
+            # Database (MariaDB container)
+            ############################################################
+            DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+            DB_PASSWORD=${DB_PASSWORD}
+            MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+            MARIADB_PASSWORD=${DB_PASSWORD}
+            MARIADB_USER=${DB_USER}
+            MARIADB_DATABASE=${DB_NAME}
+
+            ############################################################
+            # Prisma / App / Parser
+            ############################################################
+            DATABASE_URL=${DATABASE_URL}
+
+            ############################################################
+            # Auth (NextAuth)
+            ############################################################
+            NEXTAUTH_URL=${NEXTAUTH_URL}
+            NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+            NEXTAUTH_TRUST_HOST=true
+            AUTH_TRUST_HOST=true
+
+            GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+            GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+
+            DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+            DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+
+            ############################################################
+            # App runtime
+            ############################################################
+            COMBATLOG_DIR=/data/combat.log
+            PARSER_URL=http://parser:8080
+            PARSER_WORKDIR=/workspace
+            PARSER_TIMEOUT_S=600
+            EOF
+
+            echo "[4/9] Stop previous stack"
             sudo -n docker compose -p "$PROJECT" down --remove-orphans || true
-
-            # If your compose uses container_name, force remove known offenders (safe)
             sudo -n docker rm -f ptpika_traefik ptppika_mariadb ptpika_parser ptpika_web >/dev/null 2>&1 || true
 
-            echo "[6/8] Start base services (traefik + db)"
+            echo "[5/9] Start base services (traefik + db)"
             sudo -n docker compose -p "$PROJECT" up -d traefik db
 
-            echo "[6b/8] Wait MariaDB healthy"
-            for i in {1..60}; do
-              state=$(sudo -n docker inspect --format='{{json .State.Health.Status}}' "${PROJECT}_db_1" 2>/dev/null || echo "null")
-              # fallback if service/container name differs
-              [ "$state" = "null" ] && state=$(sudo -n docker inspect --format='{{json .State.Health.Status}}' mariadb 2>/dev/null || echo "null")
+            echo "[6/9] Wait MariaDB healthy (container_name: ptppika_mariadb)"
+            for i in {1..90}; do
+              state=$(sudo -n docker inspect --format='{{json .State.Health.Status}}' ptppika_mariadb 2>/dev/null || echo "null")
               echo "Health db: $state"
               [ "$state" = "\"healthy\"" ] && break
               sleep 2
             done
+            state=$(sudo -n docker inspect --format='{{json .State.Health.Status}}' ptppika_mariadb 2>/dev/null || echo "null")
+            [ "$state" = "\"healthy\"" ] || { echo "DB never became healthy"; sudo -n docker logs --tail=200 ptppika_mariadb || true; exit 1; }
 
-            echo "[7/8] Prisma migrate deploy"
-            sudo -n docker compose -p "$PROJECT" run --rm web npx prisma migrate deploy
+            echo "[7/9] Build web + parser images"
+            sudo -n docker compose -p "$PROJECT" build web parser
 
-            echo "[8/8] Build & start web + parser"
-            sudo -n docker compose -p "$PROJECT" up -d --build web parser
+            echo "[8/9] Prisma migrate deploy (uses .env via service env_file)"
+            sudo -n docker compose -p "$PROJECT" run --rm --no-deps web npx prisma migrate deploy
+
+            echo "[9/9] Start web + parser"
+            sudo -n docker compose -p "$PROJECT" up -d web parser
 
             echo "Containers:"
             sudo -n docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
