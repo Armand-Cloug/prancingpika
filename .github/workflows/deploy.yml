@@ -67,7 +67,7 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/id_ci \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "echo OK && whoami && hostname && sudo -n true && echo SUDO_OK"
+            "echo OK && whoami && hostname && sudo -n /usr/bin/docker version >/dev/null && echo SUDO_OK"
 
       - name: Prepare /opt target dirs + preserve acme.json
         uses: appleboy/ssh-action@v0.1.10
