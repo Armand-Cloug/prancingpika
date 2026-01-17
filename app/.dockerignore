@@ -1,0 +1,7 @@
+# app/.dockerignore
+.env
+.env.*
+node_modules
+.next
+npm-debug.log
+yarn-error.log
