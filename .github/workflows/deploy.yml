@@ -247,7 +247,7 @@ jobs:
             sudo -n docker compose -p "$PROJECT" build web parser
 
             echo "[8/9] Prisma migrate deploy (uses .env via service env_file)"
-            sudo -n docker compose -p "$PROJECT" --env-file .env run --rm web npx prisma migrate deploy
+            sudo -n docker compose -p "$PROJECT" --env-file .env run --rm --no-deps web npx prisma migrate deploy
 
             echo "[9/9] Start web + parser"
             sudo -n docker compose -p "$PROJECT" up -d web parser
