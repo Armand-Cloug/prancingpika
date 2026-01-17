@@ -95,17 +95,14 @@ jobs:
             sudo -n mkdir -p "${SRC}" "${DATA}"
             sudo -n chown -R "$USER":"$USER" "${BASE}" || true
 
-            # Backup ACME to persistent DATA
             if [ -f "${SRC}/traefik/acme.json" ]; then
               mkdir -p "${DATA}/traefik"
               cp "${SRC}/traefik/acme.json" "${DATA}/traefik/acme.json"
               chmod 600 "${DATA}/traefik/acme.json" || true
             fi
 
-            # Clean SRC
             rm -rf "${SRC:?}/"* "${SRC}"/.[!.]* "${SRC}"/..?* || true
 
-            # Restore ACME into SRC
             mkdir -p "${SRC}/traefik"
             if [ -f "${DATA}/traefik/acme.json" ]; then
               cp "${DATA}/traefik/acme.json" "${SRC}/traefik/acme.json"
@@ -140,11 +137,11 @@ jobs:
 
             cd "${SRC}"
 
-            echo "[1/9] Ensure shared networks exist (proxy/internal)"
+            echo "[1/10] Ensure shared networks exist (proxy/internal)"
             sudo -n docker network create proxy >/dev/null 2>&1 || true
             sudo -n docker network create internal >/dev/null 2>&1 || true
 
-            echo "[2/9] Ensure Traefik ACME is persistent"
+            echo "[2/10] Ensure Traefik ACME is persistent"
             sudo -n mkdir -p "${DATA}/traefik"
             if [ ! -f "${DATA}/traefik/acme.json" ]; then
               sudo -n install -m 600 /dev/null "${DATA}/traefik/acme.json" || true
@@ -155,7 +152,7 @@ jobs:
             cp "${DATA}/traefik/acme.json" traefik/acme.json
             chmod 600 traefik/acme.json || true
 
-            echo "[3/9] Write .env (single source of truth)"
+            echo "[3/10] Write .env (single source of truth)"
             rm -f .env
 
             APP_DOMAIN="${{ vars.APP_DOMAIN }}"
@@ -226,14 +223,14 @@ jobs:
             PARSER_TIMEOUT_S=600
             EOF
 
-            echo "[4/9] Stop previous stack"
+            echo "[4/10] Stop previous stack"
             sudo -n docker compose -p "$PROJECT" down --remove-orphans || true
             sudo -n docker rm -f ptpika_traefik ptppika_mariadb ptpika_parser ptpika_web >/dev/null 2>&1 || true
 
-            echo "[5/9] Start base services (traefik + db)"
+            echo "[5/10] Start base services (traefik + db)"
             sudo -n docker compose -p "$PROJECT" up -d traefik db
 
-            echo "[6/9] Wait MariaDB healthy (container_name: ptppika_mariadb)"
+            echo "[6/10] Wait MariaDB healthy (container_name: ptppika_mariadb)"
             for i in {1..90}; do
               state=$(sudo -n docker inspect --format='{{json .State.Health.Status}}' ptppika_mariadb 2>/dev/null || echo "null")
               echo "Health db: $state"
@@ -243,13 +240,23 @@ jobs:
             state=$(sudo -n docker inspect --format='{{json .State.Health.Status}}' ptppika_mariadb 2>/dev/null || echo "null")
             [ "$state" = "\"healthy\"" ] || { echo "DB never became healthy"; sudo -n docker logs --tail=200 ptppika_mariadb || true; exit 1; }
 
-            echo "[7/9] Build web + parser images"
+            echo "[7/10] Ensure DB user/db exist (idempotent)"
+            # Important: avec un volume, MariaDB ne recrée pas automatiquement l'utilisateur à chaque run.
+            sudo -n docker exec -i ptppika_mariadb mariadb -uroot -p"${DB_ROOT_PASSWORD}" <<SQL
+            CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;
+            CREATE USER IF NOT EXISTS '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
+            ALTER USER '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
+            GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'%';
+            FLUSH PRIVILEGES;
+            SQL
+
+            echo "[8/10] Build web + parser images"
             sudo -n docker compose -p "$PROJECT" build web parser
 
-            echo "[8/9] Prisma migrate deploy (uses .env via service env_file)"
-            sudo -n docker compose -p "$PROJECT" --env-file .env run --rm --no-deps web npx prisma migrate deploy
+            echo "[9/10] Prisma migrate deploy"
+            sudo -n docker compose -p "$PROJECT" --env-file .env run --rm web npx prisma migrate deploy
 
-            echo "[9/9] Start web + parser"
+            echo "[10/10] Start web + parser"
             sudo -n docker compose -p "$PROJECT" up -d web parser
 
             echo "Containers:"
