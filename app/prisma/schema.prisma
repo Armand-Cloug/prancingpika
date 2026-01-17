@@ -1,0 +1,274 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+/// --------------------
+/// DATA MODELS
+/// --------------------
+
+/*
+  Table bosses
+  - Référentiel des boss (nom canonique).
+  - Sert de pivot pour regrouper toutes les runs (kills) d’un même boss.
+*/
+model Boss {
+  id   BigInt @id @default(autoincrement())
+  name String @unique @db.VarChar(128)
+
+  runs Run[]
+
+  @@map("bosses")
+}
+
+/*
+  Table groups
+  - Identifie un "groupe/roster" de manière stable via un hash (sha1) des noms de joueurs triés.
+  - Permet de faire des records par groupe (WR par roster) indépendamment de la date.
+*/
+model Group {
+  id         BigInt @id @default(autoincrement())
+  rosterHash String @unique @db.Char(40) // sha1 hex
+  rosterSize Int
+  label      String? @db.VarChar(128)    // optionnel : nom affichable du groupe
+
+  runs Run[]
+
+  @@map("groups")
+}
+
+/*
+  Table players
+  - Référentiel des joueurs (persos IG, nom tel qu’il apparaît dans les logs).
+  - Pivot pour récupérer les tops DPS/HPS sur l’ensemble des runs.
+  IMPORTANT : Player = personnage dans le jeu (Rift), pas un compte du site.
+*/
+model Player {
+  id   BigInt @id @default(autoincrement())
+  name String @unique @db.VarChar(128)
+
+  runPlayers      RunPlayer[]
+  runPlayerPhases RunPlayerPhase[]
+
+  @@map("players")
+}
+
+/*
+  Table web_accounts
+  - Comptes du site web (Google/Discord).
+  - Stocke le pseudo affiché côté site (Discord: global_name/username ; Google: name).
+  IMPORTANT : WebAccount = compte utilisateur du site, pas un personnage IG.
+*/
+model WebAccount {
+  id BigInt @id @default(autoincrement())
+
+  provider          AuthProvider
+  providerAccountId String @db.VarChar(128) // Google: sub ; Discord: id
+  pseudo            String @db.VarChar(128)
+
+  // optionnel (utile plus tard)
+  email     String?  @db.VarChar(191)
+  imageUrl  String?  @db.VarChar(255)
+  createdAt DateTime @default(now())
+  lastLogin DateTime @default(now())
+
+  guildMemberships GuildMember[]
+  uploadedRuns     Run[]
+
+  @@unique([provider, providerAccountId])
+  @@index([pseudo])
+
+  @@map("web_accounts")
+}
+
+enum AuthProvider {
+  google
+  discord
+}
+
+/*
+  Table guilds
+  - Guildes côté site (structure sociale/permissions pour uploader).
+  - Une run doit être rattachée à une guilde.
+*/
+model Guild {
+  id BigInt @id @default(autoincrement())
+
+  name      String  @unique @db.VarChar(128)
+  tag       String? @unique @db.VarChar(16)
+  createdAt DateTime @default(now())
+
+  members GuildMember[]
+  runs    Run[]
+
+  @@map("guilds")
+}
+
+/*
+  Table guild_members
+  - Table d’association (N-N) entre guildes et comptes du site.
+  - Permet de lister les guildes et les comptes dedans (+ rôle).
+*/
+model GuildMember {
+  guildId   BigInt
+  accountId BigInt
+
+  role     GuildRole @default(MEMBER)
+  joinedAt DateTime  @default(now())
+
+  guild   Guild      @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  account WebAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@id([guildId, accountId])
+
+  @@index([accountId])
+  @@index([guildId])
+
+  @@map("guild_members")
+}
+
+enum GuildRole {
+  OWNER
+  OFFICER
+  MEMBER
+}
+
+/*
+  Table runs
+  - 1 ligne = 1 kill d’un boss (encounter complet).
+  - Contient les métriques globales de l’encounter (durée totale, DPS/HPS groupe, totals).
+  - Une run est associée :
+    - à une guilde (Guild) (pour l’ownership / droits)
+    - au compte site qui a upload (WebAccount)
+*/
+model Run {
+  id BigInt @id @default(autoincrement())
+
+  bossId  BigInt
+  groupId BigInt
+
+  // NEW
+  guildId     BigInt
+  uploaderId  BigInt
+
+  startedAt DateTime
+  endedAt   DateTime
+
+  durationTotalS Int
+  totalDamage    BigInt
+  totalHealing   BigInt
+
+  dpsGroup Float
+  hpsGroup Float
+
+  logFile   String?  @db.VarChar(255)
+  createdAt DateTime @default(now())
+
+  boss  Boss  @relation(fields: [bossId], references: [id], onDelete: Restrict)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Restrict)
+
+  // NEW relations
+  guild    Guild      @relation(fields: [guildId], references: [id], onDelete: Restrict)
+  uploader WebAccount @relation(fields: [uploaderId], references: [id], onDelete: Restrict)
+
+  players RunPlayer[]
+  phases  RunPhase[]
+
+  @@index([bossId])
+  @@index([groupId])
+  @@index([guildId])
+  @@index([uploaderId])
+
+  @@index([bossId, groupId, durationTotalS]) // WR par boss+groupe
+  @@index([bossId, durationTotalS])          // WR global par boss
+
+  // utile côté site : guild leaderboard + historique uploads
+  @@index([guildId, bossId, durationTotalS])
+  @@index([uploaderId, createdAt])
+
+  @@map("runs")
+}
+
+/*
+  Table run_players
+  - Stats par joueur pour une run (totaux encounter).
+  - 1 ligne = 1 joueur dans 1 run.
+  - Sert à calculer les tops DPS/HPS par boss et à afficher les scores individuels du kill.
+*/
+model RunPlayer {
+  runId    BigInt
+  playerId BigInt
+
+  damage  BigInt
+  healing BigInt
+  dps     Float
+  hps     Float
+
+  run    Run    @relation(fields: [runId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Restrict)
+
+  @@id([runId, playerId])
+
+  @@index([playerId])
+  @@index([runId, dps])
+  @@index([runId, hps])
+
+  @@map("run_players")
+}
+
+/*
+  Table run_phases
+  - Détail des phases d’un encounter (utile pour certains boss : ex. Vengeur/Isiel).
+  - 1 ligne = 1 phase dans 1 run, avec durée et DPS groupe de la phase.
+  - Sert à stocker des "temps propres" par phase, en plus du temps total encounter.
+*/
+model RunPhase {
+  id BigInt @id @default(autoincrement())
+
+  runId BigInt
+
+  phaseName String  @db.VarChar(64) // ex: "Vengeur", "Isiel"
+  startedAt  DateTime
+  endedAt    DateTime
+
+  durationS   Int
+  totalDamage BigInt
+  dpsGroup    Float
+
+  run Run @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  playerPhases RunPlayerPhase[]
+
+  @@index([runId])
+  @@index([phaseName])
+  @@index([runId, phaseName])
+
+  @@map("run_phases")
+}
+
+/*
+  Table run_player_phases
+  - Stats par joueur par phase.
+  - 1 ligne = 1 joueur dans 1 phase (ex: DPS sur Vengeur séparé du DPS sur Isiel).
+  - Sert à obtenir les tops DPS par boss+phase et à afficher des scores par phase.
+*/
+model RunPlayerPhase {
+  phaseId  BigInt
+  playerId BigInt
+
+  damage BigInt
+  dps    Float
+
+  phase  RunPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  player Player   @relation(fields: [playerId], references: [id], onDelete: Restrict)
+
+  @@id([phaseId, playerId])
+
+  @@index([playerId])
+  @@index([phaseId, dps])
+
+  @@map("run_player_phases")
+}
