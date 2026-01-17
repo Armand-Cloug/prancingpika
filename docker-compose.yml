@@ -111,6 +111,7 @@ services:
       - DATABASE_URL=${DATABASE_URL}
     volumes:
       - combatlogs:/data/combat.log
+      - combatlogs:/workspace/combat.log
     expose:
       - "8080"  # uniquement accessible depuis les networks docker
     healthcheck:
