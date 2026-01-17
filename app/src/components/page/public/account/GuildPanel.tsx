@@ -106,7 +106,7 @@ export default function GuildPanel({
             }}
           />
           <JoinGuildForm
-            disabled={false}
+            disabled={true}
             onJoined={async () => {
               await onRefresh();
             }}

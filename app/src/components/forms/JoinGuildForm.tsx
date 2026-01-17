@@ -102,7 +102,7 @@ export function JoinGuildForm({ disabled = false, onJoined }: Props) {
                   />
                 </FormControl>
                 <FormDescription className="text-zinc-200/60">
-                  For now: joining by TAG works. (Invite codes later.)
+                  For now : joining by TAG works. (Invite codes later.)
                 </FormDescription>
                 <FormMessage />
               </FormItem>
