@@ -44,7 +44,6 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-      - ./app/.env
     depends_on:
       db:
         condition: service_healthy
@@ -102,7 +101,6 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-      - ./parser/.env
     environment:
       # où tourne le code python dans l'image
       - PARSER_WORKDIR=/workspace
