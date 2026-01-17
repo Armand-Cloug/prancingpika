@@ -154,8 +154,9 @@ volumes:
 
 networks:
   proxy:
-    driver: bridge
+    external: true
     name: proxy
   internal:
-    driver: bridge
+    external: true
     name: internal
+
