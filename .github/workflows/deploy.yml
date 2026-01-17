@@ -9,6 +9,11 @@ concurrency:
   group: production-deploy
   cancel-in-progress: false
 
+env:
+  TARGET_BASE: /opt/prancingpika
+  TARGET_SRC: /opt/prancingpika/src
+  TARGET_DATA: /opt/prancingpika/data
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -21,22 +26,20 @@ jobs:
       - name: Check required secrets/vars
         run: |
           set -e
-          # SSH
-          test -n "${SERVER_HOST}" || (echo "Missing SERVER_HOST" && exit 1)
-          test -n "${SERVER_USER}" || (echo "Missing SERVER_USER" && exit 1)
-          test -n "${SERVER_SSH_KEY}" || (echo "Missing SERVER_SSH_KEY" && exit 1)
+          test -n "${SERVER_HOST}" || (echo "❌ Missing SERVER_HOST" && exit 1)
+          test -n "${SERVER_USER}" || (echo "❌ Missing SERVER_USER" && exit 1)
+          test -n "${SERVER_SSH_KEY}" || (echo "❌ Missing SERVER_SSH_KEY" && exit 1)
 
-          # DB
-          test -n "${DB_ROOT_PASSWORD}" || (echo "Missing DB_ROOT_PASSWORD" && exit 1)
-          test -n "${DB_PASSWORD}" || (echo "Missing DB_PASSWORD" && exit 1)
+          test -n "${DB_ROOT_PASSWORD}" || (echo "❌ Missing DB_ROOT_PASSWORD" && exit 1)
+          test -n "${DB_PASSWORD}" || (echo "❌ Missing DB_PASSWORD" && exit 1)
 
-          # Domains / Traefik
-          test -n "${DOMAIN}" || (echo "Missing DOMAIN (vars.DOMAIN)" && exit 1)
-          test -n "${TRAEFIK_ACME_EMAIL}" || (echo "Missing TRAEFIK_ACME_EMAIL (vars.TRAEFIK_ACME_EMAIL)" && exit 1)
+          test -n "${DOMAIN}" || (echo "❌ Missing vars.DOMAIN" && exit 1)
+          test -n "${TRAEFIK_ACME_EMAIL}" || (echo "❌ Missing vars.TRAEFIK_ACME_EMAIL" && exit 1)
 
-          # Auth minimal (adapte selon ton projet)
-          test -n "${NEXTAUTH_SECRET}" || (echo "Missing NEXTAUTH_SECRET" && exit 1)
-          echo "OK"
+          test -n "${NEXTAUTH_URL}" || (echo "❌ Missing vars.NEXTAUTH_URL" && exit 1)
+          test -n "${NEXTAUTH_SECRET}" || (echo "❌ Missing NEXTAUTH_SECRET" && exit 1)
+
+          echo "✅ OK"
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
@@ -48,9 +51,10 @@ jobs:
           DOMAIN: ${{ vars.DOMAIN }}
           TRAEFIK_ACME_EMAIL: ${{ vars.TRAEFIK_ACME_EMAIL }}
 
+          NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
 
-      - name: Write SSH key file
+      - name: Write SSH key file (normalize)
         run: |
           set -e
           mkdir -p ~/.ssh
@@ -63,43 +67,9 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/id_ci \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "echo OK && whoami && hostname"
+            "echo OK && whoami && hostname && sudo -n true && echo SUDO_OK"
 
-      - name: Prepare target dir (backup acme.json)
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            set -e
-            mkdir -p ~/prancingpika_src
-
-            # backup ACME si présent
-            if [ -f ~/prancingpika_src/traefik/acme.json ]; then
-              cp ~/prancingpika_src/traefik/acme.json /tmp/prancingpika-acme.json.backup
-            fi
-
-            rm -rf ~/prancingpika_src/* ~/prancingpika_src/.[!.]* ~/prancingpika_src/..?* || true
-
-            mkdir -p ~/prancingpika_src/traefik
-            if [ -f /tmp/prancingpika-acme.json.backup ]; then
-              mv /tmp/prancingpika-acme.json.backup ~/prancingpika_src/traefik/acme.json
-              chmod 600 ~/prancingpika_src/traefik/acme.json
-            fi
-
-      - name: Upload project to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "./*"
-          target: "~/prancingpika_src"
-          overwrite: true
-          timeout: 180s
-
-      - name: Provision & Deploy (Docker Compose)
+      - name: Prepare /opt target dirs + preserve acme.json
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -107,6 +77,54 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             set -euo pipefail
+
+            BASE="${{ env.TARGET_BASE }}"
+            SRC="${{ env.TARGET_SRC }}"
+            DATA="${{ env.TARGET_DATA }}"
+
+            # Create /opt structure (sudo ok)
+            sudo mkdir -p "${SRC}" "${DATA}"
+            sudo chown -R "$USER":"$USER" "${BASE}" || true
+
+            # backup acme.json -> DATA
+            if [ -f "${SRC}/traefik/acme.json" ]; then
+              mkdir -p "${DATA}/traefik"
+              cp "${SRC}/traefik/acme.json" "${DATA}/traefik/acme.json"
+              chmod 600 "${DATA}/traefik/acme.json" || true
+            fi
+
+            # clean SRC
+            rm -rf "${SRC:?}/"* "${SRC}"/.[!.]* "${SRC}"/..?* || true
+
+            # restore acme.json
+            mkdir -p "${SRC}/traefik"
+            if [ -f "${DATA}/traefik/acme.json" ]; then
+              cp "${DATA}/traefik/acme.json" "${SRC}/traefik/acme.json"
+              chmod 600 "${SRC}/traefik/acme.json" || true
+            fi
+
+      - name: Upload project to server (/opt/prancingpika/src)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "./*"
+          target: "${{ env.TARGET_SRC }}"
+          overwrite: true
+          timeout: 240s
+
+      - name: Deploy (install docker if needed, write envs, compose up)
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -euo pipefail
+
+            SRC="${{ env.TARGET_SRC }}"
+            DATA="${{ env.TARGET_DATA }}"
 
             echo "[1/7] Install Docker if needed"
             if ! command -v docker >/dev/null 2>&1; then
@@ -120,25 +138,28 @@ jobs:
             fi
 
             echo "[2/7] Go to project"
-            cd ~/prancingpika_src
+            cd "${SRC}"
 
             echo "[3/7] Ensure Traefik acme.json"
-            mkdir -p traefik
-            if [ -d traefik/acme.json ]; then rm -rf traefik/acme.json; fi
-            if [ ! -f traefik/acme.json ]; then
-              install -m 600 /dev/null traefik/acme.json || { touch traefik/acme.json && chmod 600 traefik/acme.json; }
+            mkdir -p traefik "${DATA}/traefik"
+            # prefer persistent acme in DATA
+            if [ ! -f "${DATA}/traefik/acme.json" ]; then
+              install -m 600 /dev/null "${DATA}/traefik/acme.json" || { touch "${DATA}/traefik/acme.json" && chmod 600 "${DATA}/traefik/acme.json"; }
             else
-              chmod 600 traefik/acme.json
+              chmod 600 "${DATA}/traefik/acme.json"
             fi
+            # copy into repo path if your compose mounts ./traefik/acme.json
+            cp "${DATA}/traefik/acme.json" traefik/acme.json
+            chmod 600 traefik/acme.json
 
-            echo "[4/7] Write ENV files for containers"
-            # IMPORTANT: en prod Docker, le host DB n'est pas localhost => c'est "db"
+            echo "[4/7] Write ENV files"
+
             DB_USER="${{ vars.MARIADB_USER }}"
             DB_NAME="${{ vars.MARIADB_DATABASE }}"
             DB_USER="${DB_USER:-ptp_prod}"
             DB_NAME="${DB_NAME:-ptp_prod}"
 
-            # Root .env (utilisé par docker compose + traefik)
+            # root compose env
             cat > .env <<EOF
             DOMAIN=${{ vars.DOMAIN }}
             TRAEFIK_ACME_EMAIL=${{ vars.TRAEFIK_ACME_EMAIL }}
@@ -148,11 +169,11 @@ jobs:
             MARIADB_USER=${DB_USER}
             MARIADB_DATABASE=${DB_NAME}
 
-            # Prisma/Parser DB URL (host=db)
+            # Used by Prisma (host=db in docker network)
             DATABASE_URL=mysql://${DB_USER}:${{ secrets.DB_PASSWORD }}@db:3306/${DB_NAME}
             EOF
 
-            # Next app env (lu par le service web via env_file)
+            # Next env
             mkdir -p app
             cat > app/.env <<EOF
             DATABASE_URL=mysql://${DB_USER}:${{ secrets.DB_PASSWORD }}@db:3306/${DB_NAME}
@@ -168,12 +189,11 @@ jobs:
             DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
             DISCORD_CLIENT_SECRET=${{ secrets.DISCORD_CLIENT_SECRET }}
 
-            # Shared combat logs volume inside containers
             COMBATLOG_DIR=/data/combat.log
             PARSER_URL=http://parser:8080
             EOF
 
-            # Parser env (optionnel si ton API supporte DATABASE_URL direct)
+            # Parser env (if your API reads it; otherwise DATABASE_URL + envs can be enough)
             mkdir -p parser
             cat > parser/.env <<EOF
             DATABASE_URL=mysql://${DB_USER}:${{ secrets.DB_PASSWORD }}@db:3306/${DB_NAME}
@@ -181,29 +201,25 @@ jobs:
             PARSER_WORKDIR=/workspace
             COMBATLOG_DIR=/data/combat.log
             PARSER_TIMEOUT_S=600
-            # Si ton API a besoin d'un env-file explicite dans le container:
             PARSER_ENV_FILE=/workspace/parser/.env
             EOF
 
-            echo "[5/7] docker compose up (db + traefik) then build/run all"
-            docker compose down || true
-            docker compose up -d traefik db
+            echo "[5/7] Start base services"
+            sudo docker compose down || true
+            sudo docker compose up -d traefik db
 
-            echo "[5b/7] wait MariaDB healthy"
+            echo "[5b/7] Wait MariaDB healthy"
             for i in {1..60}; do
-              state=$(docker inspect --format='{{json .State.Health.Status}}' mariadb 2>/dev/null || echo "null")
+              state=$(sudo docker inspect --format='{{json .State.Health.Status}}' mariadb 2>/dev/null || echo "null")
               echo "Health mariadb: $state"
               [ "$state" = "\"healthy\"" ] && break
               sleep 2
             done
 
-            echo "[6/7] Prisma migrate deploy"
-            # Important: le container web doit contenir prisma + npx
-            docker compose run --rm web npx prisma migrate deploy
+            echo "[6/7] Prisma migrate deploy (prod-safe)"
+            sudo docker compose run --rm web npx prisma migrate deploy
 
-            echo "[6b/7] Start parser + web (build)"
-            docker compose up -d --build parser web
+            echo "[7/7] Build & start services"
+            sudo docker compose up -d --build parser web
 
-            echo "[7/7] Status"
-            docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
-
+            sudo docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
