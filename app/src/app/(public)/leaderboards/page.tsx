@@ -4,17 +4,27 @@ import RaidSection, {
 } from "@/components/page/public/leaderboards/RaidSection";
 import { getLeaderboards } from "@/lib/leaderboards";
 
-function normalizeRaid(r: any, idx: number): RaidSectionData {
-  // Case A: r.bosses is an array of objects like:
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+function normalizeRaid(r: unknown, idx: number): RaidSectionData {
+  const obj = (r ?? {}) as any;
+
+  // getLeaderboards() returns: [{ raid: { title, bosses }, bosses: [...] }, ...]
+  // But we accept older shapes too.
+  const raidTitle = obj?.raid?.title ?? obj?.title ?? `Raid ${idx + 1}`;
+
+  // Case A: obj.bosses is an array of objects like:
   // [{ bossName, fastest, comp1, comp2 }, ...]
   if (
-    Array.isArray(r?.bosses) &&
-    r.bosses.length > 0 &&
-    typeof r.bosses[0] === "object" &&
-    r.bosses[0] !== null &&
-    "bossName" in r.bosses[0]
+    Array.isArray(obj?.bosses) &&
+    obj.bosses.length > 0 &&
+    typeof obj.bosses[0] === "object" &&
+    obj.bosses[0] !== null &&
+    "bossName" in obj.bosses[0]
   ) {
-    const bossObjs = r.bosses as any[];
+    const bossObjs = obj.bosses as any[];
 
     const bosses = bossObjs.map((b) => String(b?.bossName ?? "Unknown"));
 
@@ -31,7 +41,7 @@ function normalizeRaid(r: any, idx: number): RaidSectionData {
     );
 
     return {
-      title: String(r?.title ?? `Raid ${idx + 1}`),
+      title: String(raidTitle),
       bosses,
       fastestByBoss,
       comp1ByBoss,
@@ -39,13 +49,20 @@ function normalizeRaid(r: any, idx: number): RaidSectionData {
     };
   }
 
-  // Case B: r already matches our expected structure
+  // Case B: already in the expected structure
+  const bosses =
+    Array.isArray(obj?.raid?.bosses)
+      ? obj.raid.bosses.map(String)
+      : Array.isArray(obj?.bosses)
+        ? obj.bosses.map(String)
+        : [];
+
   return {
-    title: String(r?.title ?? `Raid ${idx + 1}`),
-    bosses: Array.isArray(r?.bosses) ? r.bosses.map(String) : [],
-    fastestByBoss: r?.fastestByBoss ?? r?.fastest ?? {},
-    comp1ByBoss: r?.comp1ByBoss ?? r?.comp1 ?? {},
-    comp2ByBoss: r?.comp2ByBoss ?? r?.comp2 ?? {},
+    title: String(raidTitle),
+    bosses,
+    fastestByBoss: obj?.fastestByBoss ?? obj?.fastest ?? {},
+    comp1ByBoss: obj?.comp1ByBoss ?? obj?.comp1 ?? {},
+    comp2ByBoss: obj?.comp2ByBoss ?? obj?.comp2 ?? {},
   };
 }
 
