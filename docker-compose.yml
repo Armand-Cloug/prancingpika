@@ -93,35 +93,46 @@ services:
   parser:
     build:
       context: ./parser
-      dockerfile: dockerfile
+      dockerfile: Dockerfile   # ⚠️ corrige si ton fichier s’appelle bien "Dockerfile"
     container_name: ptpika_parser
     restart: unless-stopped
+
+    # ✅ Option A : on garde uniquement les variables d'env (dont DATABASE_URL)
+    # Si ton .env racine contient DATABASE_URL, tu peux garder env_file.
     env_file:
       - .env
-    environment:
-      # où tourne le code python dans l'image
-      - PARSER_WORKDIR=/workspace
-      # dossier partagé où Next dépose les fichiers
-      - COMBATLOG_DIR=/data/combat.log
-      # timeout parsing
-      - PARSER_TIMEOUT_S=600
 
-      # DB (recommandé en prod : passer DATABASE_URL via .env/secret)
-      # Ex: mysql://user:pass@db:3306/ptp_prod
-      - DATABASE_URL=${DATABASE_URL}
+    environment:
+      # code python
+      PARSER_WORKDIR: /workspace
+
+      # dossier partagé (volume) où Next dépose les fichiers
+      COMBATLOG_DIR: /data/combat.log
+
+      # timeout parsing
+      PARSER_TIMEOUT_S: "600"
+
+      # DB en env (pas de PARSER_ENV_FILE)
+      DATABASE_URL: ${DATABASE_URL}
+
     volumes:
       - combatlogs:/data/combat.log
-      - combatlogs:/workspace/combat.log
+
     expose:
-      - "8080"  # uniquement accessible depuis les networks docker
+      - "8080"
+
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health >/dev/null || exit 1"]
+      # wget n’est pas toujours présent → curl est souvent plus sûr,
+      # mais garde wget si tu sais qu’il existe dans l'image.
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8080/health\").read()' >/dev/null 2>&1 || exit 1"]
       interval: 20s
       timeout: 3s
       retries: 10
       start_period: 10s
+
     networks:
       - internal
+
 
   db:
     image: mariadb:11.4
