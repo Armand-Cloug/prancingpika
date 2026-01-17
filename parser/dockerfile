@@ -1,0 +1,51 @@
+# syntax=docker/dockerfile:1
+
+# -----------------------------
+# Base image
+# -----------------------------
+FROM python:3.11-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# System deps (minimal) + timezone if needed
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+     ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+# -----------------------------
+# App setup
+# -----------------------------
+WORKDIR /workspace
+
+# Create non-root user
+RUN useradd -m -u 10001 appuser
+
+# Install Python deps first (better cache)
+# If you have requirements.txt, copy it; otherwise install inline
+# (Recommended: create a dedicated requirements file for the parser service)
+COPY parser/requirements.txt /workspace/parser/requirements.txt
+RUN pip install --no-cache-dir -r /workspace/parser/requirements.txt
+
+# Copy only what the parser service needs
+# - parser/ contains api.py, import_runs.py, analyzer.py, types.py, etc.
+COPY parser /workspace/parser
+
+# If your repo also needs other modules at root for imports, copy them too:
+# COPY . /workspace
+# But prefer keeping it minimal for security/size.
+
+# Permissions
+RUN chown -R appuser:appuser /workspace
+USER appuser
+
+# Default envs (override in compose)
+ENV PARSER_WORKDIR=/workspace \
+    COMBATLOG_DIR=/data/combat.log \
+    PARSER_TIMEOUT_S=600
+
+EXPOSE 8080
+
+# Run the API
+CMD ["python", "-m", "uvicorn", "parser.api:app", "--host", "0.0.0.0", "--port", "8080"]

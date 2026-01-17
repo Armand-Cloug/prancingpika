@@ -1,0 +1,159 @@
+services:
+  traefik:
+    image: traefik:v3.1
+    container_name: ptpika_traefik
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+
+      # Entrypoints
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+
+      # Redirection HTTP -> HTTPS
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+
+      # Let's Encrypt (HTTP-01)
+      - --certificatesresolvers.le.acme.email=${TRAEFIK_ACME_EMAIL}
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le.acme.httpchallenge=true
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+
+      # Logs
+      - --log.level=INFO
+      - --accesslog=true
+      - --accesslog.format=common
+      - --accesslog.filepath=/var/log/traefik/access.log
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./traefik/acme.json:/letsencrypt/acme.json
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/log/traefik:/var/log/traefik
+    networks:
+      - proxy
+
+  web:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: ptpika_web
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      parser:
+        condition: service_started
+    environment:
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+
+      # Upload logs -> shared volume
+      - COMBATLOG_DIR=/data/combat.log
+
+      # Call parser service inside docker network
+      - PARSER_URL=http://parser:8080
+    volumes:
+      # tes uploads publics (images/etc)
+      - uploads:/app/public/upload
+      # logs de combat partagés avec le parser
+      - combatlogs:/data/combat.log
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.services.app.loadbalancer.server.port=3000
+
+      # Domaine principal
+      - traefik.http.routers.app.rule=Host(`${APP_DOMAIN}`)
+      - traefik.http.routers.app.entrypoints=websecure
+      - traefik.http.routers.app.tls=true
+      - traefik.http.routers.app.tls.certresolver=le
+
+      # www -> apex
+      - traefik.http.routers.app-www.rule=Host(`www.${APP_DOMAIN}`)
+      - traefik.http.routers.app-www.entrypoints=websecure
+      - traefik.http.routers.app-www.tls=true
+      - traefik.http.routers.app-www.tls.certresolver=le
+      - traefik.http.routers.app-www.middlewares=redirect-to-apex
+      - traefik.http.middlewares.redirect-to-apex.redirectregex.regex=^https?://www\\.${APP_DOMAIN}(.*)
+      - traefik.http.middlewares.redirect-to-apex.redirectregex.replacement=https://${APP_DOMAIN}$$1
+      - traefik.http.middlewares.redirect-to-apex.redirectregex.permanent=true
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - proxy
+      - internal
+
+  parser:
+    build:
+      context: ./parser
+      dockerfile: dockerfile
+    container_name: ptpika_parser
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # où tourne le code python dans l'image
+      - PARSER_WORKDIR=/workspace
+      # dossier partagé où Next dépose les fichiers
+      - COMBATLOG_DIR=/data/combat.log
+      # timeout parsing
+      - PARSER_TIMEOUT_S=600
+
+      # DB (recommandé en prod : passer DATABASE_URL via .env/secret)
+      # Ex: mysql://user:pass@db:3306/ptp_prod
+      - DATABASE_URL=${DATABASE_URL}
+    volumes:
+      - combatlogs:/data/combat.log
+    expose:
+      - "8080"  # uniquement accessible depuis les networks docker
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health >/dev/null || exit 1"]
+      interval: 20s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - internal
+
+  db:
+    image: mariadb:11.4
+    container_name: ptppika_mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p\"$${MARIADB_ROOT_PASSWORD}\" --silent || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 60s
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - internal
+
+volumes:
+  dbdata:
+  uploads:
+  combatlogs:
+
+networks:
+  proxy:
+    driver: bridge
+    name: proxy
+  internal:
+    driver: bridge
+    name: internal

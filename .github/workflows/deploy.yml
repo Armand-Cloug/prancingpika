@@ -1,0 +1,209 @@
+name: Deploy PrancingPika (Traefik + Next + Parser + MariaDB)
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch: {}
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: Prod
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Check required secrets/vars
+        run: |
+          set -e
+          # SSH
+          test -n "${SERVER_HOST}" || (echo "Missing SERVER_HOST" && exit 1)
+          test -n "${SERVER_USER}" || (echo "Missing SERVER_USER" && exit 1)
+          test -n "${SERVER_SSH_KEY}" || (echo "Missing SERVER_SSH_KEY" && exit 1)
+
+          # DB
+          test -n "${DB_ROOT_PASSWORD}" || (echo "Missing DB_ROOT_PASSWORD" && exit 1)
+          test -n "${DB_PASSWORD}" || (echo "Missing DB_PASSWORD" && exit 1)
+
+          # Domains / Traefik
+          test -n "${DOMAIN}" || (echo "Missing DOMAIN (vars.DOMAIN)" && exit 1)
+          test -n "${TRAEFIK_ACME_EMAIL}" || (echo "Missing TRAEFIK_ACME_EMAIL (vars.TRAEFIK_ACME_EMAIL)" && exit 1)
+
+          # Auth minimal (adapte selon ton projet)
+          test -n "${NEXTAUTH_SECRET}" || (echo "Missing NEXTAUTH_SECRET" && exit 1)
+          echo "OK"
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+
+          DB_ROOT_PASSWORD: ${{ secrets.DB_ROOT_PASSWORD }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+          DOMAIN: ${{ vars.DOMAIN }}
+          TRAEFIK_ACME_EMAIL: ${{ vars.TRAEFIK_ACME_EMAIL }}
+
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+
+      - name: Write SSH key file
+        run: |
+          set -e
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_ci
+          sed -i 's/\r$//' ~/.ssh/id_ci
+          chmod 600 ~/.ssh/id_ci
+          ssh-keygen -y -f ~/.ssh/id_ci > /dev/null
+
+      - name: Sanity SSH
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/id_ci \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "echo OK && whoami && hostname"
+
+      - name: Prepare target dir (backup acme.json)
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+            mkdir -p ~/prancingpika_src
+
+            # backup ACME si présent
+            if [ -f ~/prancingpika_src/traefik/acme.json ]; then
+              cp ~/prancingpika_src/traefik/acme.json /tmp/prancingpika-acme.json.backup
+            fi
+
+            rm -rf ~/prancingpika_src/* ~/prancingpika_src/.[!.]* ~/prancingpika_src/..?* || true
+
+            mkdir -p ~/prancingpika_src/traefik
+            if [ -f /tmp/prancingpika-acme.json.backup ]; then
+              mv /tmp/prancingpika-acme.json.backup ~/prancingpika_src/traefik/acme.json
+              chmod 600 ~/prancingpika_src/traefik/acme.json
+            fi
+
+      - name: Upload project to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "./*"
+          target: "~/prancingpika_src"
+          overwrite: true
+          timeout: 180s
+
+      - name: Provision & Deploy (Docker Compose)
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -euo pipefail
+
+            echo "[1/7] Install Docker if needed"
+            if ! command -v docker >/dev/null 2>&1; then
+              sudo apt-get update -y
+              sudo apt-get install -y ca-certificates curl gnupg
+              sudo install -m 0755 -d /etc/apt/keyrings
+              curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+              echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo $VERSION_CODENAME) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+              sudo apt-get update -y
+              sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+            fi
+
+            echo "[2/7] Go to project"
+            cd ~/prancingpika_src
+
+            echo "[3/7] Ensure Traefik acme.json"
+            mkdir -p traefik
+            if [ -d traefik/acme.json ]; then rm -rf traefik/acme.json; fi
+            if [ ! -f traefik/acme.json ]; then
+              install -m 600 /dev/null traefik/acme.json || { touch traefik/acme.json && chmod 600 traefik/acme.json; }
+            else
+              chmod 600 traefik/acme.json
+            fi
+
+            echo "[4/7] Write ENV files for containers"
+            # IMPORTANT: en prod Docker, le host DB n'est pas localhost => c'est "db"
+            DB_USER="${{ vars.MARIADB_USER }}"
+            DB_NAME="${{ vars.MARIADB_DATABASE }}"
+            DB_USER="${DB_USER:-ptp_prod}"
+            DB_NAME="${DB_NAME:-ptp_prod}"
+
+            # Root .env (utilisé par docker compose + traefik)
+            cat > .env <<EOF
+            DOMAIN=${{ vars.DOMAIN }}
+            TRAEFIK_ACME_EMAIL=${{ vars.TRAEFIK_ACME_EMAIL }}
+
+            DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            MARIADB_USER=${DB_USER}
+            MARIADB_DATABASE=${DB_NAME}
+
+            # Prisma/Parser DB URL (host=db)
+            DATABASE_URL=mysql://${DB_USER}:${{ secrets.DB_PASSWORD }}@db:3306/${DB_NAME}
+            EOF
+
+            # Next app env (lu par le service web via env_file)
+            mkdir -p app
+            cat > app/.env <<EOF
+            DATABASE_URL=mysql://${DB_USER}:${{ secrets.DB_PASSWORD }}@db:3306/${DB_NAME}
+
+            NEXTAUTH_URL=${{ vars.NEXTAUTH_URL }}
+            NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+            NEXTAUTH_TRUST_HOST=true
+            AUTH_TRUST_HOST=true
+
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+
+            DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
+            DISCORD_CLIENT_SECRET=${{ secrets.DISCORD_CLIENT_SECRET }}
+
+            # Shared combat logs volume inside containers
+            COMBATLOG_DIR=/data/combat.log
+            PARSER_URL=http://parser:8080
+            EOF
+
+            # Parser env (optionnel si ton API supporte DATABASE_URL direct)
+            mkdir -p parser
+            cat > parser/.env <<EOF
+            DATABASE_URL=mysql://${DB_USER}:${{ secrets.DB_PASSWORD }}@db:3306/${DB_NAME}
+
+            PARSER_WORKDIR=/workspace
+            COMBATLOG_DIR=/data/combat.log
+            PARSER_TIMEOUT_S=600
+            # Si ton API a besoin d'un env-file explicite dans le container:
+            PARSER_ENV_FILE=/workspace/parser/.env
+            EOF
+
+            echo "[5/7] docker compose up (db + traefik) then build/run all"
+            sudo docker compose down || true
+            sudo docker compose up -d traefik db
+
+            echo "[5b/7] wait MariaDB healthy"
+            for i in {1..60}; do
+              state=$(sudo docker inspect --format='{{json .State.Health.Status}}' mariadb 2>/dev/null || echo "null")
+              echo "Health mariadb: $state"
+              [ "$state" = "\"healthy\"" ] && break
+              sleep 2
+            done
+
+            echo "[6/7] Prisma migrate deploy"
+            # Important: le container web doit contenir prisma + npx
+            sudo docker compose run --rm web npx prisma migrate deploy
+
+            echo "[6b/7] Start parser + web (build)"
+            sudo docker compose up -d --build parser web
+
+            echo "[7/7] Status"
+            sudo docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+

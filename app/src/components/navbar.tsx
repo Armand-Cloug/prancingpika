@@ -54,6 +54,9 @@ export default function MainNav() {
           <Link className={itemClass("/leaderboards")} href="/leaderboards">
             Leaderboards
           </Link>
+          <Link className={itemClass("/players")} href="/top-players">
+            Top Players
+          </Link>
           <Link className={itemClass("/account")} href="/account">
             Account
           </Link>
@@ -88,6 +91,9 @@ export default function MainNav() {
         </Link>
         <Link className={itemClass("/leaderboards")} href="/leaderboards">
           Leaderboards
+        </Link>
+        <Link className={itemClass("/players")} href="/top-players">
+          Top Players
         </Link>
         <Link className={itemClass("/account")} href="/account">
           Account

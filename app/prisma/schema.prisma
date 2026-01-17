@@ -49,9 +49,9 @@ model Group {
 model Player {
   id   BigInt @id @default(autoincrement())
   name String @unique @db.VarChar(128)
+  class String? @db.VarChar(32)
 
   runPlayers      RunPlayer[]
-  runPlayerPhases RunPlayerPhase[]
 
   @@map("players")
 }
@@ -158,6 +158,8 @@ model Run {
   endedAt   DateTime
 
   durationTotalS Int
+  bossDurationS  Int?
+  
   totalDamage    BigInt
   totalHealing   BigInt
 
@@ -175,7 +177,6 @@ model Run {
   uploader WebAccount @relation(fields: [uploaderId], references: [id], onDelete: Restrict)
 
   players RunPlayer[]
-  phases  RunPhase[]
 
   @@index([bossId])
   @@index([groupId])
@@ -217,58 +218,4 @@ model RunPlayer {
   @@index([runId, hps])
 
   @@map("run_players")
-}
-
-/*
-  Table run_phases
-  - Détail des phases d’un encounter (utile pour certains boss : ex. Vengeur/Isiel).
-  - 1 ligne = 1 phase dans 1 run, avec durée et DPS groupe de la phase.
-  - Sert à stocker des "temps propres" par phase, en plus du temps total encounter.
-*/
-model RunPhase {
-  id BigInt @id @default(autoincrement())
-
-  runId BigInt
-
-  phaseName String  @db.VarChar(64) // ex: "Vengeur", "Isiel"
-  startedAt  DateTime
-  endedAt    DateTime
-
-  durationS   Int
-  totalDamage BigInt
-  dpsGroup    Float
-
-  run Run @relation(fields: [runId], references: [id], onDelete: Cascade)
-
-  playerPhases RunPlayerPhase[]
-
-  @@index([runId])
-  @@index([phaseName])
-  @@index([runId, phaseName])
-
-  @@map("run_phases")
-}
-
-/*
-  Table run_player_phases
-  - Stats par joueur par phase.
-  - 1 ligne = 1 joueur dans 1 phase (ex: DPS sur Vengeur séparé du DPS sur Isiel).
-  - Sert à obtenir les tops DPS par boss+phase et à afficher des scores par phase.
-*/
-model RunPlayerPhase {
-  phaseId  BigInt
-  playerId BigInt
-
-  damage BigInt
-  dps    Float
-
-  phase  RunPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
-  player Player   @relation(fields: [playerId], references: [id], onDelete: Restrict)
-
-  @@id([phaseId, playerId])
-
-  @@index([playerId])
-  @@index([phaseId, dps])
-
-  @@map("run_player_phases")
 }

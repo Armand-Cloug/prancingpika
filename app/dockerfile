@@ -1,0 +1,66 @@
+# Dockerfile (Next.js + Prisma) — fixed COPY issue
+
+############################
+# 1) deps
+############################
+FROM node:20-alpine AS deps
+RUN apk add --no-cache openssl libc6-compat
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+
+############################
+# 2) builder
+############################
+FROM node:20-alpine AS builder
+RUN apk add --no-cache openssl libc6-compat
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+RUN npx prisma generate
+RUN npm run build
+
+
+############################
+# 3) runner
+############################
+FROM node:20-alpine AS runner
+RUN apk add --no-cache openssl libc6-compat
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+RUN addgroup -S nextjs && adduser -S nextjs -G nextjs
+
+# Copy runtime artifacts
+COPY --from=builder /app/package.json ./package.json
+
+# IMPORTANT: don’t use glob with COPY here
+# If you have next.config.js/ts/mjs, copy the folder (safe), or just omit it.
+# (Omitting is fine in most apps because it's already baked into the build.)
+# COPY --from=builder /app/next.config.js ./next.config.js
+# COPY --from=builder /app/next.config.mjs ./next.config.mjs
+# COPY --from=builder /app/next.config.ts ./next.config.ts
+
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/prisma ./prisma
+
+USER nextjs
+
+EXPOSE 3000
+CMD ["npm", "run", "start"]
