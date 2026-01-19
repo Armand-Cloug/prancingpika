@@ -46,7 +46,10 @@ function rolePill(role: CompEntry["role"]) {
   if (role === "support") {
     return `${base} bg-violet-500/15 text-violet-200 border-violet-500/20`;
   }
-  return `${base} bg-sky-500/15 text-sky-200 border-sky-500/20`;
+    if (role === "tank") {
+    return `${base} bg-sky-500/15 text-sky-200 border-sky-500/20`;
+  }
+  return `${base} bg-red-500/15 text-red-200 border-red-500/20`;
 }
 
 export default function BossCompTable({

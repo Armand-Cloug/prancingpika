@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 export type CallingKey = "rogue" | "cleric" | "warrior" | "primalist" | "mage";
 
 export type TopPlayerRow = {
+  runId: string; // BigInt serialized
   date: string; // yyyy-mm-dd
   player: string;
   dps: number;
@@ -30,7 +31,7 @@ function toYMD(d: Date) {
 const CLASS_MATCH: Record<CallingKey, string[]> = {
   rogue: ["ROGUE", "Rogue", "rogue"],
   cleric: ["CLERIC", "Cleric", "cleric"],
-  warrior: ["WARRIOR", "Warrior", "warrior"],
+  warrior: ["WARRIOR", "Warrior", "warrior", "WAR", "War", "war"],
   primalist: ["PRIMALIST", "Primalist", "primalist", "PRIMA", "Prima", "prima"],
   mage: ["MAGE", "Mage", "mage"],
 };
@@ -42,18 +43,21 @@ async function topForClass(bossName: string, key: CallingKey): Promise<TopPlayer
     where: {
       run: { boss: { name: bossName } },
       player: {
-        OR: variants.map((v) => ({ class: v })),
+        // simpler + faster than OR list
+        class: { in: variants },
       },
     },
-    include: {
+    select: {
+      dps: true,
       player: { select: { name: true } },
-      run: { select: { endedAt: true, durationTotalS: true, bossDurationS: true } },
+      run: { select: { id: true, endedAt: true, durationTotalS: true, bossDurationS: true } },
     },
     orderBy: [{ dps: "desc" }],
     take: 100,
   });
 
   return rows.map((r) => ({
+    runId: r.run.id.toString(),
     date: toYMD(r.run.endedAt),
     player: r.player.name,
     dps: Math.round(r.dps),

@@ -2,6 +2,7 @@
 "use client";
 
 import type { CallingKey, TopPlayerRow } from "@/lib/top-players";
+import GroupDpsDialog from "@/components/forms/GroupDpsDialog";
 
 function formatTime(s: number) {
   const sec = Math.max(0, Math.floor(s));
@@ -65,14 +66,18 @@ export default function ClassTopTable({
         <div className="text-[11px] opacity-90">ST DPS</div>
       </div>
 
-      {/* Single table (no nested table wrapper) */}
+      {/* Table
+          Objectif:
+          - "Player" reste lisible sur petits écrans
+          - "Date" disparaît en dessous de lg (au lieu de rogner Player)
+      */}
       <table className="w-full table-fixed text-[12px]">
         <colgroup>
-          <col className="w-[26px]" />  {/* rank */}
-          <col className="w-[86px]" />  {/* date */}
-          <col />                       {/* player */}
-          <col className="w-[92px]" />  {/* dps */}
-          <col className="w-[60px]" />  {/* time */}
+          <col className="w-[26px]" /> {/* rank */}
+          <col className="hidden lg:table-column w-[86px]" /> {/* date (hide < lg) */}
+          <col /> {/* player */}
+          <col className="w-[82px] sm:w-[92px]" /> {/* dps */}
+          <col className="w-[52px] sm:w-[60px]" /> {/* time */}
         </colgroup>
 
         <thead className="bg-[#0b1220]/50 text-[11px] text-zinc-300/75">
@@ -86,7 +91,7 @@ export default function ClassTopTable({
 
           <tr className="border-t border-white/10">
             <th className="py-2 pl-3 text-left font-medium">#</th>
-            <th className="py-2 text-left font-medium">Date</th>
+            <th className="hidden lg:table-cell py-2 text-left font-medium">Date</th>
             <th className="py-2 text-left font-medium">Player</th>
             <th className="py-2 pr-3 text-right font-medium whitespace-nowrap">ST DPS</th>
             <th className="py-2 pr-3 text-right font-medium">Time</th>
@@ -98,8 +103,10 @@ export default function ClassTopTable({
             Array.from({ length: 10 }).map((_, i) => (
               <tr key={i} className="border-t border-white/5">
                 <td className="py-2 pl-3 text-zinc-300/50 tabular-nums">{i + 1}</td>
-                <td className="py-2 text-zinc-300/30">----</td>
-                <td className="py-2 text-zinc-300/30">Loading…</td>
+                <td className="hidden lg:table-cell py-2 text-zinc-300/30">----</td>
+                <td className="py-2 text-zinc-300/30">
+                  <div className="min-w-[120px] truncate whitespace-nowrap">Loading…</div>
+                </td>
                 <td className="py-2 pr-3 text-right text-zinc-300/30">—</td>
                 <td className="py-2 pr-3 text-right text-zinc-300/30">—</td>
               </tr>
@@ -114,15 +121,34 @@ export default function ClassTopTable({
             rows.map((r, idx) => (
               <tr key={`${r.player}-${r.date}-${idx}`} className="border-t border-white/5">
                 <td className="py-2 pl-3 tabular-nums text-zinc-200/85">{idx + 1}</td>
-                <td className="py-2 tabular-nums text-zinc-200/85 whitespace-nowrap">{r.date}</td>
-                <td className="py-2 pr-2">
-                  <div className="min-w-0 truncate whitespace-nowrap" title={r.player}>
-                    {r.player}
-                  </div>
+
+                <td className="hidden lg:table-cell py-2 tabular-nums text-zinc-200/85 whitespace-nowrap">
+                  {r.date}
                 </td>
+
+                <td className="py-2 pr-2">
+                  <GroupDpsDialog
+                    runId={r.runId}
+                    bossLabel={boss}
+                    dateLabel={r.date}
+                    trigger={
+                      <button
+                        type="button"
+                        className="block w-full min-w-0 text-left"
+                        title={r.player}
+                      >
+                        <span className="block w-full min-w-0 truncate whitespace-nowrap text-sky-200/90 hover:text-sky-200">
+                          {r.player}
+                        </span>
+                      </button>
+                    }
+                  />
+                </td>
+
                 <td className="py-2 pr-3 text-right tabular-nums whitespace-nowrap">
                   {r.dps.toLocaleString("en-US")}
                 </td>
+
                 <td className="py-2 pr-3 text-right tabular-nums whitespace-nowrap">
                   {formatTime(r.timeS)}
                 </td>

@@ -15,7 +15,7 @@ export default function InfoStrip() {
         This is a new version with a brand new log parser. Some features from the old site are
         missing and will be added back over time. Some other will never be added. Know that an 
         anti cheat is in place, so if you Sessions never shows up, it's probably because something 
-        was detected. I'm rreally to discuss if you thinks a mistake have been made. READ THE RULES !
+        was detected. I'm really open to discuss if you thinks a mistake have been made. READ THE RULES !
       </div>
 
       <div className="rounded-xl border border-white/10 bg-[#2A3B4F]/70 px-4 py-3 text-sm text-zinc-200/90">

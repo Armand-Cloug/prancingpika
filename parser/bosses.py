@@ -45,11 +45,6 @@ def _isiel_handler(fight: Fight) -> list[Phase]:
     from parser.encounters.isiel import build_phases_isiel
     return build_phases_isiel(fight)
 
-
-def _tarjulia_kill_check(fight: Fight) -> bool:
-    from parser.encounters.tarjulia import is_kill_tarjulia
-    return is_kill_tarjulia(fight)
-
 def _council_handler(fight: Fight) -> list[Phase]:
     from parser.encounters.council_destin import build_phases_council_destin
     return build_phases_council_destin(fight)
@@ -65,13 +60,29 @@ BOSS_DEFS: dict[str, BossDef] = {
     # TDNM
     "Beligosh": BossDef("Beligosh", aliases=[], handler=_common_handler),
     "Tarjulia": BossDef("Tarjulia", aliases=[], handler=_common_handler),
-    "Le Concile du Destin": BossDef("Le Concile du Destin", aliases=["Countessa Danazhal", "Marquise Boldoch", "Comte Pluezhal"], handler=_council_handler, exact_match=True),
     "Malannon": BossDef("Malannon", aliases=[], handler=_common_handler),
 
     # BOS
     "Azranel": BossDef("Azranel", aliases=[], handler=_common_handler),
     "Commandant Isiel": BossDef("Commandant Isiel", aliases=["Isiel"], handler=_isiel_handler),
     "Titan X": BossDef("Titan X", aliases=["TitanX"], handler=_titanx_handler),
+    
+    # SHITTY COUNCIL
+    "Le Concile du Destin": BossDef(
+        "Le Concile du Destin",
+        aliases=[
+            "Countessa Danazhal",
+            "Marquise Boldoch",
+            "Comte Pluezhal",
+            "Âme de Danazhal",
+            "Âme de Boldoch",
+            "Âme de Pluezhal",
+            "Ame de Danazhal",
+            "Ame de Boldoch",
+            "Ame de Pluezhal",
+        ],
+        handler=_council_handler,
+    ),
 }
 
 

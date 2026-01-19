@@ -1,5 +1,6 @@
 // src/lib/leaderboards.ts
 import { prisma } from "@/lib/prisma";
+import { inferRole, type Role } from "@/lib/role";
 
 export type RaidDef = {
   key: string;
@@ -40,7 +41,7 @@ export type FastestEntry = {
 };
 
 export type CompEntry = {
-  role: "dps" | "heal" | "support";
+  role: Role;
   player: string;
   playerClass?: string | null; // Player.class
   dps: number;
@@ -63,13 +64,6 @@ function fmtTime(sec: number) {
   const m = Math.floor(sec / 60);
   const s = sec % 60;
   return `${m}:${String(s).padStart(2, "0")}`;
-}
-
-function inferRole(dps: number, hps: number) {
-  // simple heuristic (you can refine later)
-  if (hps > 0 && hps >= dps * 0.6) return "heal" as const;
-  if (hps > 0 && hps >= dps * 0.2) return "support" as const;
-  return "dps" as const;
 }
 
 function pickTopDistinctGuildRuns<T extends { guildId: bigint }>(runs: T[], limit = 10) {

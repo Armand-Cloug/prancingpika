@@ -1,5 +1,5 @@
-// src/components/navbar/MainNav.tsx
-'use client';
+// src/components/navbar.tsx
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -12,12 +12,11 @@ export default function MainNav() {
   const { status } = useSession();
   const isAuth = status === "authenticated";
 
-  const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
+  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
   const itemClass = (href: string) =>
     cn(
-      "relative rounded-lg px-3 py-2 text-sm font-medium transition",
+      "relative rounded-lg px-3 py-2 text-sm font-medium transition whitespace-nowrap",
       isActive(href)
         ? "text-zinc-50 bg-white/10 ring-1 ring-white/10"
         : "text-zinc-200/70 hover:text-zinc-100 hover:bg-white/5"
@@ -37,9 +36,7 @@ export default function MainNav() {
           />
 
           <div className="leading-tight">
-            <div className="text-sm font-semibold tracking-tight text-zinc-50">
-              PrancingPika
-            </div>
+            <div className="text-sm font-semibold tracking-tight text-zinc-50">PrancingPika</div>
             <div className="text-[11px] text-zinc-200/60 group-hover:text-zinc-200/80 transition-colors">
               Rift parser & leaderboards
             </div>
@@ -54,8 +51,17 @@ export default function MainNav() {
           <Link className={itemClass("/leaderboards")} href="/leaderboards">
             Leaderboards
           </Link>
-          <Link className={itemClass("/players")} href="/top-players">
+          <Link className={itemClass("/top-players")} href="/top-players">
             Top Players
+          </Link>
+          <Link className={itemClass("/guilds")} href="/guilds">
+            Guilds
+          </Link>
+          <Link className={itemClass("/lookup")} href="/lookup">
+            Lookup
+          </Link>
+          <Link className={itemClass("/last-uploads")} href="/last-uploads">
+            Last Uploads
           </Link>
           <Link className={itemClass("/account")} href="/account">
             Account
@@ -84,36 +90,51 @@ export default function MainNav() {
       {/* Highlight line */}
       <div className="h-px w-full bg-gradient-to-r from-transparent via-white/25 to-transparent" />
 
-      {/* Mobile row */}
-      <div className="mx-auto flex max-w-6xl items-center gap-2 px-6 py-3 md:hidden">
-        <Link className={itemClass("/")} href="/">
-          Home
-        </Link>
-        <Link className={itemClass("/leaderboards")} href="/leaderboards">
-          Leaderboards
-        </Link>
-        <Link className={itemClass("/players")} href="/top-players">
-          Top Players
-        </Link>
-        <Link className={itemClass("/account")} href="/account">
-          Account
-        </Link>
+      {/* Mobile row (scrollable links + action pinned right) */}
+      <div className="md:hidden">
+        <div className="mx-auto flex max-w-6xl items-center gap-2 px-6 py-3">
+          {/* Scroll area for links */}
+          <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pr-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <Link className={itemClass("/")} href="/">
+              Home
+            </Link>
+            <Link className={itemClass("/leaderboards")} href="/leaderboards">
+              Leaderboards
+            </Link>
+            <Link className={itemClass("/top-players")} href="/top-players">
+              Top Players
+            </Link>
+            <Link className={itemClass("/guilds")} href="/guilds">
+              Guilds
+            </Link>
+            <Link className={itemClass("/lookup")} href="/lookup">
+              Lookup
+            </Link>
+            <Link className={itemClass("/last-uploads")} href="/last-uploads">
+              Last Uploads
+            </Link>
+            <Link className={itemClass("/account")} href="/account">
+              Account
+            </Link>
+          </div>
 
-        <div className="ml-auto">
-          {status === "loading" ? null : isAuth ? (
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => signOut({ callbackUrl: "/" })}
-              className="bg-white/10 text-zinc-100 hover:bg-white/15 border border-white/10"
-            >
-              Sign out
-            </Button>
-          ) : (
-            <Button asChild size="sm" className="bg-sky-500 text-white hover:bg-sky-400">
-              <Link href="/sign-in">Sign in</Link>
-            </Button>
-          )}
+          {/* Action pinned */}
+          <div className="shrink-0">
+            {status === "loading" ? null : isAuth ? (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="bg-white/10 text-zinc-100 hover:bg-white/15 border border-white/10"
+              >
+                Sign out
+              </Button>
+            ) : (
+              <Button asChild size="sm" className="bg-sky-500 text-white hover:bg-sky-400">
+                <Link href="/sign-in">Sign in</Link>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </header>
