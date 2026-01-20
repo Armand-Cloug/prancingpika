@@ -92,11 +92,11 @@ export function CreateGuildForm({ disabled = false, onCreated }: Props) {
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-zinc-200/90">Guild name</FormLabel>
+                <FormLabel className="text-zinc-200/90">Guild name (Put [EU] or [NA] for better dissociation)</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="e.g. Prancing Pika"
+                    placeholder="e.g. [EU]ClownFiesta"
                     disabled={disabled || submitting}
                     className="bg-[#1F2B3A]/60 border-white/10 text-zinc-100 placeholder:text-zinc-200/40"
                   />
@@ -118,7 +118,7 @@ export function CreateGuildForm({ disabled = false, onCreated }: Props) {
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="PIKA"
+                    placeholder="CLF"
                     disabled={disabled || submitting}
                     className="bg-[#1F2B3A]/60 border-white/10 text-zinc-100 placeholder:text-zinc-200/40 uppercase"
                     onChange={(e) => field.onChange(e.target.value.toUpperCase())}
