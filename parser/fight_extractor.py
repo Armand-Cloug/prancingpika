@@ -70,6 +70,21 @@ def extract_kills(events: list[Event]) -> list[Fight]:
 
     recent_events: deque[Event] = deque()
 
+    # --- SPECIAL: Council of Fate tracking ---
+    council_dead: set[str] = set()
+
+    COUNCIL_KEY = "Le Concile du Destin"
+    COUNCIL_MEMBERS = {
+        "countessa danazhal",
+        "marquise boldoch",
+        "comte pluezhal",
+    }
+
+    def _is_council_member(name: str) -> bool:
+        return (name or "").strip().casefold() in COUNCIL_MEMBERS
+    # --- END SPECIAL ---
+
+
     def _clear_pending() -> None:
         nonlocal pending_dead_boss, pending_dead_event, pending_invalidated
         pending_dead_boss = None
@@ -82,6 +97,7 @@ def extract_kills(events: list[Event]) -> list[Fight]:
         current_events = []
         last_combat_end = None
         last_boss_seen_sec = None
+        council_dead.clear()
         _clear_pending()
 
     def _discard_current_fight() -> None:
@@ -91,6 +107,7 @@ def extract_kills(events: list[Event]) -> list[Fight]:
         current_events = []
         last_combat_end = None
         last_boss_seen_sec = None
+        council_dead.clear()
         _clear_pending()
 
     def _note_boss_seen(ev: Event) -> None:
@@ -252,6 +269,29 @@ def extract_kills(events: list[Event]) -> list[Fight]:
         boss_key = match_boss_name(died)
         if not boss_key:
             continue
+
+        # --- SPECIAL: Council of Fate ---
+        # Do NOT finalize on souls/adds, and finalize only when the 3 council members are dead.
+        if boss_key == COUNCIL_KEY:
+            if not _is_council_member(died):
+                # ignore souls / other adds
+                continue
+
+            council_dead.add((died or "").strip().casefold())
+            if len(council_dead) < 3:
+                continue
+
+            # Apply the usual "do not count" rule only on the real end (3rd death).
+            if is_kill_line:
+                interactions = _count_boss_interactions_before_begin(boss_key)
+                if interactions >= MIN_COMBATLIKE_INTERACTIONS:
+                    _log_skip(boss_key, ev, interactions)
+                    _discard_current_fight()
+                    continue
+
+            _finalize(boss_key, ev)
+            continue
+        # --- END SPECIAL ---
 
         # Kill => appliquer la règle "ne pas compter" si interactions avant Begin
         if is_kill_line:

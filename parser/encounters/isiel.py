@@ -28,66 +28,48 @@ def _find_first_involving(fight: Fight, name: str, start_sec: int) -> int | None
     return None
 
 
-def _find_vengeur_end(fight: Fight) -> int | None:
-    v_low = VENGEUR_NAME.lower()
+def _find_vengeur_end(fight: Fight, stop_sec: int | None = None) -> int | None:
     for ev in fight.events:
+        if stop_sec is not None and ev.ts_sec >= stop_sec:
+            break
         txt = f"{ev.raw} {ev.src} {ev.dst} {ev.ability}".lower()
-        if v_low not in txt:
-            continue
         for p in VENGEUR_END_PATTERNS:
             if p.search(txt):
                 return ev.ts_sec
     return None
 
-
 def build_phases_isiel(fight: Fight) -> list[Phase]:
-    """
-    Total = Combat Begin -> Kill Isiel
-    Phase 1 (Vengeur) : Combat Begin -> (marker 60%/invuln OU premier event Isiel)
-    Phase 2 (Isiel)   : spawn Isiel -> Kill Isiel
-    """
     start = fight.start_sec
     end = fight.end_sec
 
-    # 1) fin Vengeur
-    v_end = _find_vengeur_end(fight)
-
-    # 2) spawn Isiel
+    # spawn Isiel
     isiel_first = _find_first_involving(fight, ISIEL_NAME, start)
 
+    # fin Vengeur: marker 60%/invuln, mais uniquement avant le spawn Isiel si on l'a
+    v_end = _find_vengeur_end(fight, stop_sec=isiel_first)
+
+    # si pas trouvé, fallback: premier event Isiel, sinon 70s
     if v_end is None and isiel_first is not None:
         v_end = isiel_first
-
-    # fallback si on ne trouve rien: 1:10 après Combat Begin (spec connue)
     if v_end is None:
         v_end = min(start + 70, end)
 
-    # start Isiel: le premier event Isiel si dispo, sinon v_end
-    isiel_start = isiel_first if isiel_first is not None else v_end
+    # IMPORTANT: Isiel commence à v_end pour inclure le délai de spawn
+    isiel_start = v_end
+
+    # clamp
+    if v_end < start:
+        v_end = start
+    if v_end > end:
+        v_end = end
     if isiel_start < start:
         isiel_start = start
     if isiel_start > end:
         isiel_start = end
 
-    if v_end < start:
-        v_end = start
-    if v_end > end:
-        v_end = end
-
-    # phases
     phases = [
-        Phase(
-            name="Vengeur",
-            start_sec=start,
-            end_sec=v_end,
-            boss_name=VENGEUR_NAME,
-        ),
-        Phase(
-            name="Isiel",
-            start_sec=isiel_start,
-            end_sec=end,
-            boss_name=ISIEL_NAME,
-        ),
+        Phase(name="Vengeur", start_sec=start, end_sec=v_end, boss_name=VENGEUR_NAME),
+        Phase(name="Isiel", start_sec=isiel_start, end_sec=end, boss_name=ISIEL_NAME),
     ]
-
     return phases
+
