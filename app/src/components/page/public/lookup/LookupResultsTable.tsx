@@ -1,6 +1,7 @@
 // src/components/page/public/lookup/LookupResultsTable.tsx
 "use client";
 
+import { useMemo } from "react";
 import GroupDpsDialog from "@/components/forms/GroupDpsDialog";
 
 function formatTime(s: number) {
@@ -49,6 +50,11 @@ export default function LookupResultsTable({
   truncated: boolean;
   loading: boolean;
 }) {
+  const sorted = useMemo(() => {
+    // "fait juste un trie" => tri simple par bossName, rien d'autre
+    return [...records].sort((a, b) => a.bossName.localeCompare(b.bossName));
+  }, [records]);
+
   return (
     <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-[0_18px_55px_rgba(0,0,0,0.35)]">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-[radial-gradient(700px_circle_at_20%_0%,rgba(56,189,248,0.14),transparent_55%)]" />
@@ -104,14 +110,14 @@ export default function LookupResultsTable({
                     <td className="py-2 pl-2 pr-4 text-right text-zinc-300/40">—</td>
                   </tr>
                 ))
-              ) : records.length === 0 ? (
+              ) : sorted.length === 0 ? (
                 <tr>
                   <td className="py-3 pl-3 text-zinc-300/60" colSpan={7}>
                     No data
                   </td>
                 </tr>
               ) : (
-                records.map((r, idx) => (
+                sorted.map((r, idx) => (
                   <tr key={`${r.runId}-${idx}`} className="border-b border-white/5 last:border-0">
                     <td className="py-2 pl-3 pr-2 tabular-nums text-zinc-200/85 whitespace-nowrap">
                       {toYMD(r.endedAt)}
@@ -132,7 +138,6 @@ export default function LookupResultsTable({
                       ) : null}
                     </td>
 
-                    {/* Click player => open group DPS modal for that run */}
                     <td className="py-2 px-2">
                       <GroupDpsDialog
                         runId={r.runId}

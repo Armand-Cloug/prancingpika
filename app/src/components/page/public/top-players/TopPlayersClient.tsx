@@ -110,24 +110,31 @@ export default function TopPlayersClient({
   return (
     <div className="w-full">
       {/* Header + controls */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+      <div className="relative flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-xl font-semibold tracking-tight text-zinc-100">Top Players</h1>
           <p className="mt-1 text-sm text-zinc-200/75">Top 100 ST DPS by calling — pick a boss.</p>
         </div>
 
-        {/* Controls: checkbox left of select, select pinned to far right */}
+        {/* Boss name centered */}
+        <div className="pointer-events-none hidden sm:block absolute left-1/2 -translate-x-1/2 bottom-0">
+          <div className="max-w-[420px] truncate text-4xl font-semibold text-zinc-100/90" title={boss}>
+            {boss}
+          </div>
+        </div>
+
+        {/* Controls: checkbox + select on the right */}
         <div className="w-full sm:w-auto flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-4">
-          <label className="flex select-none items-center gap-2 text-sm text-zinc-200/85 sm:order-1">
+          <label className="flex select-none items-center gap-2 text-sm text-zinc-200/85">
             <Checkbox
               checked={bestOnly}
               onCheckedChange={(v) => setBestOnly(Boolean(v))}
               className="border-white/15 data-[state=checked]:bg-white/15"
             />
-            Meilleur score par joueur
+            Best Score with no duplicates
           </label>
 
-          <div className="w-full sm:w-[220px] sm:order-2 sm:shrink-0">
+          <div className="w-full sm:w-[220px] sm:shrink-0">
             <Select value={boss} onValueChange={setBoss}>
               <SelectTrigger className="bg-white/5 border-white/10 text-zinc-100">
                 <SelectValue placeholder="Choose a boss" />
@@ -140,6 +147,13 @@ export default function TopPlayersClient({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Boss name centered (mobile) */}
+          <div className="sm:hidden text-center">
+            <div className="truncate text-base font-semibold text-zinc-100/90" title={boss}>
+              {boss}
+            </div>
           </div>
         </div>
       </div>

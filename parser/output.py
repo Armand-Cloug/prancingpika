@@ -1,3 +1,4 @@
+
 # parser/output.py
 from __future__ import annotations
 
@@ -5,8 +6,8 @@ from collections import defaultdict
 from typing import Iterable
 
 from parser.player_class import DEFAULT_CLASS
+from parser.player_role import DEFAULT_ROLE, infer_player_roles
 from parser.types import Fight, Phase
-
 
 def _fmt_duration(seconds: int) -> str:
     if seconds < 0:
@@ -54,29 +55,34 @@ def _render_table(
     dmg = _sum_damage(events, start, end, boss_name)
     heal = _sum_heal(events, start, end)
 
+    # Rôle = par fenêtre (boss/segment)
+    roles = infer_player_roles(events, start, end)
+    
     players = sorted(set(dmg.keys()) | set(heal.keys()))
     rows = []
     for p in players:
         d = dmg.get(p, 0)
         h = heal.get(p, 0)
         cls = (player_classes or {}).get(p, DEFAULT_CLASS)
-        rows.append((p, cls, d, d / dur, h, h / dur))
+        role = (roles or {}).get(p, DEFAULT_ROLE)
+        rows.append((p, cls, role, d, d / dur, h, h / dur))
 
     # tri par dégâts décroissants
-    rows.sort(key=lambda x: x[2], reverse=True)
+    rows.sort(key=lambda x: x[3], reverse=True)
 
     NAME_W = 40
     CLASS_W = 12
+    ROLE_W = 10
 
     lines = []
-    lines.append("-" * 110)
+    lines.append("-" * 122)
     lines.append(
-        f"{'Joueur':{NAME_W}} {'Classe':{CLASS_W}} {'Dégâts':>12} {'DPS':>10} {'Soins':>12} {'HPS':>10}"
+        f"{'Joueur':{NAME_W}} {'Classe':{CLASS_W}} {'Rôle':{ROLE_W}} {'Dégâts':>12} {'DPS':>10} {'Soins':>12} {'HPS':>10}"
     )
-    lines.append("-" * 110)
-    for p, cls, d, dps, h, hps in rows:
-        lines.append(f"{p:{NAME_W}} {cls:{CLASS_W}} {d:12d} {dps:10.1f} {h:12d} {hps:10.1f}")
-    lines.append("-" * 110)
+    lines.append("-" * 122)
+    for p, cls, role, d, dps, h, hps in rows:
+        lines.append(f"{p:{NAME_W}} {cls:{CLASS_W}} {role:{ROLE_W}} {d:12d} {dps:10.1f} {h:12d} {hps:10.1f}")
+    lines.append("-" * 122)
     return "\n".join(lines), sum(dmg.values()), sum(heal.values()), dur
 
 

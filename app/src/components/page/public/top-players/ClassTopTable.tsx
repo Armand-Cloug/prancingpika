@@ -73,7 +73,7 @@ export default function ClassTopTable({
       */}
       <table className="w-full table-fixed text-[12px]">
         <colgroup>
-          <col className="w-[26px]" /> {/* rank */}
+          <col className="w-[46px]" /> {/* rank */}
           <col className="hidden lg:table-column w-[86px]" /> {/* date (hide < lg) */}
           <col /> {/* player */}
           <col className="w-[82px] sm:w-[92px]" /> {/* dps */}

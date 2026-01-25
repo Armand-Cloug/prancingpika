@@ -11,7 +11,8 @@ export type LastUploadPlayerRow = {
 };
 
 export type LastUploadRun = {
-  runId: string;
+  runId: string;   // internal (not displayed)
+  groupId: string; // displayed
 
   createdAt: string; // ISO
   bossName: string;
@@ -37,6 +38,7 @@ export async function getLastUploads(limit = 10): Promise<LastUploadRun[]> {
     take: limit,
     select: {
       id: true,
+      groupId: true,
       createdAt: true,
       durationTotalS: true,
       bossDurationS: true,
@@ -73,6 +75,7 @@ export async function getLastUploads(limit = 10): Promise<LastUploadRun[]> {
 
     return {
       runId: r.id.toString(),
+      groupId: r.groupId.toString(),
       createdAt: r.createdAt.toISOString(),
       bossName: r.boss?.name ?? "Unknown",
       guildName: r.guild?.name ?? "Unknown",

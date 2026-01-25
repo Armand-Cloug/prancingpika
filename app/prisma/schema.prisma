@@ -207,6 +207,7 @@ model RunPlayer {
   healing BigInt
   dps     Float
   hps     Float
+  role    String? @db.VarChar(32)
 
   run    Run    @relation(fields: [runId], references: [id], onDelete: Cascade)
   player Player @relation(fields: [playerId], references: [id], onDelete: Restrict)
