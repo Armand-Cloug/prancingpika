@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import type { Role } from "@/lib/role";
 
 type Calling = "cleric" | "primalist" | "warrior" | "rogue" | "mage";
 
@@ -38,6 +39,16 @@ function classTint(playerClass?: string | null) {
   }
 }
 
+function rolePill(category: Role) {
+  const base =
+    "inline-flex w-[92px] max-w-[92px] justify-center rounded-md px-2 py-[2px] text-[11px] font-semibold border truncate";
+
+  if (category === "heal") return `${base} bg-emerald-500/15 text-emerald-200 border-emerald-500/20`;
+  if (category === "support") return `${base} bg-violet-500/15 text-violet-200 border-violet-500/20`;
+  if (category === "tank") return `${base} bg-sky-500/15 text-sky-200 border-sky-500/20`;
+  return `${base} bg-red-500/15 text-red-200 border-red-500/20`;
+}
+
 function formatTime(s: number) {
   const sec = Math.max(0, Math.floor(s));
   const h = Math.floor(sec / 3600);
@@ -65,6 +76,10 @@ type GroupDpsResponse = {
   rows: Array<{
     player: string;
     playerClass: string | null;
+
+    role: Role; // ✅ category
+    roleLabel: string; // ✅ displayed text
+
     dps: number;
     hps: number;
   }>;
@@ -76,7 +91,7 @@ export default function GroupDpsDialog({
   bossLabel,
   dateLabel,
 }: {
-  runId: string; // BigInt serialized as string
+  runId: string;
   trigger: React.ReactNode;
   bossLabel?: string;
   dateLabel?: string;
@@ -86,7 +101,6 @@ export default function GroupDpsDialog({
   const [data, setData] = useState<GroupDpsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // fetch only when opened
   useEffect(() => {
     if (!open) return;
 
@@ -126,16 +140,13 @@ export default function GroupDpsDialog({
 
   const headerBoss = data?.run.bossName ?? bossLabel ?? "Group DPS";
   const headerDate =
-    data?.run.startedAt
-      ? new Date(data.run.startedAt).toLocaleString("fr-FR")
-      : dateLabel ?? "";
+    data?.run.startedAt ? new Date(data.run.startedAt).toLocaleString("fr-FR") : dateLabel ?? "";
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
       <DialogContent className="max-w-[920px] bg-[#0b1220] border-white/10 text-zinc-100">
-        {/* HEADER BLEU */}
         <div className="-mx-6 -mt-6 mb-4 rounded-t-lg bg-gradient-to-b from-sky-500/15 via-sky-500/5 to-transparent px-6 pt-6 pb-4">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold pr-10">{headerBoss}</DialogTitle>
@@ -143,7 +154,6 @@ export default function GroupDpsDialog({
           </DialogHeader>
         </div>
 
-        {/* INFOS RUN */}
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-zinc-200/85">
           <span className="text-zinc-300/70">Run</span>
           <span className="tabular-nums">{runId}</span>
@@ -173,7 +183,6 @@ export default function GroupDpsDialog({
           ) : null}
         </div>
 
-        {/* STATS RUN */}
         {data?.run.durationTotalS != null ? (
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-zinc-200/85">
             <span>
@@ -203,10 +212,10 @@ export default function GroupDpsDialog({
           </div>
         ) : null}
 
-        {/* TABLE */}
         <div className="relative mt-4 overflow-hidden rounded-xl border border-white/10 bg-black/25">
           <table className="w-full table-fixed text-[12px]">
             <colgroup>
+              <col className="w-[112px]" /> {/* Role */}
               <col /> {/* Player */}
               <col className="w-[120px]" /> {/* DPS */}
               <col className="w-[120px]" /> {/* HPS */}
@@ -214,7 +223,8 @@ export default function GroupDpsDialog({
 
             <thead className="bg-[#0b1220]/70 text-[11px] text-zinc-300/60">
               <tr className="border-b border-white/10">
-                <th className="py-2 pl-3 pr-2 text-left font-medium">Player</th>
+                <th className="py-2 pl-3 pr-2 text-left font-medium">Role</th>
+                <th className="py-2 px-2 text-left font-medium">Player</th>
                 <th className="py-2 px-3 text-right font-medium whitespace-nowrap">ST DPS</th>
                 <th className="py-2 pl-3 pr-4 text-right font-medium whitespace-nowrap">HPS</th>
               </tr>
@@ -225,6 +235,9 @@ export default function GroupDpsDialog({
                 Array.from({ length: 10 }).map((_, i) => (
                   <tr key={i} className="border-b border-white/5 last:border-0">
                     <td className="py-2 pl-3 pr-2">
+                      <div className="h-[18px] w-[92px] rounded bg-white/5" />
+                    </td>
+                    <td className="py-2 px-2">
                       <div className="h-[26px] w-full rounded-lg bg-white/5" />
                     </td>
                     <td className="py-2 px-3 text-right">
@@ -237,13 +250,13 @@ export default function GroupDpsDialog({
                 ))
               ) : error ? (
                 <tr>
-                  <td className="py-3 pl-3 text-zinc-300/70" colSpan={3}>
+                  <td className="py-3 pl-3 text-zinc-300/70" colSpan={4}>
                     {error}
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td className="py-3 pl-3 text-zinc-300/60" colSpan={3}>
+                  <td className="py-3 pl-3 text-zinc-300/60" colSpan={4}>
                     No data
                   </td>
                 </tr>
@@ -251,17 +264,21 @@ export default function GroupDpsDialog({
                 rows.map((r, idx) => (
                   <tr key={`${r.player}-${idx}`} className="border-b border-white/5 last:border-0">
                     <td className="py-2 pl-3 pr-2 align-middle">
-                      <div className="w-full min-w-0">
-                        <div
-                          className={[
-                            "rounded-lg px-3 py-1.5 ring-1",
-                            "w-full min-w-0 truncate whitespace-nowrap",
-                            classTint(r.playerClass),
-                          ].join(" ")}
-                          title={r.player}
-                        >
-                          {r.player}
-                        </div>
+                      <span className={rolePill(r.role)} title={`Category: ${r.role}`}>
+                        {r.roleLabel && r.roleLabel.trim() ? r.roleLabel : "—"}
+                      </span>
+                    </td>
+
+                    <td className="py-2 px-2 align-middle">
+                      <div
+                        className={[
+                          "rounded-lg px-3 py-1.5 ring-1",
+                          "w-full min-w-0 truncate whitespace-nowrap",
+                          classTint(r.playerClass),
+                        ].join(" ")}
+                        title={r.player}
+                      >
+                        {r.player}
                       </div>
                     </td>
 
@@ -279,9 +296,7 @@ export default function GroupDpsDialog({
           </table>
         </div>
 
-        <div className="mt-2 text-[11px] text-zinc-400/70">
-          Color = Calling (Cleric / Primalist / Warrior / Rogue / Mage)
-        </div>
+        <div className="mt-2 text-[11px] text-zinc-400/70">Color = Calling (Cleric / Primalist / Warrior / Rogue / Mage)</div>
       </DialogContent>
     </Dialog>
   );

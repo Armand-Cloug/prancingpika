@@ -9,6 +9,22 @@ import type { CallingKey, TopPlayersResponse, TopPlayerRow } from "@/lib/top-pla
 
 const ORDER: CallingKey[] = ["rogue", "cleric", "warrior", "primalist", "mage"];
 
+// ✅ Manual list: label shown in UI -> exact DB boss name
+const BOSS_LABEL_TO_DB: Array<{ label: string; db: string }> = [
+  { label: "[BOS] Azranel", db: "Azranel" },
+  { label: "[BOS] Vindicator", db: "Vengeur" },
+  { label: "[BOS] Commander Isiel", db: "Commandant Isiel" },
+  { label: "[BOS] Titan X", db: "Titan X" },
+  { label: "[TDNM] Beligosh", db: "Beligosh" },
+  { label: "[TDNM] Tarjulia", db: "Tarjulia" },
+  { label: "[TDNM] Council of Fate", db: "Le Concile du Destin" },
+  { label: "[TDNM] Malannon", db: "Malannon" },
+  { label: "[IROTP] Ereandorn", db: "Ereandorn" },
+  { label: "[IROTP] Beruhast", db: "Beruhast" },
+  { label: "[IROTP] General Silgen", db: "Général Silgen" },
+  { label: "[IROTP] Hight-Priest", db: "Grand-Prêtre Arakhurn" },
+];
+
 function keepBestPerPlayer(rows: TopPlayerRow[]): TopPlayerRow[] {
   const best = new Map<string, TopPlayerRow>();
 
@@ -51,20 +67,35 @@ export default function TopPlayersClient({
   bosses: string[];
   defaultBoss: string;
 }) {
-  const [boss, setBoss] = useState(defaultBoss);
+  // ✅ store the UI label in state (not the DB name)
+  const initialLabel = useMemo(() => {
+    const byDb = BOSS_LABEL_TO_DB.find((x) => x.db === defaultBoss)?.label;
+    return byDb ?? BOSS_LABEL_TO_DB[0]?.label ?? defaultBoss;
+  }, [defaultBoss]);
+
+  const [bossLabel, setBossLabel] = useState<string>(initialLabel);
   const [raw, setRaw] = useState<TopPlayersResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Checkbox: show only best score per player
   const [bestOnly, setBestOnly] = useState<boolean>(false);
 
-  const safeBosses = useMemo(() => (bosses.length ? bosses : [defaultBoss]), [bosses, defaultBoss]);
+  // ✅ resolve to DB boss name for API calls
+  const bossDb = useMemo(() => {
+    return BOSS_LABEL_TO_DB.find((x) => x.label === bossLabel)?.db ?? defaultBoss;
+  }, [bossLabel, defaultBoss]);
+
+  // ✅ keep a human label for titles (fallback to db if needed)
+  const bossTitle = bossLabel || bossDb;
+
+  // ✅ optional: disable items not present in DB list you already compute server-side
+  const dbSet = useMemo(() => new Set(bosses), [bosses]);
 
   useEffect(() => {
     let alive = true;
     setLoading(true);
 
-    fetch(`/api/public/top-players?boss=${encodeURIComponent(boss)}`, { cache: "no-store" })
+    fetch(`/api/public/top-players?boss=${encodeURIComponent(bossDb)}`, { cache: "no-store" })
       .then(async (r) => {
         const j = await r.json();
         if (!r.ok) throw new Error(j?.error || "Failed to load");
@@ -77,7 +108,7 @@ export default function TopPlayersClient({
       .catch(() => {
         if (!alive) return;
         setRaw({
-          boss,
+          boss: bossDb,
           classes: { rogue: [], cleric: [], warrior: [], primalist: [], mage: [] },
         });
       })
@@ -89,7 +120,7 @@ export default function TopPlayersClient({
     return () => {
       alive = false;
     };
-  }, [boss]);
+  }, [bossDb]);
 
   const data = useMemo<TopPlayersResponse | null>(() => {
     if (!raw) return null;
@@ -118,8 +149,8 @@ export default function TopPlayersClient({
 
         {/* Boss name centered */}
         <div className="pointer-events-none hidden sm:block absolute left-1/2 -translate-x-1/2 bottom-0">
-          <div className="max-w-[420px] truncate text-4xl font-semibold text-zinc-100/90" title={boss}>
-            {boss}
+          <div className="max-w-[420px] truncate text-4xl font-semibold text-zinc-100/90" title={bossTitle}>
+            {bossTitle}
           </div>
         </div>
 
@@ -135,14 +166,15 @@ export default function TopPlayersClient({
           </label>
 
           <div className="w-full sm:w-[220px] sm:shrink-0">
-            <Select value={boss} onValueChange={setBoss}>
+            {/* ✅ Select now uses manual labels */}
+            <Select value={bossLabel} onValueChange={setBossLabel}>
               <SelectTrigger className="bg-white/5 border-white/10 text-zinc-100">
                 <SelectValue placeholder="Choose a boss" />
               </SelectTrigger>
               <SelectContent className="bg-[#0b1220] border-white/10 text-zinc-100">
-                {safeBosses.map((b) => (
-                  <SelectItem key={b} value={b}>
-                    {b}
+                {BOSS_LABEL_TO_DB.map((b) => (
+                  <SelectItem key={b.label} value={b.label} disabled={bosses.length > 0 && !dbSet.has(b.db)}>
+                    {b.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -151,8 +183,8 @@ export default function TopPlayersClient({
 
           {/* Boss name centered (mobile) */}
           <div className="sm:hidden text-center">
-            <div className="truncate text-base font-semibold text-zinc-100/90" title={boss}>
-              {boss}
+            <div className="truncate text-base font-semibold text-zinc-100/90" title={bossTitle}>
+              {bossTitle}
             </div>
           </div>
         </div>
@@ -164,7 +196,8 @@ export default function TopPlayersClient({
           <ClassTopTable
             key={k}
             calling={k}
-            boss={boss}
+            // ✅ keep passing DB boss name to tables (they likely use it for links / titles / etc.)
+            boss={bossDb}
             rows={data?.classes?.[k] ?? []}
             loading={loading}
           />

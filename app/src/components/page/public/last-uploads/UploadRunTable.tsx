@@ -37,13 +37,17 @@ function classTint(playerClass?: string | null) {
   }
 }
 
-function rolePill(role: Role) {
+/**
+ * Color pill uses category (dps/heal/tank/support),
+ * but displayed text must be the raw DB role label (rift-specific).
+ */
+function rolePill(category: Role) {
   const base =
-    "inline-flex w-[74px] justify-center rounded-md px-2 py-[2px] text-[11px] font-semibold border";
+    "inline-flex w-[92px] max-w-[92px] justify-center rounded-md px-2 py-[2px] text-[11px] font-semibold border truncate";
 
-  if (role === "heal") return `${base} bg-emerald-500/15 text-emerald-200 border-emerald-500/20`;
-  if (role === "support") return `${base} bg-violet-500/15 text-violet-200 border-violet-500/20`;
-  if (role === "tank") return `${base} bg-sky-500/15 text-sky-200 border-sky-500/20`;
+  if (category === "heal") return `${base} bg-emerald-500/15 text-emerald-200 border-emerald-500/20`;
+  if (category === "support") return `${base} bg-violet-500/15 text-violet-200 border-violet-500/20`;
+  if (category === "tank") return `${base} bg-sky-500/15 text-sky-200 border-sky-500/20`;
   return `${base} bg-red-500/15 text-red-200 border-red-500/20`;
 }
 
@@ -56,7 +60,7 @@ export default function UploadRunTable({ run }: { run: LastUploadRun }) {
     <div className="rounded-xl border border-white/10 bg-black/25 overflow-hidden">
       <table className="w-full table-fixed text-[12px]">
         <colgroup>
-          <col className="w-[96px]" /> {/* Role */}
+          <col className="w-[112px]" /> {/* Role label */}
           <col /> {/* Player */}
           <col className="w-[110px]" /> {/* ST DPS */}
           <col className="w-[92px]" /> {/* HPS */}
@@ -86,7 +90,10 @@ export default function UploadRunTable({ run }: { run: LastUploadRun }) {
             run.players.map((p, idx) => (
               <tr key={`${run.runId}-${p.player}-${idx}`} className="border-b border-white/5 last:border-0">
                 <td className="py-2 pl-3 pr-2 align-middle">
-                  <span className={rolePill(p.role)}>{p.role}</span>
+                  {/* ✅ Show DB role label, color = category */}
+                  <span className={rolePill(p.role)} title={`Category: ${p.role}`}>
+                    {p.roleLabel}
+                  </span>
                 </td>
 
                 <td className="py-2 px-2 align-middle min-w-0">

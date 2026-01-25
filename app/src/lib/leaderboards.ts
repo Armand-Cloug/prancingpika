@@ -1,6 +1,7 @@
 // src/lib/leaderboards.ts
 import { prisma } from "@/lib/prisma";
-import { inferRole, type Role } from "@/lib/role";
+import type { Role } from "@/lib/role";
+import { normalizeRoleLabel, roleCategoryFromDbOrInfer } from "@/lib/rift-role-map";
 
 export type RaidDef = {
   key: string;
@@ -30,10 +31,7 @@ export type FastestEntry = {
   guildName: string;
   guildTag?: string | null;
 
-  // total encounter duration
   durationS: number;
-
-  // OPTIONAL: boss-only duration (Isiel/Titan special cases, but we allow it for all)
   bossDurationS?: number | null;
 
   dpsGroup?: number | null;
@@ -41,16 +39,20 @@ export type FastestEntry = {
 };
 
 export type CompEntry = {
+  /** Category used for colors in UI (dps/heal/tank/support) */
   role: Role;
+  /** Raw role from DB (Rift-specific) shown in UI */
+  roleLabel: string;
+
   player: string;
-  playerClass?: string | null; // Player.class
+  playerClass?: string | null;
   dps: number;
   hps: number;
 };
 
 export type BossLeaderboard = {
   bossName: string;
-  fastest: FastestEntry[]; // top 10 (distinct guilds)
+  fastest: FastestEntry[]; // top 10 distinct guilds
   comp1: CompEntry[] | null; // from rank #1 run
   comp2: CompEntry[] | null; // from rank #2 run
 };
@@ -61,9 +63,10 @@ export type RaidLeaderboard = {
 };
 
 function fmtTime(sec: number) {
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return `${m}:${String(s).padStart(2, "0")}`;
+  const s = Math.max(0, Math.floor(sec));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2, "0")}`;
 }
 
 function pickTopDistinctGuildRuns<T extends { guildId: bigint }>(runs: T[], limit = 10) {
@@ -80,8 +83,8 @@ function pickTopDistinctGuildRuns<T extends { guildId: bigint }>(runs: T[], limi
 }
 
 export async function getLeaderboards(): Promise<RaidLeaderboard[]> {
-  // Fetch bosses ids for all raid boss names
   const allBossNames = Array.from(new Set(RAIDS.flatMap((r) => r.bosses)));
+
   const bosses = await prisma.boss.findMany({
     where: { name: { in: allBossNames } },
     select: { id: true, name: true },
@@ -103,8 +106,7 @@ export async function getLeaderboards(): Promise<RaidLeaderboard[]> {
         continue;
       }
 
-      // 1) Get many fastest runs for that boss, then keep first per guild until 10
-      // We take 300 to be safe if many duplicates per guild.
+      // Get many fastest runs then keep first per guild until 10
       const runs = await prisma.run.findMany({
         where: { bossId },
         orderBy: { durationTotalS: "asc" },
@@ -112,7 +114,7 @@ export async function getLeaderboards(): Promise<RaidLeaderboard[]> {
         select: {
           id: true,
           durationTotalS: true,
-          bossDurationS: true, // <-- NEW (for split time display)
+          bossDurationS: true,
           dpsGroup: true,
           guildId: true,
           guild: { select: { name: true, tag: true } },
@@ -125,12 +127,11 @@ export async function getLeaderboards(): Promise<RaidLeaderboard[]> {
         guildName: r.guild?.name ?? "Unknown",
         guildTag: r.guild?.tag ?? null,
         durationS: r.durationTotalS,
-        bossDurationS: r.bossDurationS ?? null, // <-- NEW
-        dpsGroup: r.dpsGroup,
+        bossDurationS: r.bossDurationS ?? null,
+        dpsGroup: r.dpsGroup ?? null,
         runId: r.id.toString(),
       }));
 
-      // rank #1 and #2 run ids (among distinct guilds)
       const run1 = distinct[0]?.id ?? null;
       const run2 = distinct[1]?.id ?? null;
 
@@ -143,13 +144,13 @@ export async function getLeaderboards(): Promise<RaidLeaderboard[]> {
           orderBy: { dps: "desc" },
         });
 
-        // show up to 12 lines
         return players.slice(0, 12).map((p) => {
           const dps = Math.round(p.dps ?? 0);
           const hps = Math.round(p.hps ?? 0);
 
           return {
-            role: inferRole(dps, hps),
+            roleLabel: normalizeRoleLabel(p.role),
+            role: roleCategoryFromDbOrInfer(p.role, dps, hps),
             player: p.player.name,
             playerClass: p.player.class ?? null,
             dps,
@@ -158,9 +159,7 @@ export async function getLeaderboards(): Promise<RaidLeaderboard[]> {
         });
       }
 
-      const comp1 = await loadComp(run1);
-      const comp2 = await loadComp(run2);
-
+      const [comp1, comp2] = await Promise.all([loadComp(run1), loadComp(run2)]);
       bossResults.push({ bossName, fastest, comp1, comp2 });
     }
 

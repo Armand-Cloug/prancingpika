@@ -22,13 +22,16 @@ from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
-from urllib.parse import urlparse, unquote
+from urllib.parse import unquote, urlparse
 
-from parser.analyzer import read_events, extract_kills
+from parser.analyzer import extract_kills, read_events
 from parser.types import Event, Fight, Phase
 
+# Roles (contextuels par run)
+from parser.player_role import DEFAULT_ROLE, infer_player_roles
+
 try:
-    from parser.player_class import infer_player_classes, DEFAULT_CLASS  # type: ignore
+    from parser.player_class import DEFAULT_CLASS, infer_player_classes  # type: ignore
 except Exception:
     infer_player_classes = None  # type: ignore
     DEFAULT_CLASS = "Unknown"
@@ -260,7 +263,7 @@ def build_segments(fight: Fight) -> List[RunSegment]:
                 boss_name=boss_name,
                 start_sec=fight.start_sec,
                 end_sec=fight.end_sec,
-                boss_filter=boss_name,          # ✅ boss-only par défaut
+                boss_filter=boss_name,  # boss-only par défaut
                 duration_total_s=total_dur,
                 boss_duration_s=boss_dur,
             )
@@ -268,6 +271,7 @@ def build_segments(fight: Fight) -> List[RunSegment]:
 
     # Commandant Isiel: 2 segments (Vengeur phase + Isiel phase)
     if enc == _norm("Commandant Isiel") and phases:
+
         def is_phase(p: Phase, key: str) -> bool:
             pn = _norm(p.name)
             kk = _norm(key)
@@ -286,16 +290,20 @@ def build_segments(fight: Fight) -> List[RunSegment]:
                     boss_name=v_name,
                     start_sec=vengeur.start_sec,
                     end_sec=vengeur.end_sec,
-                    boss_filter=v_name,          # ✅ boss-only
+                    boss_filter=v_name,
                     duration_total_s=v_dur,
                     boss_duration_s=None,
                 )
             )
 
-        # Segment Isiel = run "Commandant Isiel" :
-        # - bornes = combat total (pour l'unicité / visibilité)
-        # - mais boss_duration_s = durée de la phase Isiel => utilisée pour les DPS/HPS
-        is_name = (isiel.boss_name or isiel.name or fight.encounter or "Commandant Isiel") if isiel else (fight.encounter or "Commandant Isiel")
+        # Segment Isiel = run "Commandant Isiel"
+        # - bornes = combat total (unicité / visibilité)
+        # - boss_duration_s = durée de la phase Isiel => utilisée pour les DPS/HPS
+        is_name = (
+            (isiel.boss_name or isiel.name or fight.encounter or "Commandant Isiel")
+            if isiel
+            else (fight.encounter or "Commandant Isiel")
+        )
         is_dur = max(1, duration_between_secs(isiel.start_sec, isiel.end_sec)) if isiel else None
 
         segs.append(
@@ -303,7 +311,7 @@ def build_segments(fight: Fight) -> List[RunSegment]:
                 boss_name=is_name,
                 start_sec=fight.start_sec,
                 end_sec=fight.end_sec,
-                boss_filter=is_name,              # ✅ IMPORTANT: sinon tu comptes les adds / autre
+                boss_filter=is_name,
                 duration_total_s=total_dur,
                 boss_duration_s=is_dur,
             )
@@ -317,7 +325,7 @@ def build_segments(fight: Fight) -> List[RunSegment]:
             boss_name=fight.encounter,
             start_sec=fight.start_sec,
             end_sec=fight.end_sec,
-            boss_filter=fight.encounter,  # ✅ boss-only par défaut
+            boss_filter=fight.encounter,
             duration_total_s=total_dur,
             boss_duration_s=None,
         )
@@ -383,9 +391,7 @@ def import_log_file(
 
             if seg.boss_duration_s:
                 duration_s = int(max(1, seg.boss_duration_s))
-                # stats_end = fin du combat (ou fin de segment)
                 stats_end = seg.end_sec
-                # stats_start = stats_end - duration_s
                 stats_start = max(seg.start_sec, seg.end_sec - duration_s)
 
             dmg_seg = sum_damage(fight.events, stats_start, stats_end, seg.boss_filter)
@@ -396,13 +402,22 @@ def import_log_file(
             dps_group = float(total_damage) / float(duration_s)
             hps_group = float(total_healing) / float(duration_s)
 
+            # -----------------------------
+            # Roles:
+            # - IMPORTANT: rôles = fenêtre du SEGMENT (pas boss-only, pas fenêtre stats réduite)
+            # - sinon tu risques de rater des sorts signature en pré-pull / transition
+            # -----------------------------
+            roles_map = infer_player_roles(fight.events, seg.start_sec, seg.end_sec)
+
             if dry_run:
+                # aperçu roles (compact) pour debug
+                sample_roles = ", ".join(f"{p}:{roles_map.get(p, DEFAULT_ROLE)}" for p in roster[:10])
                 print(
                     f"[DRY] boss='{seg.boss_name}' "
                     f"seg=[{started_at}->{ended_at}] durTotal={int(seg.duration_total_s)} "
                     f"stats=[{stats_start}->{stats_end}] durStats={duration_s} "
                     f"bossDur={seg.boss_duration_s} bossFilter={seg.boss_filter!r} roster={len(roster)} "
-                    f"DMG={total_damage} DPS={dps_group:.1f}"
+                    f"DMG={total_damage} DPS={dps_group:.1f} roles_sample=[{sample_roles}]"
                 )
                 continue
 
@@ -450,14 +465,16 @@ def import_log_file(
                     h = int(heal_seg.get(p, 0))
                     dps = float(d) / float(duration_s)
                     hps = float(h) / float(duration_s)
+                    role = roles_map.get(p, DEFAULT_ROLE)
+
                     cur.execute(
                         """
                         INSERT INTO run_players
-                          (runId, playerId, damage, healing, dps, hps)
+                          (runId, playerId, damage, healing, dps, hps, role)
                         VALUES
-                          (%s, %s, %s, %s, %s, %s)
+                          (%s, %s, %s, %s, %s, %s, %s)
                         """,
-                        (run_id, player_ids[p], d, h, dps, hps),
+                        (run_id, player_ids[p], d, h, dps, hps, role),
                     )
 
                 conn.commit()

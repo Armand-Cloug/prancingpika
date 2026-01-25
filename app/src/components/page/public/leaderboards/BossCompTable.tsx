@@ -38,7 +38,7 @@ function classTint(playerClass?: string | null) {
 
 function rolePill(role: CompEntry["role"]) {
   const base =
-    "inline-flex w-[74px] justify-center rounded-md px-2 py-[2px] text-[11px] font-semibold border";
+    "inline-flex max-w-[110px] w-[110px] justify-center rounded-md px-2 py-[2px] text-[11px] font-semibold border";
 
   if (role === "heal") {
     return `${base} bg-emerald-500/15 text-emerald-200 border-emerald-500/20`;
@@ -46,7 +46,7 @@ function rolePill(role: CompEntry["role"]) {
   if (role === "support") {
     return `${base} bg-violet-500/15 text-violet-200 border-violet-500/20`;
   }
-    if (role === "tank") {
+  if (role === "tank") {
     return `${base} bg-sky-500/15 text-sky-200 border-sky-500/20`;
   }
   return `${base} bg-red-500/15 text-red-200 border-red-500/20`;
@@ -74,24 +74,19 @@ export default function BossCompTable({
       <div className="px-3 pb-3">
         <div className="rounded-xl border border-white/10 bg-black/25 overflow-hidden">
           <table className="w-full table-fixed text-[12px]">
-            {/* Give more room to Player, keep numbers compact */}
             <colgroup>
-              <col className="w-[96px]" />  {/* Role */}
-              <col />                       {/* Player (flex) */}
+              <col className="w-[124px]" /> {/* Role */}
+              <col /> {/* Player */}
               <col className="w-[112px]" /> {/* ST DPS */}
-              <col className="w-[88px]" />  {/* HPS */}
+              <col className="w-[88px]" /> {/* HPS */}
             </colgroup>
 
             <thead className="bg-[#0b1220]/70 text-[11px] text-zinc-300/60">
               <tr className="border-b border-white/10">
                 <th className="py-2 pl-3 pr-2 text-left font-medium">Role</th>
                 <th className="py-2 px-2 text-left font-medium">Player</th>
-                <th className="py-2 px-3 text-right font-medium whitespace-nowrap">
-                  ST DPS
-                </th>
-                <th className="py-2 pl-3 pr-4 text-right font-medium whitespace-nowrap">
-                  HPS
-                </th>
+                <th className="py-2 px-3 text-right font-medium whitespace-nowrap">ST DPS</th>
+                <th className="py-2 pl-3 pr-4 text-right font-medium whitespace-nowrap">HPS</th>
               </tr>
             </thead>
 
@@ -104,25 +99,23 @@ export default function BossCompTable({
                 </tr>
               ) : (
                 rows.map((r, idx) => (
-                  <tr
-                    key={`${r.player}-${idx}`}
-                    className="border-b border-white/5 last:border-0"
-                  >
+                  <tr key={`${r.player}-${idx}`} className="border-b border-white/5 last:border-0">
                     <td className="py-2 pl-3 pr-2 align-middle">
-                      <span className={rolePill(r.role)}>{r.role}</span>
+                      <span className={rolePill(r.role)} title={r.roleLabel}>
+                        <span className="truncate">{r.roleLabel}</span>
+                      </span>
                     </td>
 
-                    {/* Player: larger space + truncate (no wrap) */}
                     <td className="py-2 px-2 align-middle">
                       <div
                         className={[
                           "rounded-lg px-3 py-1.5 ring-1",
-                          "min-w-0",              // required for truncate in table cells
-                          "truncate",             // cut with ellipsis
+                          "min-w-0",
+                          "truncate",
                           "whitespace-nowrap",
                           classTint(r.playerClass),
                         ].join(" ")}
-                        title={r.player} // show full name on hover
+                        title={r.player}
                       >
                         {r.player}
                       </div>

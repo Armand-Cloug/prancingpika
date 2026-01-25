@@ -1,18 +1,25 @@
 // src/lib/last-uploads.ts
 import { prisma } from "@/lib/prisma";
-import { inferRole, type Role } from "@/lib/role";
+import type { Role } from "@/lib/role";
+import { normalizeRoleLabel, roleCategoryFromDbOrInfer } from "@/lib/rift-role-map";
 
 export type LastUploadPlayerRow = {
   player: string;
   playerClass?: string | null;
+
+  /** Category used for colors */
   role: Role;
+  /** Raw role from DB (Rift-specific) */
+  roleLabel: string;
+
   dps: number;
   hps: number;
 };
 
 export type LastUploadRun = {
-  runId: string;   // internal (not displayed)
-  groupId: string; // displayed
+  runId: string;
+
+  groupId: string;
 
   createdAt: string; // ISO
   bossName: string;
@@ -39,6 +46,7 @@ export async function getLastUploads(limit = 10): Promise<LastUploadRun[]> {
     select: {
       id: true,
       groupId: true,
+
       createdAt: true,
       durationTotalS: true,
       bossDurationS: true,
@@ -47,12 +55,14 @@ export async function getLastUploads(limit = 10): Promise<LastUploadRun[]> {
       boss: { select: { name: true } },
       guild: { select: { name: true, tag: true } },
       uploader: { select: { pseudo: true, provider: true } },
+
       players: {
         take: 12,
         orderBy: { dps: "desc" },
         select: {
           dps: true,
           hps: true,
+          role: true,
           player: { select: { name: true, class: true } },
         },
       },
@@ -67,7 +77,10 @@ export async function getLastUploads(limit = 10): Promise<LastUploadRun[]> {
       return {
         player: p.player.name,
         playerClass: p.player.class ?? null,
-        role: inferRole(dps, hps),
+
+        roleLabel: normalizeRoleLabel(p.role),
+        role: roleCategoryFromDbOrInfer(p.role, dps, hps),
+
         dps,
         hps,
       };
@@ -76,6 +89,7 @@ export async function getLastUploads(limit = 10): Promise<LastUploadRun[]> {
     return {
       runId: r.id.toString(),
       groupId: r.groupId.toString(),
+
       createdAt: r.createdAt.toISOString(),
       bossName: r.boss?.name ?? "Unknown",
       guildName: r.guild?.name ?? "Unknown",
