@@ -36,6 +36,10 @@ except Exception:
     infer_player_classes = None  # type: ignore
     DEFAULT_CLASS = "Unknown"
 
+# Abilities (data-only)
+from parser.boss_match import match_boss_name
+from parser.meter.abilities_calc import collect_by_ability, to_lines
+
 
 # -----------------------------
 # ENV / DB helpers
@@ -226,6 +230,84 @@ def sum_heal(events: Iterable[Event], start_sec: int, end_sec: int) -> Dict[str,
 
 
 # -----------------------------
+# Abilities helpers (fallback boss override)
+# -----------------------------
+def _collect_damage_abilities_fallback(
+    fight: Fight,
+    player: str,
+    win_start: int,
+    win_end: int,
+    boss_name_for_filter: str,
+):
+    """
+    Fallback si collect_by_ability() n'a pas boss_key_override.
+    - fenêtre = [win_start..win_end]
+    - dégâts uniquement
+    - boss_only strict sur la cible (dst) via match_boss_name
+    """
+    from parser.meter.abilities_calc import AbilityStats  # import local pour éviter cycles
+
+    boss_key = match_boss_name(boss_name_for_filter)
+    stats: Dict[str, AbilityStats] = {}
+    pkey = player.strip().casefold()
+
+    for e in fight.events:
+        if e.ts_sec < win_start or e.ts_sec > win_end:
+            continue
+        if (e.src or "").strip().casefold() != pkey:
+            continue
+        if e.code not in DAMAGE_CODES:
+            continue
+        if match_boss_name(e.dst) != boss_key:
+            continue
+        if e.amount <= 0:
+            continue
+
+        ability = e.ability or "Unknown"
+        s = stats.get(ability)
+        if s is None:
+            s = AbilityStats(name=ability)
+            stats[ability] = s
+
+        crit = e.code == 23
+        s.add(int(e.amount), crit)
+
+    return stats
+
+
+def _collect_damage_abilities(
+    fight: Fight,
+    player: str,
+    win_start: int,
+    win_end: int,
+    boss_name_for_filter: str,
+):
+    """
+    Utilise abilities_calc.collect_by_ability si possible, sinon fallback.
+    On force le filtre boss sur boss_name_for_filter (utile pour le segment Vengeur).
+    """
+    try:
+        # si ton abilities_calc a déjà boss_key_override
+        return collect_by_ability(
+            fight,
+            player=player,
+            kind="damage",
+            boss_only=True,
+            win_start=win_start,
+            win_end=win_end,
+            boss_key_override=boss_name_for_filter,  # type: ignore[arg-type]
+        )
+    except TypeError:
+        return _collect_damage_abilities_fallback(
+            fight=fight,
+            player=player,
+            win_start=win_start,
+            win_end=win_end,
+            boss_name_for_filter=boss_name_for_filter,
+        )
+
+
+# -----------------------------
 # Segments builder
 # -----------------------------
 @dataclass(frozen=True)
@@ -343,6 +425,7 @@ def import_log_file(
     uploader_id: int,
     dry_run: bool = False,
     group_label: str | None = None,
+    with_abilities: bool = True,
 ) -> None:
     with log_path.open("r", encoding="utf-8", errors="replace") as f:
         events = read_events(f)
@@ -405,12 +488,10 @@ def import_log_file(
             # -----------------------------
             # Roles:
             # - IMPORTANT: rôles = fenêtre du SEGMENT (pas boss-only, pas fenêtre stats réduite)
-            # - sinon tu risques de rater des sorts signature en pré-pull / transition
             # -----------------------------
             roles_map = infer_player_roles(fight.events, seg.start_sec, seg.end_sec)
 
             if dry_run:
-                # aperçu roles (compact) pour debug
                 sample_roles = ", ".join(f"{p}:{roles_map.get(p, DEFAULT_ROLE)}" for p in roster[:10])
                 print(
                     f"[DRY] boss='{seg.boss_name}' "
@@ -427,6 +508,7 @@ def import_log_file(
                     p_class = classes.get(p, DEFAULT_CLASS)
                     player_ids[p] = ensure_player(cur, p, p_class)
 
+                # Insert run
                 cur.execute(
                     """
                     INSERT INTO runs
@@ -460,6 +542,9 @@ def import_log_file(
                 )
                 run_id = int(cur.lastrowid)
 
+                # Insert run_players + prepare abilities rows
+                abilities_rows: List[Tuple] = []
+
                 for p in roster:
                     d = int(dmg_seg.get(p, 0))
                     h = int(heal_seg.get(p, 0))
@@ -477,11 +562,63 @@ def import_log_file(
                         (run_id, player_ids[p], d, h, dps, hps, role),
                     )
 
+                    if not with_abilities:
+                        continue
+
+                    # Abilities DAMAGE (boss-only strict, fenêtre stats)
+                    dmg_stats = _collect_damage_abilities(
+                        fight=fight,
+                        player=p,
+                        win_start=stats_start,
+                        win_end=stats_end,
+                        boss_name_for_filter=seg.boss_name,
+                    )
+                    if not dmg_stats:
+                        continue
+
+                    dmg_total_p = int(sum(s.total for s in dmg_stats.values()))
+                    if dmg_total_p <= 0:
+                        continue
+
+                    dmg_lines = to_lines(dmg_stats.values(), duration_s, dmg_total_p)
+
+                    for ln in dmg_lines:
+                        abilities_rows.append(
+                            (
+                                run_id,
+                                player_ids[p],
+                                "DAMAGE",
+                                ln.name,
+                                int(ln.total),
+                                int(ln.hits),
+                                float(ln.crit_rate),
+                                int(ln.min_hit),
+                                int(ln.max_hit),
+                                float(ln.avg_hit),
+                                float(ln.rate),
+                                float(ln.pct),
+                            )
+                        )
+
+                # Batch insert abilities
+                if with_abilities and abilities_rows:
+                    cur.executemany(
+                        """
+                        INSERT INTO run_player_abilities
+                          (runId, playerId, kind, abilityName,
+                           total, hits, critRate, minHit, maxHit, avgHit, rate, pct)
+                        VALUES
+                          (%s, %s, %s, %s,
+                           %s, %s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        abilities_rows,
+                    )
+
                 conn.commit()
                 inserted += 1
+
             except Exception as e:
                 conn.rollback()
-                # Donne un maximum de contexte pour debug
                 print("❌ Import failed for segment:", file=sys.stderr)
                 print(
                     f"  boss={seg.boss_name!r} startedAt={started_at} endedAt={ended_at}\n"
@@ -490,6 +627,7 @@ def import_log_file(
                     f"  stats_start={stats_start} stats_end={stats_end} duration_s={duration_s}\n"
                     f"  boss_filter={seg.boss_filter!r} logFile={log_path.name}\n"
                     f"  totals: damage={total_damage} healing={total_healing}\n"
+                    f"  with_abilities={with_abilities}\n"
                     f"  error: {type(e).__name__}: {e}",
                     file=sys.stderr,
                 )
@@ -511,6 +649,11 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true", help="Ne rien écrire en DB, affiche ce qui serait importé")
     ap.add_argument("--guild-id", required=True, type=int, help="guildId (BigInt Prisma)")
     ap.add_argument("--uploader-id", required=True, type=int, help="uploaderId (WebAccount.id BigInt)")
+    ap.add_argument(
+        "--skip-abilities",
+        action="store_true",
+        help="N'insère pas run_player_abilities (plus rapide). Par défaut: activé.",
+    )
 
     args = ap.parse_args()
 
@@ -528,6 +671,7 @@ def main() -> int:
             uploader_id=args.uploader_id,
             dry_run=args.dry_run,
             group_label=args.group_label,
+            with_abilities=(not args.skip_abilities),
         )
     finally:
         conn.close()

@@ -1,5 +1,6 @@
 /.venv/
 /combat.log/
+/parser/meter/__pycache__/
 /parser/__pycache__/
 /parser/encounters/__pycache__/
 /parser/.env

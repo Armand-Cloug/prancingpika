@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import type { Role } from "@/lib/role";
+import PlayerDpsDialog from "@/components/forms/PlayerDpsDialog";
 
 type Calling = "cleric" | "primalist" | "warrior" | "rogue" | "mage";
 
@@ -77,8 +78,8 @@ type GroupDpsResponse = {
     player: string;
     playerClass: string | null;
 
-    role: Role; // ✅ category
-    roleLabel: string; // ✅ displayed text
+    role: Role; // category
+    roleLabel: string; // displayed text
 
     dps: number;
     hps: number;
@@ -152,6 +153,10 @@ export default function GroupDpsDialog({
             <DialogTitle className="text-base font-semibold pr-10">{headerBoss}</DialogTitle>
             {headerDate ? <div className="mt-1 text-[12px] text-zinc-200/70">{headerDate}</div> : null}
           </DialogHeader>
+
+          <div className="mt-3 text-[12px] text-zinc-200/70">
+            Cliquez sur un pseudo pour afficher le détail du DPS du joueur.
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-zinc-200/85">
@@ -270,16 +275,24 @@ export default function GroupDpsDialog({
                     </td>
 
                     <td className="py-2 px-2 align-middle">
-                      <div
-                        className={[
-                          "rounded-lg px-3 py-1.5 ring-1",
-                          "w-full min-w-0 truncate whitespace-nowrap",
-                          classTint(r.playerClass),
-                        ].join(" ")}
-                        title={r.player}
-                      >
-                        {r.player}
-                      </div>
+                      <PlayerDpsDialog
+                        runId={runId}
+                        player={r.player}
+                        trigger={
+                          <button
+                            type="button"
+                            className={[
+                              "rounded-lg px-3 py-1.5 ring-1",
+                              "w-full min-w-0 truncate whitespace-nowrap text-left",
+                              "transition hover:brightness-110 hover:ring-white/20 focus:outline-none focus:ring-2 focus:ring-sky-400/30",
+                              classTint(r.playerClass),
+                            ].join(" ")}
+                            title="Cliquer pour voir le détail DPS"
+                          >
+                            {r.player}
+                          </button>
+                        }
+                      />
                     </td>
 
                     <td className="py-2 px-3 text-right tabular-nums text-zinc-200/90 whitespace-nowrap align-middle">
@@ -296,7 +309,9 @@ export default function GroupDpsDialog({
           </table>
         </div>
 
-        <div className="mt-2 text-[11px] text-zinc-400/70">Color = Calling (Cleric / Primalist / Warrior / Rogue / Mage)</div>
+        <div className="mt-2 text-[11px] text-zinc-400/70">
+          Color = Calling (Cleric / Primalist / Warrior / Rogue / Mage)
+        </div>
       </DialogContent>
     </Dialog>
   );

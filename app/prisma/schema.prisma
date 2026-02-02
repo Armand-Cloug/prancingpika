@@ -47,11 +47,11 @@ model Group {
   IMPORTANT : Player = personnage dans le jeu (Rift), pas un compte du site.
 */
 model Player {
-  id   BigInt @id @default(autoincrement())
-  name String @unique @db.VarChar(128)
+  id    BigInt  @id @default(autoincrement())
+  name  String  @unique @db.VarChar(128)
   class String? @db.VarChar(32)
 
-  runPlayers      RunPlayer[]
+  runPlayers RunPlayer[]
 
   @@map("players")
 }
@@ -97,8 +97,8 @@ enum AuthProvider {
 model Guild {
   id BigInt @id @default(autoincrement())
 
-  name      String  @unique @db.VarChar(128)
-  tag       String? @unique @db.VarChar(16)
+  name      String   @unique @db.VarChar(128)
+  tag       String?  @unique @db.VarChar(16)
   createdAt DateTime @default(now())
 
   members GuildMember[]
@@ -158,8 +158,8 @@ model Run {
   endedAt   DateTime
 
   durationTotalS Int
-  bossDurationS  Int?
-  
+  bossDurationS  Int?   // durée de la phase boss (ST) si connue
+
   totalDamage    BigInt
   totalHealing   BigInt
 
@@ -212,6 +212,9 @@ model RunPlayer {
   run    Run    @relation(fields: [runId], references: [id], onDelete: Cascade)
   player Player @relation(fields: [playerId], references: [id], onDelete: Restrict)
 
+  // NEW: détail par compétence (click joueur)
+  abilities RunPlayerAbility[]
+
   @@id([runId, playerId])
 
   @@index([playerId])
@@ -219,4 +222,46 @@ model RunPlayer {
   @@index([runId, hps])
 
   @@map("run_players")
+}
+
+/*
+  Table run_player_abilities
+  - Détail par compétence pour un joueur dans une run.
+  - 1 ligne = 1 compétence (damage ou heal).
+  - Conçu pour afficher ton tableau personnalisé au clic.
+*/
+model RunPlayerAbility {
+  id BigInt @id @default(autoincrement())
+
+  runId    BigInt
+  playerId BigInt
+
+  kind AbilityKind @default(DAMAGE)
+
+  abilityName String @db.VarChar(128)
+
+  total     BigInt
+  hits      Int
+  critRate  Float
+  minHit    Int
+  maxHit    Int
+  avgHit    Float
+
+  // DPS/HPS de la compétence sur la même fenêtre que RunPlayer (phase boss si dispo)
+  rate Float
+  pct  Float
+
+  runPlayer RunPlayer @relation(fields: [runId, playerId], references: [runId, playerId], onDelete: Cascade)
+
+  @@unique([runId, playerId, kind, abilityName])
+  @@index([runId, playerId])
+  @@index([runId, kind])
+  @@index([abilityName])
+
+  @@map("run_player_abilities")
+}
+
+enum AbilityKind {
+  DAMAGE
+  HEAL
 }
