@@ -155,7 +155,7 @@ export default function GroupDpsDialog({
           </DialogHeader>
 
           <div className="mt-3 text-[12px] text-zinc-200/70">
-            Cliquez sur un pseudo pour afficher le détail du DPS du joueur.
+            Click on a player to see their individual DPS breakdown.
           </div>
         </div>
 

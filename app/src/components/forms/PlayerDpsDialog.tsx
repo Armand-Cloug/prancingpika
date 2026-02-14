@@ -181,7 +181,7 @@ export default function PlayerDpsDialog({
 
             <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-[12px] text-zinc-200/85">
               <span>
-                <span className="text-zinc-300/70">Dégâts joueur</span>{" "}
+                <span className="text-zinc-300/70">Player Damage</span>{" "}
                 <span className="tabular-nums">{fmtInt(summary.total)}</span>
               </span>
               <span>
@@ -190,8 +190,7 @@ export default function PlayerDpsDialog({
             </div>
 
             <div className="mt-3 text-[11px] text-zinc-400/70">
-              Détail DPS par compétence (trié par Total). Clique sur un autre pseudo dans le tableau groupe pour ouvrir
-              son détail.
+              DPS breakdown by ability.
             </div>
           </div>
 
