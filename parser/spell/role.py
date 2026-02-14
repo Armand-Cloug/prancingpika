@@ -169,7 +169,7 @@ ROLE_COMBOS: dict[str, list[frozenset[str]]] = {
   ],
 
   "Shamann": [
-      frozenset({"ICV", "FES"}),
+      frozenset({"ICB", "FES"}),
   ],
 
   "Inquisitor": [

@@ -100,13 +100,18 @@ export default function PlayerDpsDialog({
   const header = useMemo(() => {
     const boss = (data as any)?.run?.bossName ?? "Encounter";
     const phase = (data as any)?.run?.phaseLabel ?? (data as any)?.run?.phase ?? "Boss";
-    const dur = (data as any)?.run?.bossDurationS ?? (data as any)?.run?.durationS ?? (data as any)?.run?.durationTotalS;
+    const dur =
+      (data as any)?.run?.bossDurationS ??
+      (data as any)?.run?.durationS ??
+      (data as any)?.run?.durationTotalS ??
+      0;
     const who = (data as any)?.player?.name ?? player;
     return { boss, phase, dur: Number(dur ?? 0), who };
   }, [data, player]);
 
   const summary = useMemo(() => {
-    const total = (data as any)?.player?.totalDamage ?? (data as any)?.player?.damage ?? (data as any)?.player?.total ?? 0;
+    const total =
+      (data as any)?.player?.totalDamage ?? (data as any)?.player?.damage ?? (data as any)?.player?.total ?? 0;
     const dps = (data as any)?.player?.dps ?? 0;
     return { total: Number(total ?? 0), dps: Number(dps ?? 0) };
   }, [data]);
@@ -143,152 +148,162 @@ export default function PlayerDpsDialog({
     return mapped;
   }, [data]);
 
+  const thNum = "py-2 px-3 text-left font-medium whitespace-nowrap";
+  const tdNum = "py-2 px-3 text-left tabular-nums whitespace-nowrap text-zinc-200/90";
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
+      {/* IMPORTANT (ton inspect le prouve):
+          DialogContent shadcn a un `max-w-lg` par défaut, qui écrase ton `max-w-none`.
+          Solution: forcer avec `!` pour override, sans toucher dialog.tsx.
+      */}
       <DialogContent
         className="
-          w-[95vw] max-w-[1400px]
-          max-h-[90vh]
+          !w-[98vw] !max-w-none
+          !h-[94vh] !max-h-none
+          p-0
           overflow-hidden
           bg-[#0b1220] border-white/10 text-zinc-100
         "
       >
-        <div className="-mx-6 -mt-6 mb-4 rounded-t-lg bg-gradient-to-b from-violet-500/15 via-violet-500/5 to-transparent px-6 pt-6 pb-4">
-          <DialogHeader>
-            <DialogTitle className="text-base font-semibold pr-10">
-              Encounter: {header.boss} | Joueur: {header.who} | Phase boss: {header.phase} | Durée: {formatTime(header.dur)}
-            </DialogTitle>
-            <div className="mt-1 text-[12px] text-zinc-200/70">Run #{runId}</div>
-          </DialogHeader>
-        </div>
+        <div className="h-full w-full flex flex-col">
+          {/* HEADER */}
+          <div className="rounded-t-lg bg-gradient-to-b from-violet-500/15 via-violet-500/5 to-transparent px-6 pt-6 pb-4">
+            <DialogHeader>
+              <DialogTitle className="text-base font-semibold pr-10">
+                Encounter: {header.boss} | Joueur: {header.who} | Phase boss: {header.phase} | Durée:{" "}
+                {formatTime(header.dur)}
+              </DialogTitle>
+              <div className="mt-1 text-[12px] text-zinc-200/70">Run #{runId}</div>
+            </DialogHeader>
 
-        <div className="flex flex-wrap gap-x-6 gap-y-1 text-[12px] text-zinc-200/85">
-          <span>
-            <span className="text-zinc-300/70">Dégâts joueur</span> <span className="tabular-nums">{fmtInt(summary.total)}</span>
-          </span>
-          <span>
-            <span className="text-zinc-300/70">DPS</span> <span className="tabular-nums">{fmt1(summary.dps)}</span>
-          </span>
-        </div>
+            <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-[12px] text-zinc-200/85">
+              <span>
+                <span className="text-zinc-300/70">Dégâts joueur</span>{" "}
+                <span className="tabular-nums">{fmtInt(summary.total)}</span>
+              </span>
+              <span>
+                <span className="text-zinc-300/70">DPS</span> <span className="tabular-nums">{fmt1(summary.dps)}</span>
+              </span>
+            </div>
 
-        <div className="mt-4 text-[11px] text-zinc-400/70">
-          Détail DPS par compétence (trié par Total). Clique sur un autre pseudo dans le tableau groupe pour ouvrir son détail.
-        </div>
+            <div className="mt-3 text-[11px] text-zinc-400/70">
+              Détail DPS par compétence (trié par Total). Clique sur un autre pseudo dans le tableau groupe pour ouvrir
+              son détail.
+            </div>
+          </div>
 
-        <div className="mt-3 rounded-xl border border-white/10 bg-black/25 overflow-hidden">
-          {/* IMPORTANT: scroll horizontal + vertical si besoin */}
-          <div className="overflow-x-auto overflow-y-auto max-h-[55vh]">
-            <table className="min-w-[1180px] w-full table-auto text-[12px]">
-              <colgroup>
-                <col className="w-[280px]" /> {/* Compétence */}
-                <col className="w-[150px]" /> {/* Total */}
-                <col className="w-[130px]" /> {/* DPS */}
-                <col className="w-[90px]" /> {/* % */}
-                <col className="w-[90px]" /> {/* Hits */}
-                <col className="w-[90px]" /> {/* Crit% */}
-                <col className="w-[130px]" /> {/* Min */}
-                <col className="w-[130px]" /> {/* Max */}
-                <col className="w-[130px]" /> {/* Avg */}
-              </colgroup>
-
-              <thead className="bg-[#0b1220]/70 text-[11px] text-zinc-300/60 sticky top-0 z-10">
-                <tr className="border-b border-white/10">
-                  <th className="py-2 pl-3 pr-2 text-left font-medium">Compétence</th>
-                  <th className="py-2 px-2 text-left font-medium">Total</th>
-                  <th className="py-2 px-2 text-left font-medium">DPS</th>
-                  <th className="py-2 px-2 text-left font-medium">%</th>
-                  <th className="py-2 px-2 text-left font-medium">Hits</th>
-                  <th className="py-2 px-2 text-left font-medium">Crit%</th>
-                  <th className="py-2 px-2 text-left font-medium">Min</th>
-                  <th className="py-2 px-2 text-left font-medium">Max</th>
-                  <th className="py-2 pl-2 pr-4 text-left font-medium">Moy</th>
-                </tr>
-              </thead>
-
-              <tbody className="text-zinc-100">
-                {loading ? (
-                  Array.from({ length: 10 }).map((_, i) => (
-                    <tr key={i} className="border-b border-white/5 last:border-0">
-                      <td className="py-2 pl-3 pr-2">
-                        <div className="h-[14px] w-[75%] rounded bg-white/5" />
-                      </td>
-                      <td className="py-2 px-2">
-                        <div className="h-[14px] w-[90px] rounded bg-white/5" />
-                      </td>
-                      <td className="py-2 px-2">
-                        <div className="h-[14px] w-[80px] rounded bg-white/5" />
-                      </td>
-                      <td className="py-2 px-2">
-                        <div className="h-[14px] w-[50px] rounded bg-white/5" />
-                      </td>
-                      <td className="py-2 px-2">
-                        <div className="h-[14px] w-[50px] rounded bg-white/5" />
-                      </td>
-                      <td className="py-2 px-2">
-                        <div className="h-[14px] w-[50px] rounded bg-white/5" />
-                      </td>
-                      <td className="py-2 px-2">
-                        <div className="h-[14px] w-[80px] rounded bg-white/5" />
-                      </td>
-                      <td className="py-2 px-2">
-                        <div className="h-[14px] w-[80px] rounded bg-white/5" />
-                      </td>
-                      <td className="py-2 pl-2 pr-4">
-                        <div className="h-[14px] w-[80px] rounded bg-white/5" />
-                      </td>
+          {/* TABLE ZONE */}
+          <div className="flex-1 px-6 pb-6">
+            <div className="h-full rounded-xl border border-white/10 bg-black/25 overflow-hidden">
+              {/* Horizontal scrollbar UNIQUEMENT si l’écran est trop petit:
+                  - table w-full
+                  - min-width raisonnables par colonne
+              */}
+              <div className="h-full overflow-y-auto overflow-x-auto">
+                <table className="w-full table-auto text-[12px]">
+                  <thead className="bg-[#0b1220]/70 text-[11px] text-zinc-300/60 sticky top-0 z-10">
+                    <tr className="border-b border-white/10">
+                      <th className="py-2 pl-4 pr-3 text-left font-medium whitespace-nowrap min-w-[360px]">
+                        Compétence
+                      </th>
+                      <th className={`${thNum} min-w-[170px]`}>Total</th>
+                      <th className={`${thNum} min-w-[150px]`}>DPS</th>
+                      <th className={`${thNum} min-w-[90px]`}>%</th>
+                      <th className={`${thNum} min-w-[90px]`}>Hits</th>
+                      <th className={`${thNum} min-w-[90px]`}>Crit%</th>
+                      <th className={`${thNum} min-w-[140px]`}>Min</th>
+                      <th className={`${thNum} min-w-[140px]`}>Max</th>
+                      <th className={`${thNum} min-w-[140px]`}>Moy</th>
                     </tr>
-                  ))
-                ) : error ? (
-                  <tr>
-                    <td className="py-3 pl-3 text-zinc-300/70" colSpan={9}>
-                      {error}
-                    </td>
-                  </tr>
-                ) : rows.length === 0 ? (
-                  <tr>
-                    <td className="py-3 pl-3 text-zinc-300/60" colSpan={9}>
-                      No data
-                    </td>
-                  </tr>
-                ) : (
-                  rows.map((r, idx) => {
-                    const iconUrl = r.iconKey ? getAbilityIconUrl(r.iconKey) : null;
+                  </thead>
 
-                    return (
-                      <tr key={`${r.abilityName}-${idx}`} className="border-b border-white/5 last:border-0">
-                        <td className="py-2 pl-3 pr-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            {iconUrl ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={iconUrl} alt="" className="h-4 w-4 rounded-sm opacity-90 shrink-0" />
-                            ) : (
-                              <div className="h-4 w-4 rounded-sm bg-white/5 border border-white/10 shrink-0" />
-                            )}
-
-                            <div className="min-w-0">
-                              <div className="truncate" title={r.abilityName}>
-                                {r.abilityName}
-                              </div>
-                            </div>
-                          </div>
+                  <tbody className="text-zinc-100">
+                    {loading ? (
+                      Array.from({ length: 14 }).map((_, i) => (
+                        <tr key={i} className="border-b border-white/5 last:border-0">
+                          <td className="py-2 pl-4 pr-3 min-w-[360px]">
+                            <div className="h-[14px] w-[65%] rounded bg-white/5" />
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="h-[14px] w-[110px] rounded bg-white/5" />
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="h-[14px] w-[100px] rounded bg-white/5" />
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="h-[14px] w-[60px] rounded bg-white/5" />
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="h-[14px] w-[60px] rounded bg-white/5" />
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="h-[14px] w-[70px] rounded bg-white/5" />
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="h-[14px] w-[100px] rounded bg-white/5" />
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="h-[14px] w-[100px] rounded bg-white/5" />
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="h-[14px] w-[100px] rounded bg-white/5" />
+                          </td>
+                        </tr>
+                      ))
+                    ) : error ? (
+                      <tr>
+                        <td className="py-3 pl-4 text-zinc-300/70" colSpan={9}>
+                          {error}
                         </td>
-
-                        <td className="py-2 px-2 text-left tabular-nums text-zinc-200/90">{fmtInt(r.total)}</td>
-                        <td className="py-2 px-2 text-left tabular-nums text-zinc-200/90">{fmt1(r.dps)}</td>
-                        <td className="py-2 px-2 text-left tabular-nums text-zinc-200/90">{fmtPct(r.pct)}</td>
-                        <td className="py-2 px-2 text-left tabular-nums text-zinc-200/90">{fmtInt(r.hits)}</td>
-                        <td className="py-2 px-2 text-left tabular-nums text-zinc-200/90">{fmtPct(r.critRate)}</td>
-                        <td className="py-2 px-2 text-left tabular-nums text-zinc-200/90">{fmtInt(r.minHit)}</td>
-                        <td className="py-2 px-2 text-left tabular-nums text-zinc-200/90">{fmtInt(r.maxHit)}</td>
-                        <td className="py-2 pl-2 pr-4 text-left tabular-nums text-zinc-200/90">{fmt1(r.avgHit)}</td>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                    ) : rows.length === 0 ? (
+                      <tr>
+                        <td className="py-3 pl-4 text-zinc-300/60" colSpan={9}>
+                          No data
+                        </td>
+                      </tr>
+                    ) : (
+                      rows.map((r, idx) => {
+                        const iconUrl = r.iconKey ? getAbilityIconUrl(r.iconKey) : null;
+
+                        return (
+                          <tr key={`${r.abilityName}-${idx}`} className="border-b border-white/5 last:border-0">
+                            <td className="py-2 pl-4 pr-3 min-w-[360px]">
+                              <div className="flex items-center gap-2 min-w-0">
+                                {iconUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={iconUrl} alt="" className="h-4 w-4 rounded-sm opacity-90 shrink-0" />
+                                ) : (
+                                  <div className="h-4 w-4 rounded-sm bg-white/5 border border-white/10 shrink-0" />
+                                )}
+
+                                <div className="min-w-0">
+                                  <div className="truncate" title={r.abilityName}>
+                                    {r.abilityName}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className={tdNum}>{fmtInt(r.total)}</td>
+                            <td className={tdNum}>{fmt1(r.dps)}</td>
+                            <td className={tdNum}>{fmtPct(r.pct)}</td>
+                            <td className={tdNum}>{fmtInt(r.hits)}</td>
+                            <td className={tdNum}>{fmtPct(r.critRate)}</td>
+                            <td className={tdNum}>{fmtInt(r.minHit)}</td>
+                            <td className={tdNum}>{fmtInt(r.maxHit)}</td>
+                            <td className={tdNum}>{fmt1(r.avgHit)}</td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </DialogContent>
