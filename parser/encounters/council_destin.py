@@ -25,6 +25,9 @@ COUNCIL_MEMBERS: List[str] = [
     "Countessa Danazhal",
     "Marquise Boldoch",
     "Comte Pluezhal",
+    # English Version    "Count Danazhal",
+    "Marchioness Boldoch",
+    "Count Pluezhal",
 ]
 
 # Mini-bosses: "Âme de <X>" (kept here to help matching / debugging)
@@ -36,6 +39,10 @@ COUNCIL_SOULS: List[str] = [
     "Ame de Danazhal",
     "Ame de Boldoch",
     "Ame de Pluezhal",
+    # English version
+    "Danazhal's soul",
+    "Boldoch's Soul",
+    "Pleuzhal's Soul",
 ]
 
 # Damage codes observed in your Rift combat logs

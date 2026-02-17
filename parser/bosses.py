@@ -64,7 +64,7 @@ BOSS_DEFS: dict[str, BossDef] = {
 
     # BOS
     "Azranel": BossDef("Azranel", aliases=[], handler=_common_handler),
-    "Commandant Isiel": BossDef("Commandant Isiel", aliases=["Isiel"], handler=_isiel_handler),
+    "Commandant Isiel": BossDef("Commandant Isiel", aliases=["Isiel", "Commander Isiel"], handler=_isiel_handler),
     "Titan X": BossDef("Titan X", aliases=["TitanX"], handler=_titanx_handler),
     
     # SHITTY COUNCIL
@@ -73,10 +73,15 @@ BOSS_DEFS: dict[str, BossDef] = {
         aliases=[
             "Countessa Danazhal",
             "Marquise Boldoch",
+            "Marchioness Boldoch",
             "Comte Pluezhal",
+            "Count Pluezhal",
             "Âme de Danazhal",
+            "Danazhal's soul", 
             "Âme de Boldoch",
+            "Boldoch's Soul",
             "Âme de Pluezhal",
+            "Pleuzhal's Soul",
             "Ame de Danazhal",
             "Ame de Boldoch",
             "Ame de Pluezhal",

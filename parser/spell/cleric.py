@@ -16,13 +16,13 @@ def spell(key: str, *aliases: str) -> Spell:
     return Spell(key=key, aliases=frozenset(norm(a) for a in aliases))
 
 # Une ligne = un sort, autant d’alias que tu veux
-NR =      spell("Réprimande de Nysyr",     "xxx")
-ICB =     spell("Coup glacé",              "xxx")
-FES =     spell("Frappe fervente",         "xxx")
-HOF =     spell("Marteau de la foi",       "xxx")
-IDD =     spell("Insigne de dilapidation", "xxx")
-IDS =     spell("Innondation de soins",    "xxx")
-RE =      spell("Rage explosive",              "xxx")
-AM =      spell("Affliction miséreuse",         "xxx")
+NR =      spell("Réprimande de Nysyr", "Nysyr's Rebuke")
+ICB =     spell("Coup glacé", "Icy Blow")
+FES =     spell("Frappe fervente", "Fervent Strike")
+HOF =     spell("Marteau de la foi", "Hammer of Faith")
+IDD =     spell("Insigne de dilapidation", "Wasting Insignia")
+IDS =     spell("Innondation de soins", "Healing Flood")
+RE =      spell("Rage explosive", "Explosive Rage")
+AM =      spell("Affliction miséreuse", "Miserly Affliction")
 
-C_TAUNT = spell("Provocation",             "xxx")  
+C_TAUNT = spell("Provocation", "Provoke")  

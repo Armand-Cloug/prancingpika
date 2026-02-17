@@ -11,13 +11,15 @@ from .bosses import build_phases_for_fight
 from .boss_match import match_boss_name, boss_involved
 
 DEATH_RE = re.compile(r"est\s+mort", re.IGNORECASE)        # "X est mort(e)."
-KILL_RE = re.compile(r"\ba\s+tu[ée]\b", re.IGNORECASE)     # "A a tué B"
+KILL_RE = re.compile(r"(\ba\s+tu[ée]\b|\bhas\s+slain\b)", re.IGNORECASE)     # "A a tué B"
 
 # Uniquement des mots typiques de lignes de dégâts/soins (réduit fortement les faux positifs)
 COMBAT_WORD_RE = re.compile(
-    r"(inflige|dég[âa]ts?|damage|touche|frappe|attaque|crit|critique|soigne|heal)",
+    r"(inflige|dég[âa]ts?|touche|frappe|attaque|crit|critique|soigne|"
+    r"damage|heal|hits?|critically|suffers|afflicted)",
     re.IGNORECASE,
 )
+
 HAS_NUMBER_RE = re.compile(r"\b\d+\b")
 
 
