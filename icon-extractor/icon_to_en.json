@@ -1,0 +1,2892 @@
+{
+  "generic_ability_027": [
+    "Atrophy"
+  ],
+  "defiler_empowered_affliction_cc": [
+    "Aversion"
+  ],
+  "secondwind1": [
+    "Choke"
+  ],
+  "curse_of_solitude": [
+    "Conflux",
+    "Curse of Solitude"
+  ],
+  "defiler_loathsome_restoration_g": [
+    "Consuming Agony"
+  ],
+  "dirtytricks3": [
+    "Contaminate",
+    "Mass Instigate"
+  ],
+  "darkball2": [
+    "Dark Armor"
+  ],
+  "darkball2z": [
+    "Dark Touch"
+  ],
+  "generic_ability_020": [
+    "Death's Door",
+    "Inspiration of Battle"
+  ],
+  "shadow_blitz_b": [
+    "Deathly Pall",
+    "Curse of Anarchy"
+  ],
+  "void_knight-rift_summon_a": [
+    "Defile"
+  ],
+  "poisoned": [
+    "Devouring Shadows"
+  ],
+  "darkbolt5": [
+    "Draining Bolt"
+  ],
+  "necropotence1": [
+    "Empowered Darkness"
+  ],
+  "finalstrike3": [
+    "Fear"
+  ],
+  "drainlife1": [
+    "Life Leech"
+  ],
+  "finalstrike3a": [
+    "Mass Fear"
+  ],
+  "channelhealth4": [
+    "Mortality"
+  ],
+  "summonskeleton1": [
+    "Neddra's Essence"
+  ],
+  "drainlife3": [
+    "Neddra's Grasp"
+  ],
+  "generic_ability_025": [
+    "Cyclone",
+    "Electrified Strikes",
+    "Plagued Reach"
+  ],
+  "eye_of_the_storm": [
+    "Eye of the Storm",
+    "Gale Force",
+    "Rolling Fog"
+  ],
+  "chainlighting1": [
+    "Forked Lightning"
+  ],
+  "maelstrom_a": [
+    "Gathering Storm"
+  ],
+  "icestormdark": [
+    "Hailstorm"
+  ],
+  "icebolt1": [
+    "Icicle"
+  ],
+  "void_knight-improved_rift_summon_a": [
+    "Icy Vortex",
+    "Planar Spout"
+  ],
+  "stormcaller_lightning_arc": [
+    "Lightning Arc",
+    "Chain Pulse"
+  ],
+  "lightingbolt4": [
+    "Lightning Field"
+  ],
+  "stormcaller_lightning_storm_02_b": [
+    "Lightning Storm"
+  ],
+  "energy_overload1": [
+    "Living Storm"
+  ],
+  "harbinger_storm_nova_a": [
+    "Perfect Storm",
+    "Monsoon"
+  ],
+  "souldrain1": [
+    "Raging Storm"
+  ],
+  "tumble1": [
+    "Ride the Wind",
+    "Thread the Trees"
+  ],
+  "elemres4": [
+    "Static Flux",
+    "Ragestorm"
+  ],
+  "flashback": [
+    "Storm Armor"
+  ],
+  "magicresist2": [
+    "Storm Locus"
+  ],
+  "hardened_stalker": [
+    "Tempest Armor",
+    "Combat Focus"
+  ],
+  "riftblade-surging_energy_c": [
+    "Thunder Shock"
+  ],
+  "secondwind2": [
+    "Wind Chill",
+    "Hurricane Breach"
+  ],
+  "ward1z": [
+    "Arresting Presence"
+  ],
+  "binding_of_affliction_01_a": [
+    "Death's Edict",
+    "Binding of Affliction"
+  ],
+  "rogue_shadow_shift": [
+    "Degeneration",
+    "Disintegration",
+    "Inescapable"
+  ],
+  "ebon_fury_01": [
+    "Deny",
+    "Avatar of the Rift",
+    "Ebon Fury",
+    "No Witnesses"
+  ],
+  "dusk_to_dawn_01": [
+    "Grasping Void"
+  ],
+  "void_knight-improved_rift_summon": [
+    "Gravity Void"
+  ],
+  "necropotence4": [
+    "Haunting Pain",
+    "Desecrating Blow"
+  ],
+  "dominator_lighting_wall_a": [
+    "Lightning Wall",
+    "Electricity Blast"
+  ],
+  "distorted_shadows_b": [
+    "Malevolent Bolt"
+  ],
+  "voidknight_catalyze_01_a": [
+    "Malevolent Shield"
+  ],
+  "manachannel1": [
+    "Mana Wrench",
+    "Aggressive Inquisition"
+  ],
+  "hasted_time_a": [
+    "Mass Betrayal",
+    "Sigil of Catastrophe"
+  ],
+  "dominator-mass_exhaustion_b": [
+    "Mass Exhaustion",
+    "Condensed Obliteration"
+  ],
+  "ironwill1": [
+    "Mental Focus",
+    "Moving Words"
+  ],
+  "lighting_fury_a": [
+    "Neural Prod",
+    "Arc"
+  ],
+  "dominator_nyxs_orb_b": [
+    "Nyx's Orb",
+    "Electromagnetic Shield"
+  ],
+  "dominator_pain_armor_a": [
+    "Pain Armor"
+  ],
+  "righteousness1": [
+    "Priest's Lament",
+    "Blindside"
+  ],
+  "deflect2": [
+    "Reflective Command"
+  ],
+  "magicward1a": [
+    "Reflective Presence"
+  ],
+  "paragon-improved_predicatable_movements_b": [
+    "Bone Armor"
+  ],
+  "necromancer_detonate_bones_02_a": [
+    "Bone Frenzy",
+    "Dire Corruption"
+  ],
+  "necromancer_condemn": [
+    "Condemn"
+  ],
+  "necropotence4z": [
+    "Consumption"
+  ],
+  "necromancer-corpse_explosion": [
+    "Corpse Explosion"
+  ],
+  "baneful_touch_01": [
+    "Corpse Talon"
+  ],
+  "primal_death_01": [
+    "Desecrate",
+    "Death Blossom"
+  ],
+  "redirect1a": [
+    "Dismiss Pet"
+  ],
+  "souldrain4": [
+    "Empty the Crypts"
+  ],
+  "dark_containment_01": [
+    "Essence Link",
+    "Dark Containment"
+  ],
+  "binding_of_death_01": [
+    "Exhume"
+  ],
+  "necromancer-feign_death": [
+    "Feign Death"
+  ],
+  "flesh_rot_01": [
+    "Grave Rot"
+  ],
+  "dark_waters": [
+    "Infection"
+  ],
+  "menacingroar2": [
+    "Last Gasp",
+    "Feral Instincts"
+  ],
+  "invoker_prerogative1": [
+    "Lich Form",
+    "Earthen Sunder"
+  ],
+  "riftstalker_great_fortitude_01": [
+    "Loyal Minion"
+  ],
+  "incite_01_a": [
+    "Mass Grave"
+  ],
+  "poison_gas_02": [
+    "Necrosis"
+  ],
+  "venomoustrap2a": [
+    "Parasite"
+  ],
+  "conflagration2": [
+    "Burning Ground"
+  ],
+  "healthchannel3a": [
+    "Channel Elements",
+    "Cascade"
+  ],
+  "trinket20a": [
+    "Conduit of Power"
+  ],
+  "spiritblast4bc": [
+    "Crystalline Missiles",
+    "Bolt of Judgment",
+    "Precision Bolt"
+  ],
+  "arcaneshield2": [
+    "Elemental Armor"
+  ],
+  "elementalist_elemental_burst_a": [
+    "Elemental Burst"
+  ],
+  "elemresist1": [
+    "Elemental Forces"
+  ],
+  "generic_ability_031_2": [
+    "Fast Summon"
+  ],
+  "arcaneshield3": [
+    "Ice Shield",
+    "Geyser"
+  ],
+  "shaman-vengeance_of_frozen_earth_c": [
+    "Icy Carapace",
+    "Numbing Cold"
+  ],
+  "removeheat1": [
+    "Icy Gale"
+  ],
+  "sacrificepet1": [
+    "Ignite"
+  ],
+  "elementalres2b": [
+    "Intensify Elements"
+  ],
+  "lighting2a": [
+    "Lightning Strike"
+  ],
+  "elementalist_prismatic_armor": [
+    "Prismatic Armor"
+  ],
+  "elementalist_prismatic_valley": [
+    "Prismatic Volley"
+  ],
+  "healthchannel3": [
+    "Quicken Elements",
+    "Fusion of Flesh"
+  ],
+  "surge_a": [
+    "Raging Elements"
+  ],
+  "heroicsurge1a": [
+    "Reclaim Elements"
+  ],
+  "deflect1c": [
+    "Burn"
+  ],
+  "ensnare1": [
+    "Burning Bonds"
+  ],
+  "releaseheat3a": [
+    "Burning Shield"
+  ],
+  "fanaticism": [
+    "Cerebral Flare",
+    "Fanaticism"
+  ],
+  "coalesceheat1": [
+    "Cinder Burst"
+  ],
+  "pyroclasty2": [
+    "Countdown"
+  ],
+  "fireball": [
+    "Fireball"
+  ],
+  "conflagration1": [
+    "Fire Storm"
+  ],
+  "energybeam1": [
+    "Flame Bolt",
+    "Fury Blast"
+  ],
+  "rapid_setup": [
+    "Flame Volley"
+  ],
+  "burning": [
+    "Flicker"
+  ],
+  "intense_flames": [
+    "Fulminate"
+  ],
+  "detonate_a": [
+    "Fusillade"
+  ],
+  "bloodfire1": [
+    "Heat Wave"
+  ],
+  "internalizeheat1": [
+    "Inferno"
+  ],
+  "releaseheat4b": [
+    "Internalize Charge"
+  ],
+  "arcaneshield4": [
+    "Pyromancer's Armor"
+  ],
+  "tactician_infernal_torrent_a": [
+    "Scorch"
+  ],
+  "elemental_bolt1a": [
+    "Searing Bolt"
+  ],
+  "icy_heart1": [
+    "Ageless Ice"
+  ],
+  "slam2": [
+    "Avalanche Strike"
+  ],
+  "shaman-vengeance_of_bitter_wind": [
+    "Bitter Wind",
+    "Wind Shear"
+  ],
+  "shaman-courage_of_the_bear": [
+    "Courage of the Bear",
+    "Bear's Fury"
+  ],
+  "ironwill2": [
+    "Courage of the Eagle"
+  ],
+  "shaman-courage_of_the_jaguar": [
+    "Courage of the Panther"
+  ],
+  "frost_hammer1": [
+    "Crushing Blow"
+  ],
+  "paragon-way_of_mountain_c": [
+    "Deep Freeze"
+  ],
+  "lighting2": [
+    "Ekkehard's Grasp"
+  ],
+  "holysmite4": [
+    "Frozen Wrath"
+  ],
+  "spiritofcrusader1": [
+    "Furious Assault"
+  ],
+  "shaman-glacial_shield": [
+    "Glacial Shield",
+    "Crystalline Shield"
+  ],
+  "harbinger_rending_slash_a": [
+    "Glacial Strike"
+  ],
+  "rally1x": [
+    "Glory of the Chosen"
+  ],
+  "arkanxshield1": [
+    "Heart of the Frozen Sea"
+  ],
+  "shatter3": [
+    "Icy Blow",
+    "Furious Rage"
+  ],
+  "lighting1": [
+    "Jolt"
+  ],
+  "shaman-lighting_hammer": [
+    "Lightning Hammer"
+  ],
+  "shockwave2a": [
+    "Massive Blow"
+  ],
+  "demolition_specialist": [
+    "Avatar of Flame"
+  ],
+  "riftblade-avatar_of_water_a": [
+    "Avatar of Water"
+  ],
+  "generic_ability_025_a": [
+    "Avatar of Wind"
+  ],
+  "holysweep3aa": [
+    "Blade of Elemental Affinity"
+  ],
+  "2h_sword_069a": [
+    "Blade of the Ascended"
+  ],
+  "carpet_bombing_a": [
+    "Building Fury"
+  ],
+  "bomb_fragment_a": [
+    "Burst Synergy"
+  ],
+  "riftblade-earth_burst_a": [
+    "Earth Burst",
+    "Aftershock"
+  ],
+  "slam4a": [
+    "Fiery Burst"
+  ],
+  "critical2a": [
+    "Flamespear"
+  ],
+  "cripplingshot1": [
+    "Fork"
+  ],
+  "riftblade_frost_strike_01_a": [
+    "Frost Strike",
+    "Icy Fury"
+  ],
+  "shaman-vengeance_of_winter_storm_a": [
+    "Icy Burst",
+    "Icy Command"
+  ],
+  "shockwave3d": [
+    "Planar Blade"
+  ],
+  "purge": [
+    "Rift Barrage"
+  ],
+  "shaman-vengeance_of_frozen_earth": [
+    "Rift Burst"
+  ],
+  "2h_staff_078a": [
+    "Rift Spear"
+  ],
+  "generic_ability_031": [
+    "Rift Storm"
+  ],
+  "shadow_assault": [
+    "Rift Strike",
+    "Focused Obliteration"
+  ],
+  "castigation3": [
+    "Armor of Awakening"
+  ],
+  "castigation1c": [
+    "Armor of Devotion"
+  ],
+  "castigation1b": [
+    "Armor of Treachery"
+  ],
+  "confound2": [
+    "Bewilder"
+  ],
+  "spiritblast4b": [
+    "Bolt of Depravity"
+  ],
+  "binding_of_authority_01": [
+    "Bolt of Retribution"
+  ],
+  "exorcize2": [
+    "Circle of Oblivion"
+  ],
+  "tempest_bounce_shot_a": [
+    "Confound",
+    "Chain Destruction"
+  ],
+  "excommunicate": [
+    "Excommunicate",
+    "Light's Domination"
+  ],
+  "healthchannel1g": [
+    "Harsh Discipline",
+    "Nature's Fury"
+  ],
+  "doctrine_of_virtue_01": [
+    "Judicial Privilege"
+  ],
+  "nysyrs_rebuke": [
+    "Nysyr's Rebuke",
+    "Call of Blood",
+    "Precise Target"
+  ],
+  "perseverance": [
+    "Perseverance"
+  ],
+  "purge_a": [
+    "Purge",
+    "Delayed Pulse"
+  ],
+  "healing_flare_a": [
+    "Radical Coalescence",
+    "Empowering Light"
+  ],
+  "shroudofpenitent2": [
+    "Righteous Deliberation",
+    "Light of Redemption"
+  ],
+  "sanction_heretic_a": [
+    "Sanction Heretic"
+  ],
+  "exorcize1": [
+    "Bosun's Blessing"
+  ],
+  "underwaterbreath1a": [
+    "Call of the Depths",
+    "Choking Flood"
+  ],
+  "rally1": [
+    "Cleansing Waters",
+    "Elemental Barrier"
+  ],
+  "warden-crushing_wave": [
+    "Crushing Waves",
+    "Raging Waters"
+  ],
+  "rally1a": [
+    "Curative Waters",
+    "Power Shield"
+  ],
+  "souldrain3": [
+    "Dehydrate"
+  ],
+  "warden-downpour": [
+    "Downpour",
+    "Cloudburst"
+  ],
+  "mirrorandsmoke2": [
+    "Glassy Reflection"
+  ],
+  "warden-healing_cataract": [
+    "Healing Cataract",
+    "Icy Cleave"
+  ],
+  "doctrine_of_authority_01_a": [
+    "Healing Effusion",
+    "Charged Pulse"
+  ],
+  "warden-healing_flood": [
+    "Healing Flood"
+  ],
+  "layonhands2z": [
+    "Healing Spray",
+    "Discharge",
+    "Hastening Vigor"
+  ],
+  "beastmaster_shared_bonds_a": [
+    "Open Water"
+  ],
+  "ward1zz": [
+    "Orbs of the Stream",
+    "Cleansing Rush"
+  ],
+  "warden-orbs_of_the_tide": [
+    "Orbs of the Tide"
+  ],
+  "motif_of_encouragement": [
+    "Overflowing Renewal",
+    "Motif of Encouragement"
+  ],
+  "paragon_way_of_the_river_01_a": [
+    "Oversaturation"
+  ],
+  "spiritofsaints3": [
+    "Caregiver's Blessing",
+    "Command to Recover"
+  ],
+  "sentinel-cleansing_prayer_b": [
+    "Cauterize"
+  ],
+  "bomb_specialist": [
+    "Cauterizing Wave",
+    "Grand Explosion"
+  ],
+  "cauterize1": [
+    "Char"
+  ],
+  "surging_flames": [
+    "Eruption",
+    "Flash Fire"
+  ],
+  "paragon_alacricity": [
+    "Fiery Will"
+  ],
+  "purifier_firewall_a": [
+    "Fire Wall"
+  ],
+  "holysweep3c": [
+    "Flame Lance"
+  ],
+  "blessing_of_the_flames": [
+    "Flame of Life"
+  ],
+  "ressurection1za": [
+    "Flash of the Phoenix"
+  ],
+  "flash1": [
+    "Flashover"
+  ],
+  "sterilize1_a": [
+    "Gathering of Flames"
+  ],
+  "healing_flare2": [
+    "Healing Flare",
+    "Primal Warp"
+  ],
+  "latent_blaze": [
+    "Latent Blaze"
+  ],
+  "smelting1a": [
+    "Rite of the Forge"
+  ],
+  "purifier_sign_of_anticipation_b": [
+    "Sign of Anticipation"
+  ],
+  "purifier_sign_of_daring_a": [
+    "Sign of Daring"
+  ],
+  "purifier_sign_of_faith_cc": [
+    "Sign of Faith"
+  ],
+  "purifier_sign_of_wrath_a": [
+    "Sign of Wrath"
+  ],
+  "internalizeheat3b": [
+    "Soul Brand"
+  ],
+  "magicward2": [
+    "Banish"
+  ],
+  "spiritbolt1": [
+    "Bolt of Light"
+  ],
+  "spiritual_will": [
+    "Cleansing Prayer"
+  ],
+  "heal2": [
+    "Crucial Invocation"
+  ],
+  "spiritofsaints1": [
+    "Divine Call"
+  ],
+  "sentinel-healing_benediction": [
+    "Faith Rewarded"
+  ],
+  "magicward3": [
+    "Flash of Radiance"
+  ],
+  "doctrine_of_bliss_01_c": [
+    "Fullness of Life",
+    "Cleansing Flames",
+    "Judgment"
+  ],
+  "generic_ability_018": [
+    "Healer's Blessing"
+  ],
+  "ardent_doctrine_01_a": [
+    "Healer's Covenant"
+  ],
+  "sentinel-refreshing_communion": [
+    "Healer's Haste"
+  ],
+  "flame_speaker_a": [
+    "Healing Breath"
+  ],
+  "heal3": [
+    "Healing Communion"
+  ],
+  "heal2z": [
+    "Healing Invocation"
+  ],
+  "holystrength3c": [
+    "Heroic Resolve"
+  ],
+  "holystrength2": [
+    "Liberty of Thought"
+  ],
+  "ressurect4y": [
+    "Life's Return"
+  ],
+  "mend1": [
+    "Marked by the Light"
+  ],
+  "dusk_to_dawn_01_a": [
+    "Acquittal",
+    "Dusk to Dawn"
+  ],
+  "warlord-killing_field": [
+    "Constant Deviation"
+  ],
+  "defer_death": [
+    "Defer Death"
+  ],
+  "flashback_a": [
+    "Flashback"
+  ],
+  "deflection4c": [
+    "Guarded Steel",
+    "Deep Breaths"
+  ],
+  "guardian_phase": [
+    "Guardian Phase"
+  ],
+  "foul_play_01": [
+    "Instigate"
+  ],
+  "memory_capture": [
+    "Memory Capture",
+    "Protective Shield"
+  ],
+  "phantom_blow_a": [
+    "Phantom Blow"
+  ],
+  "riftstalker_toughened_soul_01": [
+    "Physical Wellness"
+  ],
+  "riftstalker_planar_repulsion_01_a": [
+    "Planar Attraction",
+    "Dominion"
+  ],
+  "riftblade-surging_energy_b": [
+    "Planar Disruption"
+  ],
+  "riftstalker_planar_refuge_01_a": [
+    "Planar Refuge",
+    "Battle Surge"
+  ],
+  "warlord_recovery_posture": [
+    "Planar Rejuvenation"
+  ],
+  "sigil_of_lurking_decay_b": [
+    "Planar Splash"
+  ],
+  "disabling2": [
+    "Planar Strike"
+  ],
+  "riftstalker_planebound_aegis": [
+    "Planebound Aegis"
+  ],
+  "rift_affinity": [
+    "Planebound Resilience"
+  ],
+  "shadow_assault_a": [
+    "Power of the Planes",
+    "Death from the Shadows"
+  ],
+  "absolution_01_a": [
+    "Absolution"
+  ],
+  "bolt_of_radiance_01_a": [
+    "Bolt of Radiance"
+  ],
+  "conviction_01": [
+    "Cavalier"
+  ],
+  "paladin-life_rapture_a": [
+    "Censure"
+  ],
+  "spiritstrike5": [
+    "Doctrine of Authority",
+    "Pacifying Strike"
+  ],
+  "doctrine_of_bliss_01_b": [
+    "Doctrine of Bliss"
+  ],
+  "cavalier_01": [
+    "Doctrine of Glory"
+  ],
+  "righteous_invocation_01": [
+    "Doctrine of Loyalty",
+    "Brothers in Arms"
+  ],
+  "even_justice_01": [
+    "Even Justice"
+  ],
+  "generic_ability_013": [
+    "Hammer of Duty",
+    "Light's Decree"
+  ],
+  "hammer_of_virtue_01": [
+    "Hammer of Faith",
+    "Aegis of the Light"
+  ],
+  "paladin_shield_of_the_vengeful": [
+    "Intercede"
+  ],
+  "interdict_01": [
+    "Interdict"
+  ],
+  "paladin-reprisal": [
+    "Just Defense",
+    "Light's Reprisal"
+  ],
+  "overwhelming_brilliance_01": [
+    "Mien of Honor",
+    "Light's Benediction"
+  ],
+  "requital_01_a": [
+    "Mien of Leadership"
+  ],
+  "defensivestrike1": [
+    "Precept of Refuge"
+  ],
+  "piety2a": [
+    "Provoke"
+  ],
+  "generic_ability_024_a": [
+    "Purpose"
+  ],
+  "redirect4b": [
+    "Rebuke"
+  ],
+  "paragon_shifting_blades_01": [
+    "Binary Strike",
+    "Shifting Blades"
+  ],
+  "revitalize1c": [
+    "Blade and Soul Parity"
+  ],
+  "blade_tempo": [
+    "Blade Tempo"
+  ],
+  "combat_pose1_a": [
+    "Combat Preparation"
+  ],
+  "charge2": [
+    "Compound Attack"
+  ],
+  "dancing_steel": [
+    "Dancing Steel"
+  ],
+  "finalstrike2": [
+    "Dauntless Strike",
+    "Mark of Extermination"
+  ],
+  "combat_pose1": [
+    "Deadly Dance"
+  ],
+  "roguestrike2a": [
+    "Deadly Strike",
+    "Flinching Strike",
+    "Unnerve"
+  ],
+  "tempest_close_training_a": [
+    "Defensive Pose",
+    "Close Training"
+  ],
+  "disabling4": [
+    "Disassemble"
+  ],
+  "defensivestrike3": [
+    "Disengage"
+  ],
+  "deflection4cc": [
+    "Double Coup"
+  ],
+  "paragon_path_of_the_tempest_01_a": [
+    "Double Strike"
+  ],
+  "deflection1a": [
+    "Dualism"
+  ],
+  "harbinger_phantom_blades": [
+    "Fated Blades",
+    "Lightning Charge"
+  ],
+  "charge3": [
+    "Flash of Steel"
+  ],
+  "bladedancer_hundred_blades_c": [
+    "Hundred Blades"
+  ],
+  "disabling1a": [
+    "Keen Strike"
+  ],
+  "paladin-preservation_b": [
+    "Meditative Trance",
+    "Life Insurance"
+  ],
+  "anthem_of_competence": [
+    "Anthem of Competence"
+  ],
+  "anthem_of_fervor": [
+    "Anthem of Fervor"
+  ],
+  "anthem_of_glory": [
+    "Anthem of Glory"
+  ],
+  "cadence_a": [
+    "Cadence"
+  ],
+  "power_chord_a": [
+    "Cadenza"
+  ],
+  "coda_of_cowardice": [
+    "Coda of Cowardice"
+  ],
+  "coda_of_distress": [
+    "Coda of Distress"
+  ],
+  "coda_of_fury": [
+    "Coda of Fury",
+    "Chains of Death"
+  ],
+  "coda_of_distress_a": [
+    "Coda of Jeopardy"
+  ],
+  "coda_of_restoration_a": [
+    "Coda of Restoration"
+  ],
+  "coda_of_wrath_a": [
+    "Coda of Wrath"
+  ],
+  "fanfare_of_power": [
+    "Fanfare of Power"
+  ],
+  "fanfare_of_vigor": [
+    "Fanfare of Vigor"
+  ],
+  "bard_harmonic_distortion": [
+    "Harmonic Distortion"
+  ],
+  "motif_of_bravery": [
+    "Motif of Bravery"
+  ],
+  "motif_of_regeneration_a": [
+    "Motif of Regeneration"
+  ],
+  "motif_of_tenacity": [
+    "Motif of Tenacity"
+  ],
+  "untangle_b": [
+    "Multiple Oscillations",
+    "Ebb and Flow",
+    "Alternative Treatment",
+    "Ground Zero"
+  ],
+  "bard_orchestra_of_the_planes": [
+    "Orchestra of the Planes"
+  ],
+  "paragon_alacricity_a": [
+    "Alacrity"
+  ],
+  "piercingenergy3": [
+    "Death Touch"
+  ],
+  "2h_sword_078_a": [
+    "Final Blessing"
+  ],
+  "kick4": [
+    "Fleet of Foot"
+  ],
+  "whirlingblades3": [
+    "Flurry"
+  ],
+  "strong_constitution_01_a": [
+    "Focus of Body"
+  ],
+  "twin_strike": [
+    "Follow Up Attacks",
+    "Rising Sun"
+  ],
+  "harbinger_planar_retreat_z": [
+    "Grasping the Horizon",
+    "Final Countdown"
+  ],
+  "combat_culmination": [
+    "Open the Stream",
+    "Rage of the Beast"
+  ],
+  "paragon-predicatable_movements_a": [
+    "Predictable Movements"
+  ],
+  "twin_strike_a": [
+    "Reaping Harvest",
+    "Blade Rush"
+  ],
+  "cleave1": [
+    "Rising Waterfall"
+  ],
+  "nightstalker_01": [
+    "Setting Moon"
+  ],
+  "blessing_of_the_flames_a": [
+    "Shield of Will"
+  ],
+  "intimidatingweapon2": [
+    "Strike Like Iron"
+  ],
+  "generic_ability_015_z": [
+    "Sweeping Blades",
+    "Scything Strike"
+  ],
+  "nightblade_blazing_path": [
+    "Blazing Path"
+  ],
+  "holysweep3a": [
+    "Blazing Strike"
+  ],
+  "stealth_z": [
+    "Conceal"
+  ],
+  "nightblade_dark_descent_a": [
+    "Dark Descent"
+  ],
+  "dark_malady_01": [
+    "Dark Malady"
+  ],
+  "necropotence4a": [
+    "Dusk Strike",
+    "Necrotic Wounds"
+  ],
+  "harbinger_lighting_blade_a": [
+    "Ebon Blades"
+  ],
+  "ebon_terror_01": [
+    "Ebon Terror"
+  ],
+  "sacrificepet4a": [
+    "Fell Blades"
+  ],
+  "fiery_chains_01_a": [
+    "Fiery Chains"
+  ],
+  "fiery_spike_01": [
+    "Fiery Spike"
+  ],
+  "warlord-cutting_distraction_a": [
+    "Flame Blitz"
+  ],
+  "flame_thrust_01": [
+    "Flame Thrust"
+  ],
+  "hellfire_blades_01": [
+    "Hellfire Blades",
+    "Decisive Strike"
+  ],
+  "living_flame_01": [
+    "Living Flame"
+  ],
+  "discombobulate2": [
+    "Lost Hope"
+  ],
+  "generic_ability_015_a": [
+    "Assassinate"
+  ],
+  "backstab": [
+    "Backstab"
+  ],
+  "poison_gas_01_a": [
+    "Blinding Powder"
+  ],
+  "debilitating_poison_01_a": [
+    "Debilitating Dart"
+  ],
+  "survival2": [
+    "Elusiveness"
+  ],
+  "poisontwo3": [
+    "Enduring Brew"
+  ],
+  "puncture2": [
+    "Enfeebling Poison"
+  ],
+  "exposeweakness4": [
+    "Expose Weakness"
+  ],
+  "sweep2": [
+    "Final Blow"
+  ],
+  "foul_play_02": [
+    "Foul Play"
+  ],
+  "hidden_veil_01": [
+    "Hidden Veil",
+    "Crest of Entropy"
+  ],
+  "exposeweak1b": [
+    "Impale"
+  ],
+  "incapacitate_01": [
+    "Incapacitate"
+  ],
+  "roguestrike1": [
+    "Jagged Strike"
+  ],
+  "assassin_leaping_plunge": [
+    "Leaping Plunge"
+  ],
+  "debilitating_poison_01_b": [
+    "Leeching Poison"
+  ],
+  "poisonone2a": [
+    "Lethal Poison"
+  ],
+  "staggeringshot3": [
+    "Malicious Poison"
+  ],
+  "reaver_explosive_infestation_b": [
+    "Master of Poisons"
+  ],
+  "paralyzing_strike_01": [
+    "Paralyzing Strike",
+    "Devouring Blow"
+  ],
+  "mortalshot2": [
+    "Barbed Shot"
+  ],
+  "headshot2": [
+    "Bull's Eye"
+  ],
+  "rogueshot1": [
+    "Calculated Shot"
+  ],
+  "rainofarrows4a": [
+    "Crossfire"
+  ],
+  "fire_and_forget": [
+    "Deaden"
+  ],
+  "headshot1b": [
+    "Deadeye Shot"
+  ],
+  "lance1": [
+    "Electrified Munitions"
+  ],
+  "rapidshot4a": [
+    "Empowered Shot"
+  ],
+  "master_archer_b": [
+    "Eradicate"
+  ],
+  "rainofarrows1": [
+    "Fan Out"
+  ],
+  "tempest_brace": [
+    "Free Recoil"
+  ],
+  "rapidshot3": [
+    "Hasted Shot"
+  ],
+  "lighting_fury": [
+    "Lightning Fury",
+    "Shock Dispersal"
+  ],
+  "fleeting_instincts_01_a": [
+    "On the Double"
+  ],
+  "quick_reload_a": [
+    "Quick Reload"
+  ],
+  "close_combat": [
+    "Ranged Combat Mastery"
+  ],
+  "rapidshot1a": [
+    "Rapid Fire Shot"
+  ],
+  "piercing_shot_01": [
+    "Rending Munitions"
+  ],
+  "repelling_shot": [
+    "Repelling Shot"
+  ],
+  "tempest_difficult_target_z": [
+    "Ace Shot"
+  ],
+  "tempest_identified_weakness_b": [
+    "Animalism",
+    "Focused Fire"
+  ],
+  "pet_raptor": [
+    "Call: Blood Raptor"
+  ],
+  "pet_dire-wolf": [
+    "Call: Dire Wolf"
+  ],
+  "pet_dire-wolf_a": [
+    "Call: Greater Dire Wolf"
+  ],
+  "world_event_griffon_pet_01": [
+    "Call: Greater Griffon",
+    "Call: Griffon"
+  ],
+  "pet_razorbeast_a": [
+    "Call: Greater Razorbeast"
+  ],
+  "pet_razorbeast": [
+    "Call: Razorbeast"
+  ],
+  "concussive_blast_01": [
+    "Concussive Blast"
+  ],
+  "diffuse_01": [
+    "Diffuse"
+  ],
+  "divert_rage_01": [
+    "Divert Rage"
+  ],
+  "escape_artist_01": [
+    "Escape Artist"
+  ],
+  "shaman-courage_of_the_bear_a": [
+    "Feral Aggression"
+  ],
+  "fleeting_instincts_02_b": [
+    "Fleeting Instincts"
+  ],
+  "trinket4": [
+    "Hasten Call",
+    "Proper Timing"
+  ],
+  "headshot3": [
+    "Head Shot"
+  ],
+  "track_humanoids_01_a": [
+    "Multiple Instincts"
+  ],
+  "void_knight-ravenous_strength_b": [
+    "Accord of Power"
+  ],
+  "voidknight_ravenous_defence_01": [
+    "Accord of Resilience"
+  ],
+  "shadow_warp": [
+    "Accord of Shifting"
+  ],
+  "riftstalker_planar_repulsion_01": [
+    "Accord of the Rift"
+  ],
+  "energyburst5": [
+    "Airburst",
+    "Fae Dispersion"
+  ],
+  "fire_death_attunement_01": [
+    "Devouring Shield"
+  ],
+  "cautious_stalker": [
+    "Impunity"
+  ],
+  "swiftstrike1a": [
+    "Reckless Strike"
+  ],
+  "shadow_stalk": [
+    "Rift Reversal"
+  ],
+  "void_knight_rift_shield": [
+    "Rift Shield"
+  ],
+  "void_knight-rift_summon": [
+    "Rift Summon",
+    "Ethereal Corruption"
+  ],
+  "ruthless_stalker": [
+    "Shock",
+    "Dazing Blow"
+  ],
+  "intervene2": [
+    "Combined Effort"
+  ],
+  "warchanter_brush_it_off": [
+    "Conduit of Nature"
+  ],
+  "holysmite3": [
+    "Crushing Force"
+  ],
+  "barbedtrap1": [
+    "Eruption of Life"
+  ],
+  "smite4a": [
+    "Essence Strike"
+  ],
+  "redirect1b": [
+    "Fae Extraction"
+  ],
+  "beastmaster_shared_bonds_c": [
+    "Fae Mimicry"
+  ],
+  "shadow_shift_c": [
+    "Fae Step"
+  ],
+  "shockwave2": [
+    "Fervent Strike"
+  ],
+  "druid-grim_silence": [
+    "Grim Silence"
+  ],
+  "druid-hidden_path": [
+    "Hidden Path"
+  ],
+  "frostkeeper_earthmending": [
+    "Natural Force",
+    "Earthmending"
+  ],
+  "warchanter_survivors_slash": [
+    "Nature's Censure",
+    "Survivor's Slash"
+  ],
+  "warchanter_turn_the_tide": [
+    "Nature's Edict"
+  ],
+  "paragon_feint": [
+    "Notion Theft"
+  ],
+  "generic_ability_011": [
+    "Peace of the Forest",
+    "Lifebound Veil"
+  ],
+  "fleeting_instincts_01": [
+    "Rapid Summon"
+  ],
+  "holysweep4d": [
+    "Resounding Blow"
+  ],
+  "bomb_annihilation": [
+    "Annihilation Sticky Bomb"
+  ],
+  "maelstrom_b": [
+    "Battle Chemist"
+  ],
+  "land_mines": [
+    "Bottomless Bandolier"
+  ],
+  "increased_explosive_power_a": [
+    "Charges",
+    "General's Order"
+  ],
+  "saboteur_cloud_maker": [
+    "Cloud Maker"
+  ],
+  "detonate": [
+    "Detonate"
+  ],
+  "soothe_the_flames": [
+    "Explosive Exit"
+  ],
+  "charge_concussion": [
+    "Flashbang"
+  ],
+  "bomb_fragment": [
+    "Fragmentation Sticky Bomb"
+  ],
+  "tempest_wellplacedshots": [
+    "Implosion Engine"
+  ],
+  "tactician_barrier_augument_a": [
+    "Last Ditch Effort"
+  ],
+  "slip_away_03": [
+    "Sabotage Run",
+    "Cloak of Death"
+  ],
+  "saboteur_molotov_cocktail": [
+    "Satchel Charge"
+  ],
+  "charge_splinter": [
+    "Scatter Sticky Bomb"
+  ],
+  "tempest_explosive_grenade_a": [
+    "Stun Grenade"
+  ],
+  "bomb_time": [
+    "Time Bomb"
+  ],
+  "entropy_embrace": [
+    "Bound Fate"
+  ],
+  "cabalist_sigil_of_ravaging_a": [
+    "Curse of Discord"
+  ],
+  "shadow_warp_b": [
+    "Dark Passage",
+    "Forced March"
+  ],
+  "dark_waters_a": [
+    "Dark Water"
+  ],
+  "generic_ability_010": [
+    "Esoteric Estimations"
+  ],
+  "menacingroar2a": [
+    "Howling Death"
+  ],
+  "maelstrom": [
+    "Maelstrom",
+    "Whirlpool",
+    "Path of Air",
+    "Eye of the Storm"
+  ],
+  "redirect1": [
+    "Mass Reversal"
+  ],
+  "redirect2": [
+    "Reversal of Fortune"
+  ],
+  "darkbolt3": [
+    "Shadow's Touch"
+  ],
+  "distorted_shadows": [
+    "Shadow Breach"
+  ],
+  "magicward4": [
+    "Sigil of Binding"
+  ],
+  "invigoration2a": [
+    "Arcane Aegis",
+    "Living Armor"
+  ],
+  "sentinel-protect_the_flock_a": [
+    "Archon's Bulwark",
+    "Stroke of Brilliance"
+  ],
+  "castigation1a": [
+    "Ashen Defense"
+  ],
+  "ardent_doctrine_01": [
+    "Burning Purpose"
+  ],
+  "archon_crumbling_resistance_01": [
+    "Crumbling Resistance"
+  ],
+  "archon-earthen_barrage": [
+    "Earthen Barrage"
+  ],
+  "humbling_blow_01": [
+    "Flaring Power"
+  ],
+  "requital_01": [
+    "Flowing Sand"
+  ],
+  "archon_rock_slide_a": [
+    "Granite Salvo",
+    "Earthquake"
+  ],
+  "riftblade-surging_energy": [
+    "Illuminate"
+  ],
+  "discombobulate3a": [
+    "Lava Field"
+  ],
+  "magicresist1": [
+    "Leeching Flames"
+  ],
+  "explosive_infestation_01_a": [
+    "Lingering Dust"
+  ],
+  "manadrain1": [
+    "Mental Flare"
+  ],
+  "long_range_bombing": [
+    "Patron's Rage"
+  ],
+  "concussion_01_b": [
+    "Pillaging Stone",
+    "Forced Apathy"
+  ],
+  "archon_point_to_point": [
+    "Point to Point"
+  ],
+  "healthchannel1b": [
+    "Power Drain"
+  ],
+  "heal1": [
+    "Purification",
+    "Natural Remedies"
+  ],
+  "reaver_explosive_infestation_a": [
+    "Blight",
+    "Explosive Infestation"
+  ],
+  "plant14a": [
+    "Bloom"
+  ],
+  "poison_gas_01": [
+    "Corrosive Spores"
+  ],
+  "chloromancer_entropic_veil_01": [
+    "Entropic Veil"
+  ],
+  "life_and_death_concord_b": [
+    "Essence Conversion"
+  ],
+  "invigorate1": [
+    "Essence Surge"
+  ],
+  "mend2b": [
+    "Flourish"
+  ],
+  "bolt_of_radiance_01": [
+    "Healing Torrent"
+  ],
+  "vitalizingshield1b": [
+    "Lifegiving Veil"
+  ],
+  "doctrine_of_faithful_01": [
+    "Living Aegis",
+    "Light's Protection"
+  ],
+  "opportunity_01_a": [
+    "Living Energy"
+  ],
+  "spiritofturtle2": [
+    "Living Shell"
+  ],
+  "chloromancer-natural_conversion": [
+    "Natural Conversion"
+  ],
+  "invigorate2": [
+    "Natural Healing"
+  ],
+  "healthchannel2": [
+    "Natural Splendor"
+  ],
+  "mend1c": [
+    "Nature's Cleansing",
+    "Expel Boon",
+    "Expel Harm"
+  ],
+  "layonhands2": [
+    "Nature's Touch"
+  ],
+  "conflagration3": [
+    "Conflagrate"
+  ],
+  "spiritblast2": [
+    "Ethereal Beam"
+  ],
+  "primalist_font_of_wit": [
+    "Font of Wit"
+  ],
+  "shreddingtrap4": [
+    "Grasping Earth"
+  ],
+  "riftstalker_great_fortitude_01_b": [
+    "Infusion"
+  ],
+  "fiery_spike_01a": [
+    "Lava Lance"
+  ],
+  "primalist_molten_wave": [
+    "Molten Wave"
+  ],
+  "primal_avatar_drake": [
+    "Primal Avatar: Drake"
+  ],
+  "plasma_strike": [
+    "Rage Spike",
+    "Plasma Strike"
+  ],
+  "paragon_analyze_weakness_e": [
+    "Skill Shot"
+  ],
+  "riftblade-earth_burst": [
+    "Summon: Beacon of the Drake"
+  ],
+  "archon-earthen_barrage_b": [
+    "Vorpal Salvo"
+  ],
+  "swiftstrike2": [
+    "Bond of Alacrity"
+  ],
+  "beastmaster_bond_of_might_a": [
+    "Bond of Power"
+  ],
+  "beastmaster_comp_intervention": [
+    "Bond of Shelter"
+  ],
+  "2h_axe_043_a": [
+    "Brutal Strike"
+  ],
+  "beastmaster_kinship_01": [
+    "Call of Kinship"
+  ],
+  "beastmaster_enraged_companion_aura_01_a": [
+    "Call of Savagery",
+    "Primal Savagery"
+  ],
+  "archon_rock_slide": [
+    "Call of Stone"
+  ],
+  "spiritoftree1": [
+    "Call of the Forest"
+  ],
+  "beastmaster_beast_whisperer_01": [
+    "Calming Influence"
+  ],
+  "blazeofglory1a": [
+    "Command to Attack"
+  ],
+  "blazeofglory3": [
+    "Command to Stand Ground"
+  ],
+  "generic_ability_004": [
+    "Cunning Ruse"
+  ],
+  "scrape3": [
+    "Cutting Slash"
+  ],
+  "beastmaster_enraged_companion_01_a": [
+    "Enrage"
+  ],
+  "sweep4": [
+    "Fierce Strike"
+  ],
+  "critical4": [
+    "Flesh Rip"
+  ],
+  "harbinger_storm_fury_e": [
+    "Divergence"
+  ],
+  "tactician_necrotic_core_b": [
+    "Font of Frenzy"
+  ],
+  "icy_cascade": [
+    "Hail Volley",
+    "Icy Cascade",
+    "Frost Barrier"
+  ],
+  "harbinger_tempest_winds": [
+    "Hurricane"
+  ],
+  "icestormdark_a": [
+    "Icy Shards"
+  ],
+  "harbinger_storm_shroud_z": [
+    "Low Stability"
+  ],
+  "primal_avatar_griffon": [
+    "Primal Avatar: Griffon"
+  ],
+  "warden-healing_cataract_a": [
+    "Rippling Ether"
+  ],
+  "archon_crumbling_resistance_01_e": [
+    "Storm Rage"
+  ],
+  "primalist_torrential_rain": [
+    "Torrential Rain"
+  ],
+  "vortex": [
+    "Tsunami"
+  ],
+  "tumble1b": [
+    "Withdrawal"
+  ],
+  "harbinger_blademark": [
+    "Blademark"
+  ],
+  "harbinger_blade_rush": [
+    "Blade Rush"
+  ],
+  "harbinger_blazing_light": [
+    "Blazing Light"
+  ],
+  "harbinger_charged_blade": [
+    "Charged Blade"
+  ],
+  "harbinger_conditioned_response_a": [
+    "Conditioned Response"
+  ],
+  "harbinger_disabling_shock_a": [
+    "Disabling Shock"
+  ],
+  "champion_thunderous_strike_a": [
+    "Distracting Slash"
+  ],
+  "harbinger_eldritch_armor": [
+    "Eldritch Armor"
+  ],
+  "harbinger_empyrean_ascension_e": [
+    "Empyrean Ascension"
+  ],
+  "harbinger_essence_of_wind_a": [
+    "Essence of Wind"
+  ],
+  "harbinger_binding_fetters": [
+    "Glaring Fetters"
+  ],
+  "harbinger_introspection": [
+    "Introspection"
+  ],
+  "harbinger_lighting_blade": [
+    "Lightning Blade"
+  ],
+  "harbinger_lucent_slash": [
+    "Lucent Slash"
+  ],
+  "harbinger_luminous_weapon": [
+    "Luminous Blessing"
+  ],
+  "harbinger_luminous_weapon_c": [
+    "Luminous Weapon"
+  ],
+  "harbinger_phantom_blades2_a": [
+    "Phantom Blades"
+  ],
+  "harbinger_phase_step_a": [
+    "Phase Step",
+    "Earthwalk"
+  ],
+  "harbinger_piercing_beam": [
+    "Piercing Beam"
+  ],
+  "harbinger_storm_nova_c": [
+    "Disorienting Blast"
+  ],
+  "virtuoso_b": [
+    "Distracting Pulse"
+  ],
+  "harbinger_energy_beam": [
+    "Double Pulse"
+  ],
+  "harbinger_blademark_a": [
+    "Dual Pulse"
+  ],
+  "lightingbolt5": [
+    "Electricity Cascade"
+  ],
+  "remote_clipping_a": [
+    "Elude",
+    "Freezing Gust"
+  ],
+  "stormcaller_lightning_storm_01_a": [
+    "Empower"
+  ],
+  "tactician_ablative_coil_c": [
+    "Enhanced Conductivity"
+  ],
+  "harbinger_storm_fury_a": [
+    "Evasive Redirection"
+  ],
+  "ressurect4bl": [
+    "False Repose"
+  ],
+  "defiler_grief_blight_a": [
+    "Aggressive Avarice"
+  ],
+  "defiler_bond_of_corruption": [
+    "Bond of Corruption"
+  ],
+  "defiler_bond_of_pain_cc": [
+    "Bond of Pain"
+  ],
+  "defiler_bond_of_torment": [
+    "Bond of Torment"
+  ],
+  "defiler_link_of_agony_a": [
+    "Call of Rage"
+  ],
+  "defiler_foul_growth_b": [
+    "Corrupted Field"
+  ],
+  "defiler_rage_blight_b": [
+    "Explosive Rage"
+  ],
+  "defiler_rage_blight_a": [
+    "Furious Infestation"
+  ],
+  "defiler_feedback": [
+    "Furious Might"
+  ],
+  "loot_gold_coins": [
+    "Greed's Call"
+  ],
+  "defiler_grief_blight": [
+    "Greed's Corruption"
+  ],
+  "defiler_husk_of_indifference_a": [
+    "Husk of Indifference"
+  ],
+  "defiler_jealous_intervention_a": [
+    "Jealous Intervention"
+  ],
+  "defiler_link_of_misery_a": [
+    "Link of Misery"
+  ],
+  "defiler_marrow_harvest": [
+    "Marrow Harvest"
+  ],
+  "defiler_ghastly_restoration_b": [
+    "Miserly Affliction"
+  ],
+  "defiler_pain_transmission_b": [
+    "Pain Transmission"
+  ],
+  "defiler_rage_blight": [
+    "Rage Extraction"
+  ],
+  "defiler_siphon_vitality_a": [
+    "Siphon Vitality"
+  ],
+  "defiler_sanguine_desecration": [
+    "Somatic Desecration"
+  ],
+  "tactician_ablative_coil_a": [
+    "Ablative Coil"
+  ],
+  "tactician_barrier_augument_b": [
+    "Barrier Remote"
+  ],
+  "tactician_devastative_augument": [
+    "Battle Remote"
+  ],
+  "tactician_curative_beam": [
+    "Curative Beam"
+  ],
+  "tactician_curative_primer_a": [
+    "Curative Blast"
+  ],
+  "tactician_curative_core_b": [
+    "Curative Core"
+  ],
+  "tactician_curative_engine": [
+    "Curative Engine"
+  ],
+  "tactician_curative_bolt": [
+    "Curative Remote"
+  ],
+  "tactician_curative_torrent": [
+    "Curative Torrent"
+  ],
+  "tactician_empyrean_bolt": [
+    "Empyrean Bolt"
+  ],
+  "tactician_empyrean_engine": [
+    "Empyrean Engine"
+  ],
+  "tactician_empyrean_primer": [
+    "Empyrean Ray"
+  ],
+  "tempest_endgame": [
+    "Energy Alteration"
+  ],
+  "tactician_fortification_core": [
+    "Fortification Core"
+  ],
+  "tactician_glacial_torrent": [
+    "Glacial Torrent",
+    "Glacial Spike",
+    "Glacial Insignia"
+  ],
+  "alchemy2n": [
+    "Impurity Siphoning Flask"
+  ],
+  "void_knight_rift_reversal_a": [
+    "Infernal Beam"
+  ],
+  "tactician_infernal_torrent": [
+    "Infernal Torrent"
+  ],
+  "tactician_mass_repulsion": [
+    "Mass Repulsion"
+  ],
+  "tactician_necrotic_bolt": [
+    "Necrotic Bolt"
+  ],
+  "warden-overflow_b": [
+    "Aqueous Blessing"
+  ],
+  "archane_projection": [
+    "Arcane Projection"
+  ],
+  "arcane_ward": [
+    "Arcane Ward"
+  ],
+  "warden-deluge_a": [
+    "Avalanche"
+  ],
+  "biting_wind": [
+    "Biting Wind"
+  ],
+  "riftblade_thunder_strike_01": [
+    "Counter Shock"
+  ],
+  "crystallize": [
+    "Crystallize"
+  ],
+  "generic_ability_026_a": [
+    "Energized Vitality",
+    "Precise Diagnosis"
+  ],
+  "frosted_ward": [
+    "Frosted Ward"
+  ],
+  "shaman-vengeance_of_frozen_earth_a": [
+    "Frozen Volition"
+  ],
+  "galvanic_strike": [
+    "Galvanic Strike"
+  ],
+  "icebolt2": [
+    "Icy Blast"
+  ],
+  "jolting_wave": [
+    "Jolting Wave"
+  ],
+  "active_treatment": [
+    "Active Treatment"
+  ],
+  "adrenaline_shot": [
+    "Adrenaline Shot"
+  ],
+  "sentinel_wrathful_exuberance": [
+    "Biofeedback"
+  ],
+  "biofeedback": [
+    "Causal Treatment"
+  ],
+  "detoxification": [
+    "Detoxification"
+  ],
+  "emergency_response": [
+    "Emergency Response"
+  ],
+  "expectant_treatment": [
+    "Expectant Treatment"
+  ],
+  "group_therapy": [
+    "Group Therapy"
+  ],
+  "bard_harmonic_distortion_a": [
+    "Intensive Care"
+  ],
+  "kiss_of_life": [
+    "Kiss of Life"
+  ],
+  "maintenance_therapy": [
+    "Maintenance Therapy"
+  ],
+  "mass_blood_transfusion": [
+    "Mass Blood Transfusion"
+  ],
+  "immunization": [
+    "Mass Detox"
+  ],
+  "massive_therapy": [
+    "Massive Therapy"
+  ],
+  "medicinal_leeching": [
+    "Medicinal Leeching"
+  ],
+  "defiler_loathsome_restoration_d": [
+    "Pandemic"
+  ],
+  "adrenaline_overdrive": [
+    "Adrenaline Overdrive"
+  ],
+  "aegis_of_advocacy": [
+    "Aegis of Advocacy"
+  ],
+  "aegis_of_sanctuary": [
+    "Aegis of Sanctuary"
+  ],
+  "ameliorate": [
+    "Ameliorate"
+  ],
+  "castigate": [
+    "Castigate"
+  ],
+  "conflict_avoidance": [
+    "Conflict Avoidance"
+  ],
+  "continuous_treatment": [
+    "Continuous Treatment"
+  ],
+  "corrective_measures": [
+    "Corrective Measures"
+  ],
+  "counteract": [
+    "Counteract",
+    "Brush it Off!"
+  ],
+  "deliverance": [
+    "Deliverance"
+  ],
+  "dichotomy_of_pain": [
+    "Dichotomy of Pain"
+  ],
+  "extraordinary_care": [
+    "Extraordinary Care"
+  ],
+  "fast_relief": [
+    "Fast Relief"
+  ],
+  "first_aid": [
+    "First Aid"
+  ],
+  "group_assistance": [
+    "Group Assistance"
+  ],
+  "liberation_treatment": [
+    "Liberation Treatment"
+  ],
+  "mass_casualty_response": [
+    "Mass Casualty Response"
+  ],
+  "mass_oppression": [
+    "Mass Oppression"
+  ],
+  "mass_rescue": [
+    "Mass Rescue"
+  ],
+  "medical_facility": [
+    "Medical Facility"
+  ],
+  "plant3c": [
+    "Creeping Vines"
+  ],
+  "rod8d": [
+    "Crystalline Lance"
+  ],
+  "riftblade_stone_shield_01_f": [
+    "Crystalline Smash"
+  ],
+  "prolonged_recovery": [
+    "Epicenter"
+  ],
+  "censure_01a": [
+    "Essence Strike"
+  ],
+  "combat_survival_a": [
+    "Essence Tap"
+  ],
+  "deflect2a": [
+    "Font of Retaliation"
+  ],
+  "mend4a": [
+    "Life Bond"
+  ],
+  "reprieve_01a": [
+    "Lifewalk"
+  ],
+  "overwhelm1a": [
+    "Overwhelm",
+    "Jungle Rush"
+  ],
+  "primal_avatar_ram": [
+    "Primal Avatar: Ram"
+  ],
+  "flame_speaker1": [
+    "Primal Roar"
+  ],
+  "positive_reaction_a": [
+    "Summon: Lifewarding Beacon",
+    "Circle of Life"
+  ],
+  "primalist_temper": [
+    "Temper"
+  ],
+  "berserk4c": [
+    "Titan's Fury"
+  ],
+  "heroicsurge1": [
+    "Titanic Spirit"
+  ],
+  "righteousness2": [
+    "Towering Stature",
+    "Divine Edict"
+  ],
+  "riftblade-earth_burst_b": [
+    "Upheaval"
+  ],
+  "warlord_recovery_posture_a": [
+    "Vitrify"
+  ],
+  "roguestrike1a": [
+    "Dire Blow"
+  ],
+  "flesh_rot_01_b": [
+    "Flesh Rot"
+  ],
+  "infestation_01": [
+    "Infestation"
+  ],
+  "fatique": [
+    "Pestilence"
+  ],
+  "plague_01_a": [
+    "Plague Bringer"
+  ],
+  "whirlwind4": [
+    "Rancid Cleave"
+  ],
+  "charge1": [
+    "Ravaging Strike"
+  ],
+  "defiler_link_of_agony": [
+    "Shadow of Dread"
+  ],
+  "tumble1a": [
+    "Shadow Warp"
+  ],
+  "necropotence2": [
+    "Soul Sickness"
+  ],
+  "confound1": [
+    "Spasm"
+  ],
+  "reaver_crest_of_shadow": [
+    "Battle Fury",
+    "Residual Pain"
+  ],
+  "boon_of_resurgence_b": [
+    "Boon of Resurgence"
+  ],
+  "boon_of_vitality_b": [
+    "Boon of Vitality"
+  ],
+  "void_knight-insatiable_hunger_a": [
+    "Cleansing Chant"
+  ],
+  "corroded_defense": [
+    "Corroded Defense"
+  ],
+  "curse_of_consumption": [
+    "Curse of Consumption"
+  ],
+  "curse_of_frailty": [
+    "Curse of Frailty"
+  ],
+  "tempest_close_training_z": [
+    "Defend the Fallen"
+  ],
+  "defensive_favor": [
+    "Defensive Favor"
+  ],
+  "discerning_wave": [
+    "Discerning Wave"
+  ],
+  "emblem_of_alactricy": [
+    "Emblem of Alacrity"
+  ],
+  "generic_ability_029": [
+    "Emblem of Ice"
+  ],
+  "harbinger_vengeful_shock_b": [
+    "Emblem of Pain"
+  ],
+  "favor_of_the_current": [
+    "Favor of the Current"
+  ],
+  "icestorm-light": [
+    "Glacial Mark"
+  ],
+  "insignia_of_blood": [
+    "Insignia of Blood"
+  ],
+  "purifier_sign_of_faith": [
+    "Insignia of Protection"
+  ],
+  "shaman-vengeance_of_bitter_wind_a": [
+    "Air Cutter"
+  ],
+  "earthfall": [
+    "Earthfall"
+  ],
+  "champion_second_wind_e": [
+    "Font of Savagery"
+  ],
+  "harbinger_storm_fury_b": [
+    "Lashing Wind"
+  ],
+  "primal_avatar_wind_serpent": [
+    "Primal Avatar: Wind Serpent"
+  ],
+  "druid-stone_strike_b": [
+    "Rockslide"
+  ],
+  "surge_f": [
+    "Savage Twister"
+  ],
+  "harbinger_energy_beam_a": [
+    "Scirocco"
+  ],
+  "druid-bombard_b": [
+    "Seismic Smash"
+  ],
+  "harbinger_planar_retreat_f": [
+    "Shifting Wind"
+  ],
+  "harbinger_essence_of_wind_b": [
+    "Squall"
+  ],
+  "subduction": [
+    "Subduction"
+  ],
+  "archon-earthen_barrage_e": [
+    "Tectonic Spike"
+  ],
+  "whirlwind4i": [
+    "Whirling Dervish"
+  ],
+  "warden-dissolution_e": [
+    "Zephyr",
+    "Paths Converge"
+  ],
+  "poisoned_a": [
+    "Creeping Doom"
+  ],
+  "scourge_of_darkness_01_a": [
+    "Deathly Tendrils"
+  ],
+  "tactician_necrotic_core": [
+    "Font of Wrath"
+  ],
+  "icy_heart2": [
+    "Heart Freeze"
+  ],
+  "riftstalker_rift_scavenger_01_a": [
+    "Morbid Slash"
+  ],
+  "primal_avatar_tiger": [
+    "Primal Avatar: Tiger"
+  ],
+  "icebolt4a": [
+    "Shatterfrost"
+  ],
+  "assassin_thread_of_death_b": [
+    "Spirit's Wrath"
+  ],
+  "defiler_hideous_reconstruction": [
+    "Underworld Shards"
+  ],
+  "tactician_necrotic_primer": [
+    "Wrathfall"
+  ],
+  "underwaterbreath1b": [
+    "Ablution"
+  ],
+  "shadow_warp_e": [
+    "Bound"
+  ],
+  "emblem_of_alacrity_01": [
+    "Cleanse"
+  ],
+  "fanfare_of_vigor_1": [
+    "Cultivate"
+  ],
+  "warden-waterjet_b": [
+    "Deluge"
+  ],
+  "tactician_curative_torrent_1": [
+    "Emanate Life"
+  ],
+  "coda_of_restoration_b": [
+    "Essence Flow"
+  ],
+  "layonhands2a": [
+    "Estuary"
+  ],
+  "whirlwind1b": [
+    "Flash Flood"
+  ],
+  "restore1b": [
+    "Font of Vitality"
+  ],
+  "warden-healing_flood_b": [
+    "Inundate"
+  ],
+  "berserk4d": [
+    "Invigorate"
+  ],
+  "chloromancer_void_life_01_a": [
+    "Nurture"
+  ],
+  "primal_avatar_deer": [
+    "Primal Avatar: Deer Spirit"
+  ],
+  "invigoration3a": [
+    "Restore"
+  ],
+  "sentinel_wrathful_exuberance_e": [
+    "Serenity"
+  ],
+  "plant1a": [
+    "Vine Whip"
+  ],
+  "keen_eye": [
+    "Apex Predator",
+    "Battlefield Experience"
+  ],
+  "backstab_a": [
+    "Final Moment"
+  ],
+  "arcaneshield4aa": [
+    "Font of Obliteration"
+  ],
+  "champion_mark_of_convergence": [
+    "Killer Assault"
+  ],
+  "misdirection": [
+    "Locus of Destruction"
+  ],
+  "generic_ability_010_a": [
+    "Necrotize"
+  ],
+  "double_cross_01": [
+    "On the Hunt",
+    "Seasoned Strike",
+    "Swift Strike"
+  ],
+  "berserk4": [
+    "Paralyzing Glare"
+  ],
+  "life-drain3": [
+    "Predatory Instincts"
+  ],
+  "primalavatarpredator": [
+    "Primal Avatar: Raptor"
+  ],
+  "riftstalker_toughened_soul_01_a": [
+    "Primal Fear"
+  ],
+  "campfire1": [
+    "Raze"
+  ],
+  "tactician_devastative_augument_a": [
+    "Scent of Blood"
+  ],
+  "weakening_essence_01": [
+    "Silent Stalker"
+  ],
+  "swordsmith1": [
+    "Sudden Strike"
+  ],
+  "maelstrom_blast_wave": [
+    "Blast Wave"
+  ],
+  "maelstrom_drown": [
+    "Drown"
+  ],
+  "maelstrom_effervescent_blast": [
+    "Effervescent Blast"
+  ],
+  "maelstrom_excoriate": [
+    "Excoriate"
+  ],
+  "maelstrom_expulse": [
+    "Expulse"
+  ],
+  "maelstrom_flamewalker": [
+    "Flamewalker"
+  ],
+  "maelstrom_font_of_sublimation": [
+    "Font of Sublimation"
+  ],
+  "maelstrom_pressurize": [
+    "Pressurize"
+  ],
+  "maelstrom_thresher": [
+    "Primal Avatar: Thresher"
+  ],
+  "maelstrom_scald": [
+    "Scald"
+  ],
+  "maelstrom_searingplasma": [
+    "Searing Plasma"
+  ],
+  "maelstrom_subsume": [
+    "Subsume"
+  ],
+  "maelstrom_flashpoint_beacon": [
+    "Summon: Flashpoint Beacon"
+  ],
+  "maelstrom_vaporize": [
+    "Vaporize"
+  ],
+  "generic_ability_022": [
+    "Aerial Boon"
+  ],
+  "auto_attack_2": [
+    "Bind Life/Air Lash"
+  ],
+  "layinghands1": [
+    "Invigorating Gale"
+  ],
+  "awareness_01": [
+    "Piling On"
+  ],
+  "primalavatarwolf": [
+    "Primal Avatar: Wolf"
+  ],
+  "spiritbolt2": [
+    "Tailwind"
+  ],
+  "sentinel-healing_benediction_f_5": [
+    "Uplift"
+  ],
+  "berserk1a": [
+    "Battlefield Intimidation"
+  ],
+  "criticalsweep3c": [
+    "Bladefury"
+  ],
+  "champion-bull_rush": [
+    "Bull Rush"
+  ],
+  "coda_of_fury_a": [
+    "Chains of Life"
+  ],
+  "whirlwind2": [
+    "Cornered Beast"
+  ],
+  "champion-destroyers_bearing": [
+    "Destroyer's Bearing"
+  ],
+  "generic_ability_021": [
+    "Disruptive Strike"
+  ],
+  "doctrine_of_loyalty_01_a": [
+    "Dominating Bearing"
+  ],
+  "devouring_mist": [
+    "Juggernaut's Bearing"
+  ],
+  "champion_mark_of_convergence_a": [
+    "Mark of Exclusion"
+  ],
+  "exposeweakness1": [
+    "Mark of Inevitability"
+  ],
+  "sweep4b": [
+    "Mighty Blow"
+  ],
+  "charge4z": [
+    "Power Strike"
+  ],
+  "charge3a": [
+    "Punishing Blow"
+  ],
+  "cauterizea": [
+    "Delayed Fate"
+  ],
+  "generic_ability_025_c": [
+    "Empower Soul"
+  ],
+  "flame_speaker1a": [
+    "Fortune Protection"
+  ],
+  "spiritual_willa": [
+    "Impending Fate"
+  ],
+  "magicresist2a": [
+    "Inner Peace"
+  ],
+  "arm_wavea": [
+    "Insight"
+  ],
+  "releaseheat4c": [
+    "Materialize Soul"
+  ],
+  "devouring_mist_b": [
+    "Oversoul"
+  ],
+  "discombobulate2b": [
+    "Predestination"
+  ],
+  "ressurection1b": [
+    "Prescience"
+  ],
+  "poisontwo2a": [
+    "Primal Avatar: Ouroboros"
+  ],
+  "heavybleedinga": [
+    "Rend Spirit"
+  ],
+  "underwaterbreath1c": [
+    "Reversal of Fortune"
+  ],
+  "emblem_of_alacrity_02": [
+    "Rewritten Past"
+  ],
+  "sacrificepet2a": [
+    "Shatter Soul"
+  ],
+  "growing_energy_02": [
+    "Soul Fragments"
+  ],
+  "resurrect4da": [
+    "Soul Shroud"
+  ],
+  "absolution_01_b": [
+    "Spirit Sight"
+  ],
+  "secondwind1a": [
+    "Spiritual Guidance"
+  ],
+  "manadrain1a": [
+    "Thread of Fate"
+  ],
+  "warchanter_battle_song": [
+    "Battlesong"
+  ],
+  "warchanter_best_laid_plans": [
+    "Best Laid Plans"
+  ],
+  "warchanter_bond_of_brotherhood": [
+    "Bond of Brotherhood"
+  ],
+  "warchanter_catch_breath": [
+    "Catch Your Breath!"
+  ],
+  "warchanter_dont_give_up": [
+    "Don't give up!"
+  ],
+  "warchanter_encouraging_cries": [
+    "Encouraging Cries"
+  ],
+  "warchanter_excellent_strike": [
+    "Excellent Strike!"
+  ],
+  "warchanter_get_in_there": [
+    "Get in there!"
+  ],
+  "warchanter_with_you": [
+    "I'm with you!"
+  ],
+  "warchanter_your_shield": [
+    "I'm your shield!"
+  ],
+  "warchanter_nobody_backs_down": [
+    "Nobody Backs Down!"
+  ],
+  "warchanter_phalanx": [
+    "Phalanx!"
+  ],
+  "warchanter_stand_and_deliver": [
+    "Stand and Deliver!"
+  ],
+  "warchanter_stand_and_fight": [
+    "Stand and Fight!"
+  ],
+  "warchanter_stand_tall": [
+    "Stand Tall!"
+  ],
+  "harbinger_planar_retreat_b": [
+    "Bitter Gust"
+  ],
+  "champion_thunderous_strike": [
+    "Cold Snap"
+  ],
+  "elementalist_prismatic_armor_a": [
+    "Crystal Barrier"
+  ],
+  "frostkeeper_earthen_barrier": [
+    "Earthen Barrier"
+  ],
+  "vitalizingshield2": [
+    "Earthen Renewal"
+  ],
+  "devouring_mist_a": [
+    "Eternal Preservation"
+  ],
+  "frostkeeper_frigid_embrace": [
+    "Frigid Embrace"
+  ],
+  "frostkeeper_frostkeepers_armor": [
+    "Frostkeeper's Armor"
+  ],
+  "shaman-vengeance_of_frozen_earth_b": [
+    "Frozen Ground"
+  ],
+  "frostkeeper_frozen_wind": [
+    "Frozen Wind"
+  ],
+  "icebolt3": [
+    "Hail Blast"
+  ],
+  "frostkeeper_infuse_magic": [
+    "Infuse Magic"
+  ],
+  "frosted_shield": [
+    "Rime"
+  ],
+  "void_knight_staggering_rage_f_5": [
+    "Suspended Reanimation"
+  ],
+  "shadeborn_bond_darkness": [
+    "Bond of Night"
+  ],
+  "shadeborn_bottomless_void": [
+    "Bottomless Void"
+  ],
+  "shadeborn_consuming_depths": [
+    "Consuming Depths"
+  ],
+  "shadeborn_inescapable_bond": [
+    "Inescapable Bond"
+  ],
+  "shadeborn_innumerable_shadows": [
+    "Innumerable Shadows"
+  ],
+  "shadeborn_meld_darkness": [
+    "Meld Into Darkness"
+  ],
+  "shadeborn_mirrored_strike": [
+    "Mirrored Strike"
+  ],
+  "shadeborn_nexus_darkness": [
+    "Nexus of Darkness"
+  ],
+  "shadeborn_scything_night": [
+    "Scything Night"
+  ],
+  "magicitem4a": [
+    "Seeping Darkness"
+  ],
+  "shadeborn_shadow_assault": [
+    "Shadow Flurry"
+  ],
+  "shadeborn_shadow_grip": [
+    "Shadow Grip"
+  ],
+  "shadeborn_shadow_lash": [
+    "Shadow Lash"
+  ],
+  "creeping_death_01_b": [
+    "Shadow of Demise"
+  ],
+  "shadeborn_shadow_restoration": [
+    "Shadow Restoration"
+  ],
+  "weapon_barrage": [
+    "Shadow Spire",
+    "Disruption Bolt"
+  ],
+  "weakening_essence_01_a_5": [
+    "Shadow Twin"
+  ],
+  "shadeborn_strangulate": [
+    "Strangulate"
+  ],
+  "shadeborn_sudden_appearance": [
+    "Sudden Appearance"
+  ],
+  "shadeborn_void_touch": [
+    "Void Touch"
+  ],
+  "runeshaper_rune_agony": [
+    "Greater Rune of Agony"
+  ],
+  "runeshaper_rune_aggression": [
+    "Greater Rune of Energy"
+  ],
+  "runeshaper_seal_imprisonment": [
+    "Greater Rune of Imprisonment"
+  ],
+  "runshaper_mobility": [
+    "Greater Rune of Mobility"
+  ],
+  "runshaper_inscribe_fate": [
+    "Inscribe Fate",
+    "Arcane Bolt Storm"
+  ],
+  "runeshaper_runefall": [
+    "Runefall"
+  ],
+  "runeshaper_runelords_inscription": [
+    "Runelord's Inscription"
+  ],
+  "runeshaper_rune_castigation": [
+    "Rune of Castigation"
+  ],
+  "runshaper_impending_doom": [
+    "Rune of Impending Doom"
+  ],
+  "enchanting_material_23": [
+    "Rune of Inhibition"
+  ],
+  "runeshaper_rune_power": [
+    "Rune of Power"
+  ],
+  "generic_ability_016": [
+    "Rune of Return"
+  ],
+  "runshaper_rune_smiting": [
+    "Rune of Smiting"
+  ],
+  "runeshaper_rune_soul_binding": [
+    "Rune of Soul Binding"
+  ],
+  "runeshaper_rune_travail": [
+    "Rune of Travail"
+  ],
+  "runshaper_rune_prison": [
+    "Rune Prison"
+  ],
+  "runeshaper_runestrike": [
+    "Runestrike"
+  ],
+  "runshaper_rune_vessel": [
+    "Rune Vessel"
+  ],
+  "runshaper_seal_enchantment": [
+    "Seal of Enhancement"
+  ],
+  "runeshaper_seal_pain": [
+    "Seal of Pain"
+  ],
+  "impede1a": [
+    "Arcane Shot"
+  ],
+  "paladin-life_rapture": [
+    "Elemental Barrage"
+  ],
+  "warden-deluge": [
+    "Elemental Gifts"
+  ],
+  "enchant1": [
+    "Elemental Rupture"
+  ],
+  "power_chord": [
+    "Leyline Traversal"
+  ],
+  "dark_harbor": [
+    "Path of Lightning"
+  ],
+  "charge_shrapnel_1": [
+    "Path of Stone"
+  ],
+  "dirtytricks1a": [
+    "Paths Rewritten"
+  ],
+  "ranged_bow_020": [
+    "Ranged Weapon Mastery"
+  ],
+  "strafe": [
+    "Summoning Quiver"
+  ],
+  "casual_treatment": [
+    "Temporal Shot"
+  ],
+  "cabalist-binding_waters_a": [
+    "Winding Paths"
+  ],
+  "heavybleeding": [
+    "Bloodletting"
+  ],
+  "hamstring2": [
+    "Cornered Prey"
+  ],
+  "tempest_adrenalin_boost": [
+    "Font of Bloodlust"
+  ],
+  "escape_artist_01_b": [
+    "Hawk's Wrath"
+  ],
+  "provoke1": [
+    "Panther Claw"
+  ],
+  "baneful_touch_01_b": [
+    "Primal Sunder"
+  ],
+  "puncture1": [
+    "Scorpion Pierce"
+  ],
+  "poisontwo1": [
+    "Serpent Tooth"
+  ],
+  "skelf_bite": [
+    "Thresher's Maw"
+  ],
+  "spiritoftree1a": [
+    "Building Rage",
+    "Calm Down"
+  ],
+  "soul_paragon": [
+    "Gift of the Paragon"
+  ],
+  "paragon_way_of_the_river_01": [
+    "Way of the River"
+  ],
+  "criticalstrike1": [
+    "A Quick Death"
+  ],
+  "malicious_strike_01_a": [
+    "Arterial Strike"
+  ],
+  "censure_01": [
+    "Backhand"
+  ],
+  "triage1": [
+    "Battlefield Medic"
+  ],
+  "slam3a": [
+    "Breaking Blow"
+  ],
+  "strike_of_judgement_01": [
+    "Clear the Breach"
+  ],
+  "warlord_deadly_posture": [
+    "Deadly Posture"
+  ],
+  "smokeandmirrors1": [
+    "Defensive Maneuver"
+  ],
+  "warlord_defensive_posture2_b": [
+    "Defensive Posture"
+  ],
+  "riftstalker_planebound_aegis_b": [
+    "Defensive Surge"
+  ],
+  "rampage1": [
+    "Empowering Strike"
+  ],
+  "grim_blade_01": [
+    "Into the Breach"
+  ],
+  "paladin_lights_blessing_b": [
+    "Light's Blessing"
+  ],
+  "smite2": [
+    "Light's Hammer"
+  ]
+}

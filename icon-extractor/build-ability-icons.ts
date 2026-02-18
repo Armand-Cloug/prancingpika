@@ -1066,7 +1066,7 @@ export const ABILITY_ICON_RULES: AbilityIconRule[] = [
   { key: "tactician_curative_torrent_1", aliases: ["Émanation de Vie", "Emanate Life"] },
   { key: "tactician_devastative_augument", aliases: ["Combat à distance", "Battle Remote"] },
   { key: "tactician_devastative_augument_a", aliases: ["Odeur de sang", "Scent of Blood"] },
-  { key: "tactician_empyrean_bolt", aliases: ["Empyrean Bolt", "Trait empyréen"] },
+  { key: "tactician_empyrean_bolt", aliases: ["Empyrean Bolt"] },
   { key: "tactician_empyrean_engine", aliases: ["Machine empyréenne", "Empyrean Engine"] },
   { key: "tactician_empyrean_primer", aliases: ["Rayon empyréen", "Empyrean Ray"] },
   { key: "tactician_fortification_core", aliases: ["Noyau de Fortification", "Fortification Core"] },
@@ -1080,7 +1080,7 @@ export const ABILITY_ICON_RULES: AbilityIconRule[] = [
   { key: "tactician_necrotic_core_b", aliases: ["Fontis de frénésie", "Font of Frenzy"] },
   { key: "tactician_necrotic_engine", aliases: ["Moteur nécrotique"] },
   { key: "tactician_necrotic_primer", aliases: ["Rayon nécrotique", "Chute de courroux", "Wrathfall"] },
-  { key: "tactician_necrotic_torrent", aliases: ["Variation planaire", "Planar Variation", "Necrotic Torrent", "Torrent nécrotique"] },
+  { key: "tactician_necrotic_torrent", aliases: ["Variation planaire"] },
   { key: "tempest_adrenalin_boost", aliases: ["Fontis de soif de sang", "Font of Bloodlust"] },
   { key: "tempest_bounce_shot_a", aliases: ["Destruction en chaîne", "Déroute", "Confound", "Chain Destruction"] },
   { key: "tempest_brace", aliases: ["Recul libre", "Free Recoil"] },
@@ -1103,7 +1103,7 @@ export const ABILITY_ICON_RULES: AbilityIconRule[] = [
   { key: "tumble1", aliases: ["Chevauchée du vent", "Enfilade", "Ride the Wind", "Thread the Trees"] },
   { key: "tumble1a", aliases: ["Déformation de l'ombre", "Shadow Warp"] },
   { key: "tumble1b", aliases: ["Retrait", "Withdrawal"] },
-  { key: "twilight_force_01_b", aliases: ["Grâce à l'éther", "Force crépusculaire", "Twilight Force", "Through the Ether"] },
+  { key: "twilight_force_01_b", aliases: ["Grâce à l'éther", "Force crépusculaire"] },
   { key: "twin_strike", aliases: ["Attaques complémentaires", "Soleil levant", "Follow Up Attacks", "Rising Sun"] },
   { key: "twin_strike_a", aliases: ["Moisson", "Lame fiévreuse", "Reaping Harvest", "Blade Rush"] },
   { key: "underwaterbreath1a", aliases: ["Appel des profondeurs", "Flux étrangleur", "Call of the Depths", "Choking Flood"] },
@@ -1200,9 +1200,8 @@ export const ABILITY_ICON_RULES: AbilityIconRule[] = [
   { key: "whirlwind4", aliases: ["Élémentaire d'Air mineur", "Rancid Cleave"] },
   { key: "whirlwind4i", aliases: ["Derviche tourbillonnant", "Whirling Dervish"] },
   { key: "world_event_griffon_pet_01", aliases: ["Appel : Griffon", "Appel : Griffon majeur", "Call: Greater Griffon", "Call: Griffon"] },
-  { key: "auto_attack_1", aliases: ["Attaque auto.", "Auto Attack"] },
-  { key: "warlord-cracking_skulls_b", aliases: ["Action punitive", "Punishing Strike", "Coup sauvage"] },
-  { key: "spiritstrike4v2a", aliases: ["Tenebrean Equation", "Équation ténébréenne"] },
+  { key: "auto_attack_1", aliases: ["Attaque auto.", "Équation ténébréenne"] },
+  { key: "warlord-cracking_skulls_b", aliases: ["Action punitive"] },
 ];
 
 export function normalizeAbilityName(s: string) {

@@ -4,4 +4,6 @@
 /parser/__pycache__/
 /parser/encounters/__pycache__/
 /parser/.env
+/icon-extractor/icons32/
+/icon-extractor/har/
 auto-import.sh
