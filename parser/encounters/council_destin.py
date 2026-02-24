@@ -69,7 +69,13 @@ def _is_death_event(ev: Event) -> bool:
     if ev.code not in DEATH_CODES:
         return False
     raw = (ev.raw or "").casefold()
-    return ("est mort" in raw) or (" a tué " in raw) or (" a tue " in raw)
+    return (
+        ("est mort" in raw)
+        or (" a tué " in raw)
+        or (" a tue " in raw)
+        or (" has died" in raw)
+        or (" has slain " in raw)
+    )
 
 
 def _sec_to_ts(sec: int) -> str:

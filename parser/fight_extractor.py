@@ -10,7 +10,7 @@ from .types import Event, Fight
 from .bosses import build_phases_for_fight
 from .boss_match import match_boss_name, boss_involved
 
-DEATH_RE = re.compile(r"est\s+mort", re.IGNORECASE)        # "X est mort(e)."
+DEATH_RE = re.compile(r"(?:est\s+mort|has\s+died)", re.IGNORECASE)           # "X est mort(e)." / "X has died."
 KILL_RE = re.compile(r"(\ba\s+tu[ée]\b|\bhas\s+slain\b)", re.IGNORECASE)     # "A a tué B"
 
 # Uniquement des mots typiques de lignes de dégâts/soins (réduit fortement les faux positifs)
