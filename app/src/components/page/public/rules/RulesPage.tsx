@@ -4,6 +4,7 @@ import MainRules from "./RulesMainRules";
 import TopRules from "./TopRules";
 import AntiCheatCard from "./AntiCheatCard";
 import ModerationCard from "./Moderation";
+import DpsRules from "./DpsRules";
 
 export default function RulesPage() {
   return (
@@ -23,6 +24,7 @@ export default function RulesPage() {
           <div className="lg:col-span-2 space-y-6">
             <MainRules />
             <TopRules />
+            <DpsRules />
           </div>
 
           {/* Right: anti cheat + footer note */}
