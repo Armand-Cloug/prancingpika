@@ -75,7 +75,7 @@ jobs:
 
       - name: Sanity SSH (and sudo NOPASSWD)
         run: |
-          ssh -o StrictHostKeyChecking=accept-new -i -vvv ~/.ssh/id_ci \
+          ssh -vvv -o StrictHostKeyChecking=accept-new -i ~/.ssh/id_ci \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "echo OK && whoami && hostname && sudo -n true && echo SUDO_OK"
 
