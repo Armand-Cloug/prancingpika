@@ -272,6 +272,40 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      // Notify Discord bot API (best effort)
+      // BOT_URL example: http://bot:3001
+      const botUrl = process.env.BOT_URL;
+      let bot: unknown = null;
+
+      if (botUrl) {
+        try {
+          const r = await fetch(`${botUrl}/notify`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              event: "combatlog_uploaded",
+              guild: {
+                id: membership.guildId.toString(),
+                name: membership.guild.name,
+                tag: membership.guild.tag,
+              },
+              uploaderAccountId: account.id.toString(),
+              file: {
+                fileName: finalName,
+                fileSize,
+                relativePath: `combat.log/${finalName}`,
+              },
+              parser,
+              at: new Date().toISOString(),
+            }),
+          });
+
+          bot = await r.json().catch(() => ({ ok: false, error: "BAD_JSON" }));
+        } catch {
+          bot = { ok: false, error: "BOT_UNREACHABLE" };
+        }
+      }
+
       resolve(
         NextResponse.json({
           ok: true,
@@ -286,6 +320,7 @@ export async function POST(req: NextRequest) {
             path: `combat.log/${finalName}`, // relative for parser command
           },
           parser,
+          bot,
         })
       );
     });

@@ -173,7 +173,7 @@ export default function PlayerDpsDialog({
           <div className="rounded-t-lg bg-gradient-to-b from-violet-500/15 via-violet-500/5 to-transparent px-6 pt-6 pb-4">
             <DialogHeader>
               <DialogTitle className="text-base font-semibold pr-10">
-                Encounter: {header.boss} | Joueur: {header.who} | Phase boss: {header.phase} | Durée:{" "}
+                Encounter: {header.boss} | Player: {header.who} | Mob Type: {header.phase} | Timer:{" "}
                 {formatTime(header.dur)}
               </DialogTitle>
               <div className="mt-1 text-[12px] text-zinc-200/70">Run #{runId}</div>
@@ -206,7 +206,7 @@ export default function PlayerDpsDialog({
                   <thead className="bg-[#0b1220]/70 text-[11px] text-zinc-300/60 sticky top-0 z-10">
                     <tr className="border-b border-white/10">
                       <th className="py-2 pl-4 pr-3 text-left font-medium whitespace-nowrap min-w-[360px]">
-                        Compétence
+                        Abilitys
                       </th>
                       <th className={`${thNum} min-w-[170px]`}>Total</th>
                       <th className={`${thNum} min-w-[150px]`}>DPS</th>
@@ -215,7 +215,7 @@ export default function PlayerDpsDialog({
                       <th className={`${thNum} min-w-[90px]`}>Crit%</th>
                       <th className={`${thNum} min-w-[140px]`}>Min</th>
                       <th className={`${thNum} min-w-[140px]`}>Max</th>
-                      <th className={`${thNum} min-w-[140px]`}>Moy</th>
+                      <th className={`${thNum} min-w-[140px]`}>Avg</th>
                     </tr>
                   </thead>
 

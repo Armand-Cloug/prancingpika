@@ -49,12 +49,11 @@ services:
     environment:
       - PORT=3000
       - HOSTNAME=0.0.0.0
-
       # Upload logs -> shared volume
       - COMBATLOG_DIR=/data/combat.log
-
-      # Call parser service inside docker network
+      # Call parser & bot service inside docker network
       - PARSER_URL=http://parser:8080
+      - BOT_URL=http://bot:8081
     volumes:
       # tes uploads publics (images/etc)
       - uploads:/app/public/upload
@@ -93,43 +92,30 @@ services:
   parser:
     build:
       context: ./parser
-      dockerfile: Dockerfile   # ⚠️ corrige si ton fichier s’appelle bien "Dockerfile"
+      dockerfile: Dockerfile
     container_name: ptpika_parser
     restart: unless-stopped
-
-    # ✅ Option A : on garde uniquement les variables d'env (dont DATABASE_URL)
-    # Si ton .env racine contient DATABASE_URL, tu peux garder env_file.
     env_file:
       - .env
-
     environment:
       # code python
       PARSER_WORKDIR: /workspace
-
       # dossier partagé (volume) où Next dépose les fichiers
       COMBATLOG_DIR: /data/combat.log
-
       # timeout parsing
       PARSER_TIMEOUT_S: "600"
-
-      # DB en env (pas de PARSER_ENV_FILE)
+      # DB en env
       DATABASE_URL: ${DATABASE_URL}
-
     volumes:
       - combatlogs:/data/combat.log
-
     expose:
       - "8080"
-
     healthcheck:
-      # wget n’est pas toujours présent → curl est souvent plus sûr,
-      # mais garde wget si tu sais qu’il existe dans l'image.
       test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8080/health\").read()' >/dev/null 2>&1 || exit 1"]
       interval: 20s
       timeout: 3s
       retries: 10
       start_period: 10s
-
     networks:
       - internal
 
@@ -151,6 +137,25 @@ services:
       start_period: 60s
     volumes:
       - dbdata:/var/lib/mysql
+    networks:
+      - internal
+
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    container_name: ptpika_bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    expose:
+      - "8081"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8081/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     networks:
       - internal
 

@@ -7,3 +7,7 @@
 /icon-extractor/icons32/
 /icon-extractor/har/
 auto-import.sh
+/bot/.env
+
+### En DEV
+/bot/

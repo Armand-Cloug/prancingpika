@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Rift Tracker",
+  title: "PrancingPika - Rift Tracker",
   description: "Planes of Telara — combat logs, scores, leaderboards",
 
   icons: {

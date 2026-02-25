@@ -1,0 +1,277 @@
+name: Deploy PrancingPika (Preprod)
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch: {}
+
+concurrency:
+  group: preprod-deploy
+  cancel-in-progress: false
+
+env:
+  TARGET_BASE: /opt/prancingpika
+  TARGET_SRC: /opt/prancingpika/src
+  TARGET_DATA: /opt/prancingpika/data
+  COMPOSE_PROJECT: ptpika
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: Preprod
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Check required secrets
+        run: |
+          set -e
+          test -n "${SERVER_HOST}" || (echo "Missing SERVER_HOST" && exit 1)
+          test -n "${SERVER_USER}" || (echo "Missing SERVER_USER" && exit 1)
+          test -n "${SERVER_SSH_KEY}" || (echo "Missing SERVER_SSH_KEY" && exit 1)
+          test -n "${DB_ROOT_PASSWORD}" || (echo "Missing DB_ROOT_PASSWORD" && exit 1)
+          test -n "${DB_PASSWORD}" || (echo "Missing DB_PASSWORD" && exit 1)
+          test -n "${NEXTAUTH_SECRET}" || (echo "Missing NEXTAUTH_SECRET" && exit 1)
+          test -n "${GOOGLE_CLIENT_ID}" || (echo "Missing GOOGLE_CLIENT_ID" && exit 1)
+          test -n "${GOOGLE_CLIENT_SECRET}" || (echo "Missing GOOGLE_CLIENT_SECRET" && exit 1)
+          test -n "${DISCORD_CLIENT_ID}" || (echo "Missing DISCORD_CLIENT_ID" && exit 1)
+          test -n "${DISCORD_CLIENT_SECRET}" || (echo "Missing DISCORD_CLIENT_SECRET" && exit 1)
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          DB_ROOT_PASSWORD: ${{ secrets.DB_ROOT_PASSWORD }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
+          DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+
+      - name: Check required vars
+        run: |
+          set -e
+          test -n "${APP_DOMAIN}" || (echo "Missing vars.APP_DOMAIN" && exit 1)
+          test -n "${TRAEFIK_ACME_EMAIL}" || (echo "Missing vars.TRAEFIK_ACME_EMAIL" && exit 1)
+          test -n "${DB_USER}" || (echo "Missing vars.DB_USER" && exit 1)
+          test -n "${DB_NAME}" || (echo "Missing vars.DB_NAME" && exit 1)
+          test -n "${NEXTAUTH_URL}" || (echo "Missing vars.NEXTAUTH_URL" && exit 1)
+        env:
+          APP_DOMAIN: ${{ vars.APP_DOMAIN }}
+          TRAEFIK_ACME_EMAIL: ${{ vars.TRAEFIK_ACME_EMAIL }}
+          DB_USER: ${{ vars.DB_USER }}
+          DB_NAME: ${{ vars.DB_NAME }}
+          NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
+
+      - name: Write SSH key file (normalize)
+        run: |
+          set -e
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_ci
+          sed -i 's/\r$//' ~/.ssh/id_ci
+          chmod 600 ~/.ssh/id_ci
+          ssh-keygen -y -f ~/.ssh/id_ci > /dev/null
+
+      - name: Sanity SSH (and sudo NOPASSWD)
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/id_ci \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "echo OK && whoami && hostname && sudo -n true && echo SUDO_OK"
+
+      - name: Prepare target dir (/opt) (persist acme.json)
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -euo pipefail
+
+            BASE="${{ env.TARGET_BASE }}"
+            SRC="${{ env.TARGET_SRC }}"
+            DATA="${{ env.TARGET_DATA }}"
+
+            sudo -n mkdir -p "${SRC}" "${DATA}"
+            sudo -n chown -R "$USER":"$USER" "${BASE}" || true
+
+            if [ -f "${SRC}/traefik/acme.json" ]; then
+              mkdir -p "${DATA}/traefik"
+              cp "${SRC}/traefik/acme.json" "${DATA}/traefik/acme.json"
+              chmod 600 "${DATA}/traefik/acme.json" || true
+            fi
+
+            rm -rf "${SRC:?}/"* "${SRC}"/.[!.]* "${SRC}"/..?* || true
+
+            mkdir -p "${SRC}/traefik"
+            if [ -f "${DATA}/traefik/acme.json" ]; then
+              cp "${DATA}/traefik/acme.json" "${SRC}/traefik/acme.json"
+              chmod 600 "${SRC}/traefik/acme.json" || true
+            else
+              install -m 600 /dev/null "${SRC}/traefik/acme.json" || { touch "${SRC}/traefik/acme.json"; chmod 600 "${SRC}/traefik/acme.json"; }
+            fi
+
+      - name: Upload project to server (/opt/prancingpika/src)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "./*"
+          target: "${{ env.TARGET_SRC }}"
+          overwrite: true
+          timeout: 180s
+
+      - name: Provision & Deploy (compose up + migrations)
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -euo pipefail
+
+            SRC="${{ env.TARGET_SRC }}"
+            DATA="${{ env.TARGET_DATA }}"
+            PROJECT="${{ env.COMPOSE_PROJECT }}"
+
+            cd "${SRC}"
+
+            echo "[1/10] Ensure shared networks exist (proxy/internal)"
+            sudo -n docker network create proxy >/dev/null 2>&1 || true
+            sudo -n docker network create internal >/dev/null 2>&1 || true
+
+            echo "[2/10] Ensure Traefik ACME is persistent"
+            sudo -n mkdir -p "${DATA}/traefik"
+            if [ ! -f "${DATA}/traefik/acme.json" ]; then
+              sudo -n install -m 600 /dev/null "${DATA}/traefik/acme.json" || true
+            fi
+            sudo -n chmod 600 "${DATA}/traefik/acme.json" || true
+
+            mkdir -p traefik
+            cp "${DATA}/traefik/acme.json" traefik/acme.json
+            chmod 600 traefik/acme.json || true
+
+            echo "[3/10] Write .env (single source of truth)"
+            rm -f .env
+
+            # Preprod domain (new var; fallback to hardcoded)
+            APP_DOMAIN="${{ vars.PREPROD_APP_DOMAIN }}"
+            if [ -z "${APP_DOMAIN}" ]; then
+              APP_DOMAIN="preprod.prancingpika.cloug.fr"
+            fi
+
+            TRAEFIK_ACME_EMAIL="${{ vars.TRAEFIK_ACME_EMAIL }}"
+
+            DB_USER="${{ vars.DB_USER }}"
+            DB_NAME="${{ vars.DB_NAME }}"
+            DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            DB_ROOT_PASSWORD="${{ secrets.DB_ROOT_PASSWORD }}"
+
+            # Preprod NextAuth URL (new var; fallback derived from APP_DOMAIN)
+            NEXTAUTH_URL="${{ vars.PREPROD_NEXTAUTH_URL }}"
+            if [ -z "${NEXTAUTH_URL}" ]; then
+              NEXTAUTH_URL="https://${APP_DOMAIN}"
+            fi
+            NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}"
+
+            GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
+            GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
+            DISCORD_CLIENT_ID="${{ secrets.DISCORD_CLIENT_ID }}"
+            DISCORD_CLIENT_SECRET="${{ secrets.DISCORD_CLIENT_SECRET }}"
+
+            [ -n "$DB_USER" ] || { echo "Missing vars.DB_USER"; exit 1; }
+            [ -n "$DB_NAME" ] || { echo "Missing vars.DB_NAME"; exit 1; }
+            [ -n "$DB_PASSWORD" ] || { echo "Missing secrets.DB_PASSWORD"; exit 1; }
+            [ -n "$DB_ROOT_PASSWORD" ] || { echo "Missing secrets.DB_ROOT_PASSWORD"; exit 1; }
+
+            DATABASE_URL="mysql://${DB_USER}:${DB_PASSWORD}@db:3306/${DB_NAME}"
+
+            cat > .env <<EOF
+            ############################################################
+            # Traefik / Domain
+            ############################################################
+            APP_DOMAIN=${APP_DOMAIN}
+            TRAEFIK_ACME_EMAIL=${TRAEFIK_ACME_EMAIL}
+
+            ############################################################
+            # Database (MariaDB container)
+            ############################################################
+            DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+            DB_PASSWORD=${DB_PASSWORD}
+            MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+            MARIADB_PASSWORD=${DB_PASSWORD}
+            MARIADB_USER=${DB_USER}
+            MARIADB_DATABASE=${DB_NAME}
+
+            ############################################################
+            # Prisma / App / Parser
+            ############################################################
+            DATABASE_URL=${DATABASE_URL}
+
+            ############################################################
+            # Auth (NextAuth)
+            ############################################################
+            NEXTAUTH_URL=${NEXTAUTH_URL}
+            NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+            NEXTAUTH_TRUST_HOST=true
+            AUTH_TRUST_HOST=true
+
+            GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+            GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+
+            DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+            DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+
+            ############################################################
+            # App runtime
+            ############################################################
+            COMBATLOG_DIR=/data/combat.log
+            PARSER_URL=http://parser:8080
+            PARSER_WORKDIR=/workspace
+            PARSER_TIMEOUT_S=600
+            EOF
+
+            echo "[4/10] Stop previous stack"
+            sudo -n docker compose -p "$PROJECT" down --remove-orphans || true
+            sudo -n docker rm -f ptpika_traefik ptppika_mariadb ptpika_parser ptpika_web >/dev/null 2>&1 || true
+
+            echo "[5/10] Start base services (traefik + db)"
+            sudo -n docker compose -p "$PROJECT" up -d traefik db
+
+            echo "[6/10] Wait MariaDB healthy (container_name: ptppika_mariadb)"
+            for i in {1..90}; do
+              state=$(sudo -n docker inspect --format='{{json .State.Health.Status}}' ptppika_mariadb 2>/dev/null || echo "null")
+              echo "Health db: $state"
+              [ "$state" = "\"healthy\"" ] && break
+              sleep 2
+            done
+            state=$(sudo -n docker inspect --format='{{json .State.Health.Status}}' ptppika_mariadb 2>/dev/null || echo "null")
+            [ "$state" = "\"healthy\"" ] || { echo "DB never became healthy"; sudo -n docker logs --tail=200 ptppika_mariadb || true; exit 1; }
+
+            echo "[7/10] Ensure DB user/db exist (idempotent)"
+            sudo -n docker exec -i ptppika_mariadb mariadb -uroot -p"${DB_ROOT_PASSWORD}" <<SQL
+            CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;
+            CREATE USER IF NOT EXISTS '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
+            ALTER USER '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
+            GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'%';
+            FLUSH PRIVILEGES;
+            SQL
+
+            echo "[8/10] Build web + parser images"
+            sudo -n docker compose -p "$PROJECT" build web parser
+
+            echo "[9/10] Prisma migrate deploy"
+            sudo -n docker compose -p "$PROJECT" --env-file .env run --rm web npx prisma migrate deploy
+
+            echo "[10/10] Start web + parser"
+            sudo -n docker compose -p "$PROJECT" up -d web parser
+
+            echo "Containers:"
+            sudo -n docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+
+            echo "Persist ACME back to DATA (best effort)"
+            if [ -f "traefik/acme.json" ]; then
+              sudo -n cp "traefik/acme.json" "${DATA}/traefik/acme.json" || true
+              sudo -n chmod 600 "${DATA}/traefik/acme.json" || true
+            fi
