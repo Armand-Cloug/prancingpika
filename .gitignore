@@ -8,3 +8,4 @@
 /icon-extractor/har/
 auto-import.sh
 /bot/.env
+/bot/node_modules/
