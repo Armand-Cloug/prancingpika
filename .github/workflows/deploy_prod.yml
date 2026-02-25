@@ -1,4 +1,4 @@
-name: Deploy PrancingPika
+name: Deploy PrancingPika (Prod)
 
 on:
   push:
