@@ -93,8 +93,11 @@ jobs:
             DATA="${{ env.TARGET_DATA }}"
 
             sudo -n mkdir -p "${SRC}" "${DATA}"
-            sudo -n chown -R "$USER":"$USER" "${BASE}" || true
 
+            # IMPORTANT: comme la prod, tout /opt/prancingpika appartient à l'user deploy
+            sudo -n chown -R "$USER":"$USER" "${BASE}"
+
+            # Sauvegarde ACME si présent
             if [ -f "${SRC}/traefik/acme.json" ]; then
               mkdir -p "${DATA}/traefik"
               cp "${SRC}/traefik/acme.json" "${DATA}/traefik/acme.json"
