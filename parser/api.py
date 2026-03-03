@@ -10,6 +10,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from parser.format_log import convert_file as format_log_file
 from parser.translate import translate_log_file
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
@@ -96,8 +97,12 @@ def parse(req: ParseReq):
                 detail="DATABASE_URL is missing in environment (Option A requires it).",
             )
 
-        # Traduction EN -> FR avant parsing
-        translated_path = translate_log_file(file_path)
+        # 1) Normaliser le format de log (format détaillé -> format classique)
+        formatted_path = format_log_file(file_path)
+
+        # 2) Traduction EN -> FR avant parsing (sur le fichier formaté)
+        translated_path = translate_log_file(formatted_path)
+
         logfile_arg = str(translated_path)
 
         cmd = [
@@ -139,8 +144,10 @@ def parse(req: ParseReq):
             "code": p.returncode,
             "workdir": str(WORKDIR),
             "combat_dir": str(COMBAT_DIR),
-            "logfile": logfile_arg,
             "fileName": file_name,
+            "formatted_logfile": str(formatted_path),
+            "translated_logfile": str(translated_path),
+            "logfile": logfile_arg,
             "env_file_used": env_file_used,
             "import": {"guildId": guild_id, "uploaderId": uploader_id, "date": date_str},
             "stdout_tail": stdout_tail,
