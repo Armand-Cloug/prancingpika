@@ -1,5 +1,6 @@
 /.venv/
 /combat.log/
+/logs/
 /parser/meter/__pycache__/
 /parser/__pycache__/
 /parser/encounters/__pycache__/
@@ -9,3 +10,6 @@
 auto-import.sh
 /bot/.env
 /bot/node_modules/
+/rust/.env
+/bot/.env
+/app/.env

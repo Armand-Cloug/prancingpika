@@ -90,35 +90,7 @@ services:
       - internal
 
   parser:
-    build:
-      context: ./parser
-      dockerfile: Dockerfile
-    container_name: ptpika_parser
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      # code python
-      PARSER_WORKDIR: /workspace
-      # dossier partagé (volume) où Next dépose les fichiers
-      COMBATLOG_DIR: /data/combat.log
-      # timeout parsing
-      PARSER_TIMEOUT_S: "600"
-      # DB en env
-      DATABASE_URL: ${DATABASE_URL}
-    volumes:
-      - combatlogs:/data/combat.log
-    expose:
-      - "8080"
-    healthcheck:
-      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8080/health\").read()' >/dev/null 2>&1 || exit 1"]
-      interval: 20s
-      timeout: 3s
-      retries: 10
-      start_period: 10s
-    networks:
-      - internal
-
+    # Rust Docker conf to in future
 
   db:
     image: mariadb:11.4
