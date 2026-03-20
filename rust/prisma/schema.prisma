@@ -84,6 +84,7 @@ model Player {
 
   runPlayers         RunPlayer[]
   runDeaths          RunDeath[]
+  runPlayerAbilities RunPlayerAbility[]
 
   @@map("players")
 }

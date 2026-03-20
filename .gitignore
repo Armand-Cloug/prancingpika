@@ -13,3 +13,5 @@ auto-import.sh
 /rust/.env
 /bot/.env
 /app/.env
+/target/
+/rust/target/

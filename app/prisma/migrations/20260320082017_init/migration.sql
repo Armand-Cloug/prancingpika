@@ -1,9 +1,33 @@
 -- CreateTable
+CREATE TABLE `instances` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(128) NOT NULL,
+    `shortName` VARCHAR(32) NULL,
+
+    UNIQUE INDEX `instances_name_key`(`name`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `bosses` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(128) NOT NULL,
+    `displayName` VARCHAR(128) NULL,
+    `instanceId` BIGINT NULL,
 
     UNIQUE INDEX `bosses_name_key`(`name`),
+    INDEX `bosses_instanceId_idx`(`instanceId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `abilities` (
+    `id` BIGINT NOT NULL,
+    `name` VARCHAR(128) NOT NULL,
+    `damageType` VARCHAR(32) NULL,
+    `firstSeenAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    INDEX `abilities_name_idx`(`name`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -81,8 +105,10 @@ CREATE TABLE `runs` (
     `bossDurationS` INTEGER NULL,
     `totalDamage` BIGINT NOT NULL,
     `totalHealing` BIGINT NOT NULL,
+    `totalAbsorbed` BIGINT NOT NULL DEFAULT 0,
     `dpsGroup` DOUBLE NOT NULL,
     `hpsGroup` DOUBLE NOT NULL,
+    `apsGroup` DOUBLE NOT NULL DEFAULT 0,
     `logFile` VARCHAR(255) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
@@ -90,8 +116,8 @@ CREATE TABLE `runs` (
     INDEX `runs_groupId_idx`(`groupId`),
     INDEX `runs_guildId_idx`(`guildId`),
     INDEX `runs_uploaderId_idx`(`uploaderId`),
-    INDEX `runs_bossId_groupId_durationTotalS_idx`(`bossId`, `groupId`, `durationTotalS`),
     INDEX `runs_bossId_durationTotalS_idx`(`bossId`, `durationTotalS`),
+    INDEX `runs_bossId_groupId_durationTotalS_idx`(`bossId`, `groupId`, `durationTotalS`),
     INDEX `runs_guildId_bossId_durationTotalS_idx`(`guildId`, `bossId`, `durationTotalS`),
     INDEX `runs_uploaderId_createdAt_idx`(`uploaderId`, `createdAt`),
     PRIMARY KEY (`id`)
@@ -103,14 +129,75 @@ CREATE TABLE `run_players` (
     `playerId` BIGINT NOT NULL,
     `damage` BIGINT NOT NULL,
     `healing` BIGINT NOT NULL,
+    `absorbed` BIGINT NOT NULL DEFAULT 0,
+    `overheal` BIGINT NOT NULL DEFAULT 0,
+    `blocked` BIGINT NOT NULL DEFAULT 0,
     `dps` DOUBLE NOT NULL,
     `hps` DOUBLE NOT NULL,
+    `aps` DOUBLE NOT NULL DEFAULT 0,
+    `role` VARCHAR(32) NULL,
 
     INDEX `run_players_playerId_idx`(`playerId`),
     INDEX `run_players_runId_dps_idx`(`runId`, `dps`),
     INDEX `run_players_runId_hps_idx`(`runId`, `hps`),
+    INDEX `run_players_runId_aps_idx`(`runId`, `aps`),
     PRIMARY KEY (`runId`, `playerId`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `run_player_abilities` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `runId` BIGINT NOT NULL,
+    `playerId` BIGINT NOT NULL,
+    `kind` ENUM('DAMAGE', 'HEAL', 'ABSORB') NOT NULL DEFAULT 'DAMAGE',
+    `abilityId` BIGINT NOT NULL,
+    `abilityName` VARCHAR(128) NOT NULL,
+    `total` BIGINT NOT NULL,
+    `hits` INTEGER NOT NULL,
+    `critRate` DOUBLE NOT NULL,
+    `minHit` INTEGER NOT NULL,
+    `maxHit` INTEGER NOT NULL,
+    `avgHit` DOUBLE NOT NULL,
+    `rate` DOUBLE NOT NULL,
+    `pct` DOUBLE NOT NULL,
+    `absorbed` BIGINT NOT NULL DEFAULT 0,
+
+    INDEX `run_player_abilities_runId_playerId_idx`(`runId`, `playerId`),
+    INDEX `run_player_abilities_runId_kind_idx`(`runId`, `kind`),
+    INDEX `run_player_abilities_abilityId_idx`(`abilityId`),
+    UNIQUE INDEX `run_player_abilities_runId_playerId_kind_abilityId_key`(`runId`, `playerId`, `kind`, `abilityId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `run_deaths` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `runId` BIGINT NOT NULL,
+    `playerId` BIGINT NOT NULL,
+    `deathCount` INTEGER NOT NULL,
+    `firstDeathSec` INTEGER NULL,
+    `lastDeathSec` INTEGER NULL,
+
+    INDEX `run_deaths_runId_idx`(`runId`),
+    UNIQUE INDEX `run_deaths_runId_playerId_key`(`runId`, `playerId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `run_buffs` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `runId` BIGINT NOT NULL,
+    `buffName` VARCHAR(128) NOT NULL,
+    `totalUptimeSec` INTEGER NOT NULL,
+    `uptimePct` DOUBLE NOT NULL,
+    `sourcePlayer` VARCHAR(128) NULL,
+
+    INDEX `run_buffs_runId_idx`(`runId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `bosses` ADD CONSTRAINT `bosses_instanceId_fkey` FOREIGN KEY (`instanceId`) REFERENCES `instances`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `guild_members` ADD CONSTRAINT `guild_members_guildId_fkey` FOREIGN KEY (`guildId`) REFERENCES `guilds`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -135,3 +222,18 @@ ALTER TABLE `run_players` ADD CONSTRAINT `run_players_runId_fkey` FOREIGN KEY (`
 
 -- AddForeignKey
 ALTER TABLE `run_players` ADD CONSTRAINT `run_players_playerId_fkey` FOREIGN KEY (`playerId`) REFERENCES `players`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `run_player_abilities` ADD CONSTRAINT `run_player_abilities_abilityId_fkey` FOREIGN KEY (`abilityId`) REFERENCES `abilities`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `run_player_abilities` ADD CONSTRAINT `run_player_abilities_runId_playerId_fkey` FOREIGN KEY (`runId`, `playerId`) REFERENCES `run_players`(`runId`, `playerId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `run_deaths` ADD CONSTRAINT `run_deaths_runId_fkey` FOREIGN KEY (`runId`) REFERENCES `runs`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `run_deaths` ADD CONSTRAINT `run_deaths_playerId_fkey` FOREIGN KEY (`playerId`) REFERENCES `players`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `run_buffs` ADD CONSTRAINT `run_buffs_runId_fkey` FOREIGN KEY (`runId`) REFERENCES `runs`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
