@@ -2,7 +2,7 @@
 import { getLastUploads } from "@/lib/last-uploads";
 import UploadRunRow from "@/components/page/public/last-uploads/UploadRunRow";
 
-export const revalidate = 30;
+export const dynamic = "force-dynamic";
 
 export default async function LastUploadsPage() {
   const runs = await getLastUploads(20);

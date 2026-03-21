@@ -2,7 +2,7 @@
 import RaidSection    from "@/components/page/public/leaderboards/RaidSection";
 import { getLeaderboards } from "@/lib/leaderboards";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export default async function LeaderboardsPage() {
   const raids = await getLeaderboards();

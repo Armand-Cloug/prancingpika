@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import TopPlayersClient from "@/components/page/public/top-players/TopPlayersClient";
 import { RAIDS } from "@/lib/leaderboards";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 const BOSS_DB_ALIASES: Record<string, string[]> = {
   "Vindicator MK1":        ["Vengeur I", "Vergelter Ausf. 1", "Vindicator", "Vengeur", "Vergelter"],
