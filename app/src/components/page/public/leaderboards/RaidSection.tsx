@@ -29,7 +29,7 @@ export default function RaidSection({ data }: { data: RaidLeaderboard }) {
               {boss.bossName}
             </p>
 
-            <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1.6fr 1.6fr" }}>
+            <div className="grid gap-4" style={{ gridTemplateColumns: "1.3fr 1.5fr 1.5fr" }}>
               {/* Fastest kills */}
               <div>
                 <BossFastestTable bossName={boss.bossName} rows={boss.fastest} />

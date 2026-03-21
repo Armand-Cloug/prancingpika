@@ -43,8 +43,8 @@ export default function BossFastestTable({
           <table className="w-full table-fixed text-[11.5px]">
             <colgroup>
               <col />
-              <col className="w-[110px]" />
-              <col className={hasBossTime ? "w-[130px]" : "w-[72px]"} />
+              <col className="w-[84px]" />
+              <col className={hasBossTime ? "w-[108px]" : "w-[60px]"} />
             </colgroup>
             <thead>
               <tr className="border-b border-white/[0.07] bg-black/20">
@@ -84,9 +84,6 @@ export default function BossFastestTable({
                                 <span className="text-sky-300/90 hover:text-sky-200 hover:underline truncate">
                                   {name}
                                 </span>
-                                {tag && (
-                                  <span className="text-zinc-600 text-[10px]">[{tag}]</span>
-                                )}
                               </span>
                             </button>
                           }
