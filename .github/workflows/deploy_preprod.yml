@@ -307,7 +307,11 @@ jobs:
             sudo -n docker compose -p "$PROJECT" up -d web parser bot
 
             echo "[12/12] Fix volume permissions (combatlogs ACL)"
-            bash "${SRC}/fix_deploy.sh"
+            if [ -f "${SRC}/fix_deploy.sh" ]; then
+              bash "${SRC}/fix_deploy.sh"
+            else
+              echo "fix_deploy.sh not found at ${SRC}, skipping ACL setup"
+            fi
 
             echo "Containers:"
             sudo -n docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
