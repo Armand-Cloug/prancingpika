@@ -288,13 +288,15 @@ jobs:
             sudo -n docker compose -p "$PROJECT" build web parser bot
 
             echo "[10/12] Prisma migrate deploy"
-            # Si _prisma_migrations n'existe pas (DB pré-existante sans Prisma),
-            # on baseline l'init pour éviter "Table already exists".
-            HAS_MIG=$(sudo -n docker exec ptppika_mariadb mariadb -uroot -p"${DB_ROOT_PASSWORD}" \
-              -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${DB_NAME}' AND table_name='_prisma_migrations';" \
+            # Vérifie si la migration init est déjà enregistrée comme appliquée.
+            # La table peut exister sans que la migration y soit inscrite (DB pré-existante),
+            # auquel cas Prisma tenterait de recréer les tables → erreur "already exists".
+            IS_BASELINED=$(sudo -n docker exec ptppika_mariadb mariadb -uroot -p"${DB_ROOT_PASSWORD}" \
+              "${DB_NAME}" \
+              -e "SELECT COUNT(*) FROM _prisma_migrations WHERE migration_name='20260320082017_init' AND finished_at IS NOT NULL;" \
               --skip-column-names 2>/dev/null | tr -d '[:space:]' || echo "0")
-            echo "Has _prisma_migrations table: ${HAS_MIG}"
-            if [ "${HAS_MIG}" = "0" ]; then
+            echo "Migration init already recorded: ${IS_BASELINED}"
+            if [ "${IS_BASELINED}" != "1" ]; then
               echo "Baseline: marquage de l'init comme déjà appliqué (DB existante)"
               sudo -n docker compose -p "$PROJECT" --env-file .env run --rm web \
                 npx prisma migrate resolve --applied 20260320082017_init
