@@ -1,6 +1,18 @@
 // src/lib/top-players.ts
 import { prisma } from "@/lib/prisma";
 
+// Same alias map as leaderboards.ts — covers FR/DE log names stored in older DB imports
+const BOSS_DB_ALIASES: Record<string, string[]> = {
+  "Vindicator MK1":      ["Vengeur I", "Vergelter Ausf. 1", "Vindicator", "Vengeur", "Vergelter"],
+  "Commandant Isiel":    ["Commander Isiel", "Kommandant Isiel"],
+  "Grand-Prêtre Arakhurn": ["Grand-prêtre Arakhurn", "High Priest Arakhurn"],
+  "Général Silgen":      ["General Silgen", "Général Silgen (Intrepid)"],
+};
+
+function bossNameVariants(name: string): string[] {
+  return [name, ...(BOSS_DB_ALIASES[name] ?? [])];
+}
+
 export type CallingKey = "rogue" | "cleric" | "warrior" | "primalist" | "mage";
 
 export type TopPlayerRow = {
@@ -41,7 +53,7 @@ async function topForClass(bossName: string, key: CallingKey): Promise<TopPlayer
 
   const rows = await prisma.runPlayer.findMany({
     where: {
-      run: { boss: { name: bossName } },
+      run: { boss: { name: { in: bossNameVariants(bossName) } } },
       player: {
         // simpler + faster than OR list
         class: { in: variants },

@@ -22,9 +22,9 @@ type GroupDpsResponse = {
     player: string;
     playerClass: string | null;
 
-    // ✅ roles (comme leaderboards / last-uploads)
-    role: Role; // category for colors
-    roleLabel: string; // raw label from DB normalized for display
+    role: Role;
+    roleLabel: string;
+    spec: string | null;
 
     dps: number;
     hps: number;
@@ -63,6 +63,7 @@ export async function GET(req: Request) {
           dps: true,
           hps: true,
           role: true,
+          spec: true,
           player: { select: { name: true, class: true } },
         },
       },
@@ -83,6 +84,7 @@ export async function GET(req: Request) {
 
       roleLabel: normalizeRoleLabel(p.role),
       role: roleCategoryFromDbOrInfer(p.role, dps, hps),
+      spec: p.spec ?? null,
 
       dps,
       hps,

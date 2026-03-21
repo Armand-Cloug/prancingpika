@@ -27,7 +27,7 @@ type ApiResult<T> = Result<Json<T>, (StatusCode, Json<ApiError>)>;
 
 fn db_err(e: impl std::fmt::Display) -> (StatusCode, Json<ApiError>) {
     eprintln!("[api] DB error: {}", e);
-    (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiError::new(e.to_string())))
+    (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiError::new("Internal server error")))
 }
 
 fn bad_req(msg: impl Into<String>) -> (StatusCode, Json<ApiError>) {
@@ -47,7 +47,11 @@ pub async fn upload_log(
     let content = String::from_utf8_lossy(&body).to_string();
 
     // Écrire dans un fichier temporaire pour réutiliser import_log_file
-    let tmp_path = std::env::temp_dir().join(format!("pika_upload_{}.log", q.guild_id));
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    let tmp_path = std::env::temp_dir().join(format!("pika_upload_{}_{}.log", q.guild_id, nonce));
     std::fs::write(&tmp_path, &content).map_err(|e| db_err(e))?;
 
     let base_date = match &q.date {
@@ -485,6 +489,61 @@ pub async fn top_players(
     .map_err(db_err)?;
 
     Ok(Json(rows))
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /parse
+// Appelé par le frontend après sauvegarde du fichier sur le volume partagé.
+// Body JSON : { fileName, guildId, uploaderAccountId }
+// ─────────────────────────────────────────────────────────────────────────────
+pub async fn parse_file(
+    State(pool): State<AppState>,
+    Json(req)  : Json<ParseRequest>,
+) -> ApiResult<UploadResponse> {
+    let guild_id: i64 = req.guild_id.parse()
+        .map_err(|_| bad_req("guildId invalide"))?;
+    let uploader_id: i64 = req.uploader_account_id.parse()
+        .map_err(|_| bad_req("uploaderAccountId invalide"))?;
+
+    // Protection path traversal : on ne garde que le nom de fichier, sans répertoire.
+    let file_name = std::path::Path::new(&req.file_name)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .ok_or_else(|| bad_req("fileName invalide"))?
+        .to_string();
+
+    let base_dir = std::env::var("COMBATLOG_DIR")
+        .unwrap_or_else(|_| "/data/combat.log".to_string());
+
+    let file_path = std::path::Path::new(&base_dir).join(&file_name);
+
+    if !file_path.exists() {
+        return Err(bad_req(format!("Fichier introuvable sur le volume: {}", file_name)));
+    }
+
+    let opts = ImportOptions {
+        base_date     : chrono::Local::now().date_naive(),
+        guild_id,
+        uploader_id,
+        dry_run       : false,
+        with_abilities: true,
+        group_label   : None,
+    };
+
+    let result = import_log_file(&pool, &file_path, &opts)
+        .await
+        .map_err(|e| db_err(e))?;
+
+    Ok(Json(UploadResponse {
+        ok              : true,
+        fights_detected : result.fights_detected,
+        runs_inserted   : result.runs_inserted,
+        runs_skipped    : result.runs_skipped,
+        message         : format!(
+            "{} fight(s) détecté(s), {} importé(s), {} ignoré(s)",
+            result.fights_detected, result.runs_inserted, result.runs_skipped
+        ),
+    }))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

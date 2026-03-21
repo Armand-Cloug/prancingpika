@@ -223,6 +223,7 @@ model RunPlayer {
   aps Float @default(0)         // NOUVEAU
 
   role String? @db.VarChar(32)  // "DPS", "Healer", "Tank", "Support"
+  spec String? @db.VarChar(64)  // Spec détectée, ex: "Spitfire", "Inquisitor"
 
   run    Run    @relation(fields: [runId],    references: [id], onDelete: Cascade)
   player Player @relation(fields: [playerId], references: [id], onDelete: Restrict)

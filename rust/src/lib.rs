@@ -11,3 +11,4 @@ pub mod segments;
 pub mod output;
 pub mod db;
 pub mod api;
+pub mod player_spec;

@@ -1,256 +1,301 @@
 // src/player_role.rs
 //
-// Détection de rôle (DPS / Healer / Tank / Support / Unknown).
-// Approche PrancingPika (meilleure que PT) :
-//   1. Collecter tous les ability_names utilisés par le joueur dans la fenêtre
-//   2. Les mapper vers des "spell keys" normalisés
-//   3. Matcher les ensembles de keys contre ROLE_COMBOS (exact puis subset)
-//   4. ROLE_PRIORITY pour les égalités
+// Détection de RÔLE (DPS / Healer / Tank / Support) et de SPEC (BBQ, SpitFire, …).
+// Basé sur les spell definitions du parser Python (cleric/mage/prima/rogue/war.py + role.py).
+// Philosophie : ability_name → spell_key → combo → (spec, role)
 
 use std::collections::{HashMap, HashSet};
 use once_cell::sync::Lazy;
-
 use crate::types::{ActionCode, CombatEvent};
 
 pub const DEFAULT_ROLE: &str = "Unknown";
+pub const DEFAULT_SPEC: Option<&str> = None;
 
-/// Codes d'action observables pour la détection de rôle
-const ROLE_ACTION_CODES: &[ActionCode] = &[
-    ActionCode::CastStart,
-    ActionCode::NormalDamage, ActionCode::DotDamage, ActionCode::DamageCrit, ActionCode::Block,
-    ActionCode::HealNonCrit, ActionCode::HealCrit,
-    ActionCode::BuffGain, ActionCode::BuffFade,
-    ActionCode::DebuffAfflicted,
-    ActionCode::Absorb, ActionCode::AbsorbCrit,
-];
-
-fn norm(s: &str) -> String {
-    s.trim().to_lowercase()
+#[derive(Debug, Clone)]
+pub struct RoleSpec {
+    pub role: String,
+    pub spec: Option<String>,
 }
 
+impl Default for RoleSpec {
+    fn default() -> Self {
+        Self { role: DEFAULT_ROLE.to_string(), spec: None }
+    }
+}
+
+const ROLE_ACTION_CODES: &[ActionCode] = &[
+    ActionCode::CastStart,
+    ActionCode::NormalDamage, ActionCode::DotDamage,
+    ActionCode::DamageCrit,  ActionCode::Block,
+    ActionCode::HealNonCrit, ActionCode::HealCrit,
+    ActionCode::BuffGain,    ActionCode::BuffFade,
+    ActionCode::DebuffAfflicted,
+    ActionCode::Absorb,      ActionCode::AbsorbCrit,
+];
+
+fn norm(s: &str) -> String { s.trim().to_lowercase() }
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Mapping ability_name → spell_key
+// SPELL_KEYS : ability_name (FR + EN) → clé interne
+// Source : rogue.py / war.py / prima.py / mage.py / cleric.py
 // ─────────────────────────────────────────────────────────────────────────────
-// Convention : clé courte en MAJUSCULES = identifiant de spell pour les combos
 static SPELL_KEYS: Lazy<HashMap<String, &'static str>> = Lazy::new(|| {
     let entries: &[(&str, &str)] = &[
-        // ── Support Mage (Archon) ─────────────────────────────────────────
-        ("granite salvo",           "ARCH_GRAN"),
-        ("burning purpose",         "ARCH_BURN"),
-        ("crumbling resistance",    "ARCH_CRUMB"),
-        ("rock slide",              "ARCH_ROCK"),
 
-        // ── Support Cleric (Oracle) ───────────────────────────────────────
-        ("glacial insignia",        "ORAC_GLAC"),
-        ("wasting insignia",        "ORAC_WAST"),
-        ("shared excess",           "ORAC_SHAR"),
-        ("excès partagé",           "ORAC_SHAR"),
+        // ── ROGUE (rogue.py) ──────────────────────────────────────────────────
+        ("tir instantané",        "RFS"),   // Rapid Fire Shot
+        ("rapid fire shot",       "RFS"),
+        ("tir calculé",           "CS"),    // Calculated Shot
+        ("calculated shot",       "CS"),
+        ("frappe crépusculaire",  "DS"),    // Dusk Strike
+        ("dusk strike",           "DS"),
+        ("poison virulent",       "VIR"),   // Virulent Poison
+        ("virulent poison",       "VIR"),
+        ("trait empyréen",        "EB"),    // Empyrean Bolt
+        ("empyrean bolt",         "EB"),
+        ("force crépusculaire",   "TF"),    // Twilight Force
+        ("twilight force",        "TF"),
+        ("attaque de factionnaire","AF"),   // Sentry Battery
+        ("sentry battery",        "AF"),
+        ("cadence",               "CAD"),
+        ("frappe brûlante",       "BS"),    // Blazing Strike
+        ("blazing strike",        "BS"),
+        ("accord de puissance",   "AP"),    // Power Chord
+        ("power chord",           "AP"),
+        ("instigation",           "R_TAUNT"),
+        ("instigate",             "R_TAUNT"),
 
-        // ── Support Rogue (Bard) ──────────────────────────────────────────
-        ("coda of wrath",           "BARD_CODA"),
-        ("power chord",             "BARD_CHORD"),
-        ("anthem of competence",    "BARD_ANT_COMP"),
-        ("anthem of defiance",      "BARD_ANT_DEF"),
-        ("verse of agony",          "BARD_VERSE"),
+        // ── WARRIOR (war.py) ──────────────────────────────────────────────────
+        ("explosion de faille",   "RB"),    // Rift Burst
+        ("rift burst",            "RB"),
+        ("explosion polaire",     "IB"),    // Icy Burst
+        ("icy burst",             "IB"),
+        ("maladie de l'âme",      "SD"),    // Soul Sickness
+        ("soul sickness",         "SD"),
+        ("gardez la tête haute !", "ST"),   // Stand Tall!
+        ("stand tall!",           "ST"),
+        ("secousse",              "JT"),    // Jolt
+        ("jolt",                  "JT"),
+        ("réaction positive",     "PR"),    // Positive Reaction
+        ("positive reaction",     "PR"),
+        ("frères d'armes",        "LINK"),  // Brothers in Arms
+        ("brothers in arms",      "LINK"),
+        ("chant de guerre",       "BSO"),   // Battlesong
+        ("battlesong",            "BSO"),
+        ("voie du vent",          "WW"),    // Way of the Wind
+        ("way of the wind",       "WW"),
+        ("impulsion chargée",     "CP"),    // Charged Pulse
+        ("charged pulse",         "CP"),
+        ("charged pulsex",        "CP"),    // typo dans war.py
+        ("une mort rapide",       "AQD"),   // A Quick Death
+        ("a quick death",         "AQD"),
+        ("courant viral",         "WAR_VS"),// Viral Stream
+        ("viral stream",          "WAR_VS"),
+        ("interférence",          "W_TAUNT"),// Interfere
+        ("interfere",             "W_TAUNT"),
+        ("étincelle",             "W_TAUNT"),
+        ("spark",                 "W_TAUNT"),
 
-        // ── Support Primalist (Mystic) ────────────────────────────────────
-        ("wild storms",             "MYST_WSTORM"),
-        ("air lash",                "MYST_AIRLASH"),
-        ("tailwind",                "MYST_TAIL"),
+        // ── PRIMALIST (prima.py) ──────────────────────────────────────────────
+        ("vents arrière",         "TW"),    // Tailwind
+        ("tailwind",              "TW"),
+        ("frappe faucheuse",      "SS"),    // Scything Strike
+        ("scything strike",       "SS"),
+        ("explosion de furie",    "FB"),    // Fury Blast
+        ("fury blast",            "FB"),
+        ("brûleur",               "SCA"),   // Scald
+        ("scald",                 "SCA"),
+        ("fragments des bas-fonds","US"),   // Underworld Shards
+        ("underworld shards",     "US"),
+        ("voile animique",        "SSH"),   // Soul Shroud
+        ("soul shroud",           "SSH"),
+        ("avatar primitif : drake","APD"),  // Primal Avatar: Drake
+        ("primal avatar: drake",  "APD"),
+        ("coupe-air",             "CA"),    // Air Cutter
+        ("air cutter",            "CA"),
+        ("tape d'essence",        "P_TAUNT"),// Essence Tap
+        ("essence tap",           "P_TAUNT"),
 
-        // ── Healer Mage (Chloromancer) ────────────────────────────────────
-        ("ruin",                    "CHLORO_RUIN"),
-        ("lifegiving veil",         "CHLORO_VEIL"),
-        ("voile vivifiant",         "CHLORO_VEIL"),
-        ("aqueous blessing",        "CHLORO_AQUE"),
-        ("bienfait aqueux",         "CHLORO_AQUE"),
+        // ── MAGE (mage.py) ────────────────────────────────────────────────────
+        ("salve de granite",      "GS"),    // Granite Salvo
+        ("granite salvo",         "GS"),
+        ("forces élémentaires légendaires", "EF"), // Legendary Elemental Forces
+        ("legendary elemental forces",      "EF"),
+        ("tempête vivante",       "LS"),    // Living Storm
+        ("living storm",          "LS"),
+        ("taillade vorpale",      "MAG_VS"),// Vorpal Slash (Harbinger)
+        ("vorpal slash",          "MAG_VS"),
+        ("souillure",             "SL"),    // Defile (Warlock)
+        ("defile",                "SL"),
+        ("explosion de cendres",  "CB"),    // Cinder Burst
+        ("cinder burst",          "CB"),
+        ("tempête de feu",        "FST"),   // Fire Storm
+        ("fire storm",            "FST"),
+        ("spores infâmes",        "SI"),    // Vile Spores
+        ("vile spores",           "SI"),
+        ("vent mordant",          "M_TAUNT"),// Biting Wind (Arbiter tank taunt)
+        ("biting wind",           "M_TAUNT"),
 
-        // ── Healer Warrior (Liberator) ────────────────────────────────────
-        ("positive reaction",       "LIB_POS"),
-        ("mass casualty response",  "LIB_MASS"),
-        ("death's door",            "LIB_DOOR"),
-
-        // ── Healer Cleric (Defiler) ───────────────────────────────────────
-        ("siphon vitality",         "DEFI_SIPH"),
-        ("dark water",              "DEFI_DARK"),
-
-        // ── Tank Warrior (Void Knight) ────────────────────────────────────
-        ("unstable reaction",       "VK_UNSTAB"),
-        ("tempest",                 "VK_TEMP"),
-        ("void",                    "VK_VOID"),
-        ("néant",                   "VK_VOID"),
-
-        // ── Tank Warrior (Paladin) ────────────────────────────────────────
-        ("balance of power",        "PAL_BAL"),
-        ("protector's fury",        "PAL_FURY"),
-        ("hammer of faith",         "PAL_HAMMER"),
-
-        // ── Tank Mage (Arbiter) ───────────────────────────────────────────
-        ("counter shock",           "ARB_CSHOCK"),
-        ("icy fury",                "ARB_ICY"),
-        ("shattered reflection",    "ARB_SHATT"),
-
-        // ── Tank Rogue (Riftstalker) ──────────────────────────────────────
-        ("guarded steel",           "RS_GUARD"),
-        ("planar splash",           "RS_SPLASH"),
-        ("phantom blow",            "RS_PHANTOM"),
-
-        // ── Tank Primalist (Titan) ────────────────────────────────────────
-        ("crystalline smash",       "TITAN_CRYST"),
-
-        // ── Tank Cleric (Justicar) ────────────────────────────────────────
-        ("hammer of duty",          "JUST_HAMMER"),
-
-        // ── DPS Rogue ─────────────────────────────────────────────────────
-        ("rapid fire shot",         "MM_RFS"),
-        ("hellfire blades",         "NB_HELL"),
-        ("guardian phase",          "RIF_GPHASE"),
-        ("mode gardien",            "RIF_GPHASE"),
-
-        // ── DPS Warrior ───────────────────────────────────────────────────
-        ("rising waterfall",        "PAR_RISE"),
-        ("storm blade",             "WAR_STORM"),
-        ("lame-tempête",            "WAR_STORM"),
-        ("deep breaths",            "WAR_DEEP"),
-        ("inspirations profondes",  "WAR_DEEP"),
-
-        // ── DPS Cleric ────────────────────────────────────────────────────
-        ("bolt of retribution",     "INQ_BOLT"),
-        ("fae mimicry",             "DRU_FAE"),
-        ("bound fate",              "CAB_BOUND"),
-        ("massive blow",            "SHA_MASS"),
-        ("cabalist",                "CAB_BOUND"),
-
-        // ── DPS Mage ──────────────────────────────────────────────────────
-        ("condemn",                 "NEC_COND"),
-        ("atrophy",                 "WL_ATRO"),
-        ("burning bright",          "PYR_BURN"),
-
-        // ── DPS Primalist ─────────────────────────────────────────────────
-        ("primal savagery",         "PRIM_SAV"),
-        ("sauvagerie primitive",    "PRIM_SAV"),
-        ("delayed fate",            "PRIM_DFATE"),
-        ("destin en sursis",        "PRIM_DFATE"),
+        // ── CLERIC (cleric.py) ────────────────────────────────────────────────
+        ("réprimande de nysyr",   "NR"),    // Nysyr's Rebuke
+        ("nysyr's rebuke",        "NR"),
+        ("coup glacé",            "ICB"),   // Icy Blow
+        ("icy blow",              "ICB"),
+        ("frappe fervente",       "FES"),   // Fervent Strike
+        ("fervent strike",        "FES"),
+        ("marteau de la foi",     "HOF"),   // Hammer of Faith
+        ("hammer of faith",       "HOF"),
+        ("insigne de dilapidation","IDD"),  // Wasting Insignia
+        ("wasting insignia",      "IDD"),
+        ("innondation de soins",  "IDS"),   // Healing Flood
+        ("healing flood",         "IDS"),
+        ("rage explosive",        "RE"),    // Explosive Rage
+        ("explosive rage",        "RE"),
+        ("affliction miséreuse",  "AM"),    // Miserly Affliction
+        ("miserly affliction",    "AM"),
+        ("provocation",           "C_TAUNT"),// Provoke
+        ("provoke",               "C_TAUNT"),
     ];
     entries.iter().map(|(n, k)| (norm(n), *k)).collect()
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ROLE_COMBOS : combos de spell_keys → rôle
-// Format : (rôle, [keys nécessaires])
-// Priorité : combo plus long = plus spécifique → gagne
+// SPECS : (spec_name, role_category, [required_keys])
+// Source : role.py
 // ─────────────────────────────────────────────────────────────────────────────
-static ROLE_COMBOS: Lazy<Vec<(&'static str, Vec<&'static str>)>> = Lazy::new(|| vec![
-    // ── Support ──────────────────────────────────────────────────────────────
-    ("Support", vec!["ARCH_GRAN", "ARCH_BURN"]),       // Archon
-    ("Support", vec!["ORAC_GLAC", "ORAC_WAST"]),       // Oracle
-    ("Support", vec!["BARD_CODA", "BARD_CHORD"]),      // Bard
-    ("Support", vec!["MYST_WSTORM", "MYST_AIRLASH"]), // Mystic
-    ("Support", vec!["ARCH_GRAN"]),
-    ("Support", vec!["ORAC_GLAC"]),
-    ("Support", vec!["BARD_CODA"]),
-    ("Support", vec!["MYST_WSTORM"]),
-
-    // ── Healer ───────────────────────────────────────────────────────────────
-    ("Healer", vec!["CHLORO_RUIN", "CHLORO_VEIL"]),    // Chloro
-    ("Healer", vec!["LIB_POS", "LIB_MASS"]),           // Liberator
-    ("Healer", vec!["DEFI_SIPH", "DEFI_DARK"]),        // Defiler
-    ("Healer", vec!["CHLORO_RUIN"]),
-    ("Healer", vec!["LIB_POS"]),
-    ("Healer", vec!["DEFI_SIPH"]),
-
-    // ── Tank ─────────────────────────────────────────────────────────────────
-    ("Tank", vec!["VK_UNSTAB", "VK_VOID"]),            // Void Knight
-    ("Tank", vec!["PAL_BAL", "PAL_FURY"]),             // Paladin
-    ("Tank", vec!["ARB_CSHOCK", "ARB_ICY"]),           // Arbiter
-    ("Tank", vec!["RS_GUARD", "RS_SPLASH"]),           // Riftstalker
-    ("Tank", vec!["TITAN_CRYST"]),                     // Titan
-    ("Tank", vec!["JUST_HAMMER"]),                     // Justicar
-    ("Tank", vec!["VK_UNSTAB"]),
-    ("Tank", vec!["PAL_BAL"]),
-    ("Tank", vec!["ARB_CSHOCK"]),
-    ("Tank", vec!["RS_GUARD"]),
-
-    // ── DPS ──────────────────────────────────────────────────────────────────
-    ("DPS", vec!["MM_RFS"]),        // Marksman
-    ("DPS", vec!["NB_HELL"]),       // Nightblade
-    ("DPS", vec!["PAR_RISE"]),      // Paragon
-    ("DPS", vec!["INQ_BOLT"]),      // Inquisitor
-    ("DPS", vec!["DRU_FAE"]),       // Druid
-    ("DPS", vec!["CAB_BOUND"]),     // Cabalist
-    ("DPS", vec!["SHA_MASS"]),      // Shaman
-    ("DPS", vec!["NEC_COND"]),      // Necromancer
-    ("DPS", vec!["WL_ATRO"]),       // Warlock
-    ("DPS", vec!["PRIM_SAV"]),      // Primalist DPS
-    ("DPS", vec!["WAR_STORM"]),     // Warrior DPS
-]);
-
-// Priorité pour les égalités (DPS < Healer < Support < Tank)
-const ROLE_PRIORITY: &[&str] = &["DPS", "Healer", "Support", "Tank"];
-
-fn priority(role: &str) -> usize {
-    ROLE_PRIORITY.iter().position(|r| *r == role).unwrap_or(99)
+pub struct SpecDef {
+    name  : &'static str,
+    role  : &'static str,
+    keys  : &'static [&'static str],
 }
 
+const fn spec(name: &'static str, role: &'static str, keys: &'static [&'static str]) -> SpecDef {
+    SpecDef { name, role, keys }
+}
+
+// Ordre = priorité de détection (plus spécifique d'abord)
+static SPECS: &[SpecDef] = &[
+
+    // ── ROGUE ────────────────────────────────────────────────────────────────
+    spec("SlothFire",  "DPS",     &["RFS", "CS", "DS", "TF"]),
+    spec("Bofors",     "DPS",     &["RFS", "CS", "DS", "VIR"]),
+    spec("BBQ",        "DPS",     &["RFS", "CS", "DS", "EB"]),
+    spec("BofoTank",   "Tank",    &["RFS", "CS", "DS", "R_TAUNT"]),
+    spec("Marksman",   "DPS",     &["RFS", "CS", "AF"]),
+    spec("SpitFire",   "DPS",     &["RFS", "CS", "DS"]),
+    spec("NightBlade", "DPS",     &["BS",  "DS"]),
+    spec("TactBard",   "Support", &["CAD", "AP"]),
+
+    // ── WARRIOR ───────────────────────────────────────────────────────────────
+    spec("RiftBlade-RV",    "DPS",     &["RB", "IB", "SD"]),
+    spec("RiftBlade-TP",    "DPS",     &["RB", "IB", "JT"]),
+    spec("Liberator Tank",  "Tank",    &["ST", "PR", "W_TAUNT"]),
+    spec("Tempest",         "DPS",     &["CP", "JT"]),
+    spec("LinkChanter",     "Support", &["ST", "BSO"]),
+    spec("Liberator",       "Healer",  &["ST", "PR"]),
+    spec("Reaver",          "DPS",     &["WAR_VS", "SD"]),
+    spec("Warlord",         "DPS",     &["AQD"]),
+    spec("OneButton",       "DPS",     &["WW", "IB"]),
+
+    // ── PRIMALIST ─────────────────────────────────────────────────────────────
+    spec("HotPot",         "DPS",     &["SS", "FB", "SCA"]),
+    spec("EZ-Range",       "DPS",     &["SS", "FB", "APD"]),
+    spec("VulcaLord",      "DPS",     &["SS", "FB", "US"]),
+    spec("TankDPS",        "Tank",    &["SS", "FB", "P_TAUNT"]),
+    spec("PseudoDPS",      "DPS",     &["SS", "FB", "TW"]),
+    spec("PseudoTankHeal", "Tank",    &["TW", "P_TAUNT", "SSH"]),
+    spec("PseudoTank",     "Tank",    &["TW", "P_TAUNT"]),
+    spec("PrimaHeal",      "Healer",  &["SSH"]),
+    spec("PseudoRange",    "DPS",     &["CA"]),
+
+    // ── MAGE ──────────────────────────────────────────────────────────────────
+    spec("TankHeal",     "Tank",    &["M_TAUNT", "LS"]),
+    spec("HealTank",     "Tank",    &["M_TAUNT", "EF"]),
+    spec("MetaChont",    "Support", &["GS", "EF"]),
+    spec("ChloroChont",  "Support", &["GS", "LS"]),
+    spec("ElemChloro",   "Healer",  &["EF", "LS"]),
+    spec("MachinGun",    "DPS",     &["EF", "FST"]),
+    spec("Pyromancer",   "DPS",     &["FST", "CB"]),
+    spec("Harbinger",    "DPS",     &["MAG_VS"]),
+    spec("Warlock",      "DPS",     &["SL"]),
+
+    // ── CLERIC ────────────────────────────────────────────────────────────────
+    spec("DefiTank",    "Tank",    &["AM", "IDD", "C_TAUNT"]),
+    spec("Frooty",      "DPS",     &["AM", "RE",  "FES"]),
+    spec("DefiHeal",    "Healer",  &["AM", "IDD"]),
+    spec("Wardocle",    "Healer",  &["IDD", "IDS"]),
+    spec("Shamann",     "DPS",     &["ICB", "FES"]),
+    spec("Inquisitor",  "DPS",     &["NR",  "FES"]),
+
+    // ── COMMUN (taunts purs) ─────────────────────────────────────────────────
+    spec("Tank",        "Tank",    &["R_TAUNT"]),
+    spec("Tank",        "Tank",    &["W_TAUNT"]),
+    spec("Tank",        "Tank",    &["P_TAUNT"]),
+    spec("Tank",        "Tank",    &["M_TAUNT"]),
+    spec("Tank",        "Tank",    &["C_TAUNT"]),
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Collecte des spell_keys vus par chaque joueur dans la fenêtre
+// Collecte des spell_keys vus par joueur dans la fenêtre
 // ─────────────────────────────────────────────────────────────────────────────
 fn spells_used(
-    events   : &[CombatEvent],
-    start    : u32,
-    end      : u32,
+    events: &[CombatEvent],
+    start : u32,
+    end   : u32,
 ) -> HashMap<String, HashSet<&'static str>> {
     let mut out: HashMap<String, HashSet<&'static str>> = HashMap::new();
-
     for ev in events {
         if ev.ts_sec < start || ev.ts_sec > end { continue; }
-        if !ROLE_ACTION_CODES.contains(&ev.code) { continue; }
+        if !ROLE_ACTION_CODES.contains(&ev.code)  { continue; }
         if ev.src.is_empty() || ev.ability_name.is_empty() { continue; }
-
-        let key_str = norm(&ev.ability_name);
-        if let Some(spell_key) = SPELL_KEYS.get(&key_str).copied() {
-            out.entry(ev.src.clone()).or_default().insert(spell_key);
+        if let Some(k) = SPELL_KEYS.get(&norm(&ev.ability_name)).copied() {
+            out.entry(ev.src.clone()).or_default().insert(k);
         }
     }
     out
 }
 
-/// Choisit un rôle depuis un ensemble de spell_keys vus
-pub fn choose_role(seen: &HashSet<&'static str>) -> &'static str {
-    if seen.is_empty() { return DEFAULT_ROLE; }
+// ─────────────────────────────────────────────────────────────────────────────
+// Choisir la spec la plus précise (combo le plus long qui match)
+// ─────────────────────────────────────────────────────────────────────────────
+pub fn choose_spec(seen: &HashSet<&'static str>) -> Option<&'static SpecDef> {
+    if seen.is_empty() { return None; }
 
-    // Cherche le combo avec le plus de keys qui match (subset)
-    // Parmi les candidats, le plus long et le plus prioritaire gagne
-    let mut best: Option<(&'static str, usize)> = None; // (role, combo_len)
+    let mut best: Option<(&SpecDef, usize)> = None;
 
-    for (role, combo) in ROLE_COMBOS.iter() {
-        let combo_set: HashSet<&&str> = combo.iter().collect();
-        let seen_ref: HashSet<&&str> = seen.iter().collect();
-        if combo_set.is_subset(&seen_ref) {
-            let len = combo.len();
-            let replace = match best {
-                None => true,
-                Some((br, bl)) => {
-                    len > bl || (len == bl && priority(role) > priority(br))
-                }
-            };
-            if replace { best = Some((role, len)); }
-        }
+    for spec_def in SPECS.iter() {
+        let matches = spec_def.keys.iter().all(|k| seen.contains(k));
+        if !matches { continue; }
+        let len = spec_def.keys.len();
+        let replace = match best {
+            None          => true,
+            Some((_, bl)) => len > bl,
+        };
+        if replace { best = Some((spec_def, len)); }
     }
 
-    best.map(|(r, _)| r).unwrap_or(DEFAULT_ROLE)
+    best.map(|(s, _)| s)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // API publique
 // ─────────────────────────────────────────────────────────────────────────────
 pub fn infer_player_roles(
-    events : &[CombatEvent],
-    start  : u32,
-    end    : u32,
-) -> HashMap<String, String> {
-    let spells_map = spells_used(events, start, end);
-    spells_map.into_iter()
-        .map(|(player, keys)| (player, choose_role(&keys).to_string()))
+    events: &[CombatEvent],
+    start : u32,
+    end   : u32,
+) -> HashMap<String, RoleSpec> {
+    spells_used(events, start, end)
+        .into_iter()
+        .map(|(player, keys)| {
+            let rs = match choose_spec(&keys) {
+                Some(sd) => RoleSpec {
+                    role: sd.role.to_string(),
+                    spec: Some(sd.name.to_string()),
+                },
+                None => RoleSpec::default(),
+            };
+            (player, rs)
+        })
         .collect()
 }

@@ -1,113 +1,71 @@
 // src/components/page/public/account/AccountPage.tsx
 "use client";
 
-import * as React from "react";
-import { useSession } from "next-auth/react";
-
+import { useState, useEffect, useCallback } from "react";
 import GreetingCard from "./GreetingCard";
-import GuildPanel from "./GuildPanel";
+import GuildPanel   from "./GuildPanel";
 
 type GuildDTO = {
   id: string;
   name: string;
   tag: string;
-  role: "OWNER" | "MEMBER" | string;
+  role: string;
   joinedAt: string;
 };
 
+type AccountData = {
+  account: { id: string; pseudo: string; provider: string };
+  guilds: GuildDTO[];
+};
+
 export default function AccountPage() {
-  const { data: session, status } = useSession();
+  const [data, setData]       = useState<AccountData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState<string | null>(null);
 
-  const name =
-    (session?.user as any)?.pseudo ||
-    session?.user?.name ||
-    session?.user?.email ||
-    "User";
-
-  const [guilds, setGuilds] = React.useState<GuildDTO[]>([]);
-  const [loadingGuilds, setLoadingGuilds] = React.useState(false);
-  const [guildError, setGuildError] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (status !== "authenticated") return;
-
-    let cancelled = false;
-
-    async function load() {
-      setLoadingGuilds(true);
-      setGuildError(null);
-
-      try {
-        const res = await fetch("/api/public/account/me", { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          throw new Error(data?.error || "Failed to load account data.");
-        }
-
-        if (!cancelled) {
-          setGuilds(Array.isArray(data?.guilds) ? data.guilds : []);
-        }
-      } catch (e: any) {
-        if (!cancelled) setGuildError(e?.message || "Failed to load guilds.");
-      } finally {
-        if (!cancelled) setLoadingGuilds(false);
-      }
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/public/account/me");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setData(await res.json());
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [status]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  const currentGuild = guilds[0] ?? null;
-
-  if (status === "loading") {
-    return (
-      <main className="min-h-screen bg-[#1F2B3A] text-zinc-100 px-6 pt-24">
-        <div className="mx-auto max-w-6xl">
-          <p className="text-sm text-zinc-200/80">Loading…</p>
-        </div>
-      </main>
-    );
-  }
+  const guilds   = data?.guilds ?? [];
+  const pseudo   = data?.account.pseudo ?? "";
+  const guildName = guilds[0]?.name ?? null;
 
   return (
-    <main className="min-h-screen bg-[#1F2B3A] text-zinc-100">
-      {/* Background */}
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(900px_circle_at_20%_10%,rgba(56,189,248,0.12),transparent_55%),radial-gradient(900px_circle_at_85%_20%,rgba(255,255,255,0.06),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(31,43,58,0.45),rgba(31,43,58,0.92))]" />
+    <div className="mx-auto max-w-5xl px-6 py-10">
+      <div className="mb-8">
+        <p className="text-[10px] tracking-[0.2em] text-sky-400/70 font-medium uppercase mb-2">
+          Profile
+        </p>
+        <h1 className="text-4xl font-bold text-gradient tracking-tight">Account</h1>
+        <p className="mt-2 text-[13px] text-zinc-500">Upload logs and manage your guild</p>
       </div>
 
-      <section className="mx-auto max-w-6xl px-6 pt-24 pb-14">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <GreetingCard name={name} guilds={guilds} />
-
-          <GuildPanel
-            guildName={currentGuild ? `${currentGuild.name} [${currentGuild.tag}]` : null}
-            guilds={guilds}
-            loading={loadingGuilds}
-            error={guildError}
-            onRefresh={async () => {
-              // refresh on demand (after create/join)
-              setLoadingGuilds(true);
-              setGuildError(null);
-              try {
-                const res = await fetch("/api/public/account/me", { cache: "no-store" });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(data?.error || "Failed to refresh.");
-                setGuilds(Array.isArray(data?.guilds) ? data.guilds : []);
-              } catch (e: any) {
-                setGuildError(e?.message || "Failed to refresh guilds.");
-              } finally {
-                setLoadingGuilds(false);
-              }
-            }}
-          />
-        </div>
-      </section>
-    </main>
+      <div className="grid gap-5 lg:grid-cols-2">
+        <GreetingCard
+          name={pseudo}
+          guilds={guilds.map((g) => ({ id: g.id, name: g.name, tag: g.tag ?? "" }))}
+        />
+        <GuildPanel
+          guildName={guildName}
+          guilds={guilds}
+          loading={loading}
+          error={error}
+          onRefresh={fetchData}
+        />
+      </div>
+    </div>
   );
 }

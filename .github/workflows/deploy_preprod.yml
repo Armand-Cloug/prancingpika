@@ -193,6 +193,16 @@ jobs:
             [ -n "$DB_ROOT_PASSWORD" ] || { echo "Missing secrets.DB_ROOT_PASSWORD"; exit 1; }
             [ -n "$DISCORD_BOT_TOKEN" ] || { echo "Missing secrets.DISCORD_BOT_TOKEN"; exit 1; }
 
+            # Sécurité: les credentials sont interpolés dans du SQL inline —
+            # une apostrophe ou un backslash casserait la requête.
+            for _cred in "${DB_USER}" "${DB_PASSWORD}" "${DB_ROOT_PASSWORD}"; do
+              if printf '%s' "${_cred}" | grep -qE "['\`\\\\]"; then
+                echo "ERROR: Un credential DB contient des caractères incompatibles avec le SQL inline (' \` \\)."
+                echo "       Modifiez le secret GitHub concerné (retirez les apostrophes, backticks, backslashes)."
+                exit 1
+              fi
+            done
+
             DATABASE_URL="mysql://${DB_USER}:${DB_PASSWORD}@db:3306/${DB_NAME}"
 
             cat > .env <<EOF
@@ -274,14 +284,28 @@ jobs:
             FLUSH PRIVILEGES;
             SQL
 
-            echo "[9/11] Build web + parser + bot images"
+            echo "[9/12] Build web + parser + bot images"
             sudo -n docker compose -p "$PROJECT" build web parser bot
 
-            echo "[10/11] Prisma migrate deploy"
+            echo "[10/12] Prisma migrate deploy"
+            # Si _prisma_migrations n'existe pas (DB pré-existante sans Prisma),
+            # on baseline l'init pour éviter "Table already exists".
+            HAS_MIG=$(sudo -n docker exec ptppika_mariadb mariadb -uroot -p"${DB_ROOT_PASSWORD}" \
+              -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${DB_NAME}' AND table_name='_prisma_migrations';" \
+              --skip-column-names 2>/dev/null | tr -d '[:space:]' || echo "0")
+            echo "Has _prisma_migrations table: ${HAS_MIG}"
+            if [ "${HAS_MIG}" = "0" ]; then
+              echo "Baseline: marquage de l'init comme déjà appliqué (DB existante)"
+              sudo -n docker compose -p "$PROJECT" --env-file .env run --rm web \
+                npx prisma migrate resolve --applied 20260320082017_init
+            fi
             sudo -n docker compose -p "$PROJECT" --env-file .env run --rm web npx prisma migrate deploy
 
-            echo "[11/11] Start web + parser + bot"
+            echo "[11/12] Start web + parser + bot"
             sudo -n docker compose -p "$PROJECT" up -d web parser bot
+
+            echo "[12/12] Fix volume permissions (combatlogs ACL)"
+            bash "${SRC}/fix_deploy.sh"
 
             echo "Containers:"
             sudo -n docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'

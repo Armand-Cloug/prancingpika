@@ -18,12 +18,21 @@ pub struct UploadQuery {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UploadResponse {
     pub ok              : bool,
     pub fights_detected : usize,
     pub runs_inserted   : usize,
     pub runs_skipped    : usize,
     pub message         : String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ParseRequest {
+    pub file_name            : String,
+    pub guild_id             : String, // BigInt sérialisé en String côté Next.js
+    pub uploader_account_id  : String,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

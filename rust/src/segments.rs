@@ -90,13 +90,14 @@ pub fn build_segments(fight: &Fight) -> Vec<RunSegment> {
         let isiel_phase   = phases.iter().find(|p| norm(&p.name).contains("isiel"));
 
         if let Some(vp) = vengeur_phase {
-            let vdur = duration_between(vp.start_sec, vp.end_sec).max(1);
-            let vname = vp.boss_name.clone().unwrap_or_else(|| "Vindicator MK1".to_string());
+            let vdur        = duration_between(vp.start_sec, vp.end_sec).max(1);
+            // boss_filter = raw log name (used to filter events in memory)
+            let vfilter     = vp.boss_name.clone().unwrap_or_else(|| "Vindicator MK1".to_string());
             segs.push(RunSegment {
-                boss_name        : vname.clone(),
+                boss_name        : "Vindicator MK1".to_string(), // canonical EN name for DB
                 start_sec        : vp.start_sec,
                 end_sec          : vp.end_sec,
-                boss_filter      : Some(vname),
+                boss_filter      : Some(vfilter),
                 duration_total_s : vdur,
                 boss_duration_s  : None,
                 stats_start      : vp.start_sec,
@@ -105,7 +106,8 @@ pub fn build_segments(fight: &Fight) -> Vec<RunSegment> {
         }
 
         // Segment Isiel = durée totale du combat + phase boss distincte
-        let isiel_name  = isiel_phase
+        // boss_filter = raw log name (used to filter events in memory)
+        let isiel_filter = isiel_phase
             .and_then(|p| p.boss_name.clone())
             .unwrap_or_else(|| fight.encounter.clone());
         let isiel_dur   = isiel_phase
@@ -115,10 +117,10 @@ pub fn build_segments(fight: &Fight) -> Vec<RunSegment> {
             .unwrap_or((fight.start_sec, fight.end_sec));
 
         segs.push(RunSegment {
-            boss_name        : isiel_name.clone(),
+            boss_name        : "Commandant Isiel".to_string(), // canonical EN name for DB
             start_sec        : fight.start_sec,
             end_sec          : fight.end_sec,
-            boss_filter      : Some(isiel_name),
+            boss_filter      : Some(isiel_filter),
             duration_total_s : total_dur,
             boss_duration_s  : isiel_dur,
             stats_start      : is_stats_start,

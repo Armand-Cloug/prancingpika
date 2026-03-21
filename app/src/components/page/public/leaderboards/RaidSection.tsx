@@ -1,81 +1,48 @@
 // src/components/page/public/leaderboards/RaidSection.tsx
-import BossCompTable from "./BossCompTable";
 import BossFastestTable from "./BossFastestTable";
-import type { CompEntry, FastestEntry } from "@/lib/leaderboards";
+import BossCompTable    from "./BossCompTable";
+import type { RaidLeaderboard } from "@/lib/leaderboards";
 
-export type RaidSectionData = {
-  title: string;
-  bosses: Array<string | { bossName: string }>;
-  fastestByBoss?: Record<string, FastestEntry[]>;
-  comp1ByBoss?: Record<string, CompEntry[] | null>;
-  comp2ByBoss?: Record<string, CompEntry[] | null>;
-};
-
-function normalizeBossName(b: string | { bossName: string }) {
-  if (typeof b === "string") return b;
-  if (b && typeof b === "object" && "bossName" in b) return String(b.bossName);
-  return "Unknown";
-}
-
-export default function RaidSection({ raid }: { raid: RaidSectionData }) {
-  const bosses = Array.isArray(raid.bosses) ? raid.bosses.map(normalizeBossName) : [];
-
-  const fastest = raid.fastestByBoss ?? {};
-  const comp1 = raid.comp1ByBoss ?? {};
-  const comp2 = raid.comp2ByBoss ?? {};
-
+export default function RaidSection({ data }: { data: RaidLeaderboard }) {
   return (
-    <section className="w-full">
-      {/* Fastest */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold tracking-wide text-zinc-100">
-          {raid.title} — Fastest Kills
+    <section className="mb-14">
+      {/* Raid header */}
+      <div className="mb-5 flex items-center gap-3">
+        <h2
+          className="text-xl font-bold text-zinc-100 tracking-tight"
+          style={{ fontFamily: "'Syne', sans-serif" }}
+        >
+          {data.raid.title}
         </h2>
+        <span className="mono text-[10px] text-zinc-600 bg-white/[0.05] border border-white/[0.08]
+                         rounded px-2 py-0.5 tracking-wider">
+          {data.raid.key}
+        </span>
+        <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
       </div>
 
-      <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4 items-stretch">
-        {bosses.map((boss, i) => (
-          <BossFastestTable
-            key={`fast-${raid.title}-${i}-${boss}`}
-            bossName={boss}
-            rows={fastest[boss] ?? []}
-          />
-        ))}
-      </div>
+      <div className="flex flex-col gap-10">
+        {data.bosses.map((boss) => (
+          <div key={boss.bossName}>
+            {/* Boss name sub-header */}
+            <p className="mb-3 text-[11px] font-medium text-zinc-500 tracking-widest uppercase mono">
+              {boss.bossName}
+            </p>
 
-      {/* Comp #1 */}
-      <div className="mt-10 flex items-center justify-between">
-        <h3 className="text-sm font-semibold tracking-wide text-zinc-100">
-          Record Kill Raid Comps — Rank #1
-        </h3>
-      </div>
-
-      <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4 items-stretch">
-        {bosses.map((boss, i) => (
-          <BossCompTable
-            key={`c1-${raid.title}-${i}-${boss}`}
-            bossName={boss}
-            rows={comp1[boss] ?? null}
-            rankLabel="#1"
-          />
-        ))}
-      </div>
-
-      {/* Comp #2 */}
-      <div className="mt-10 flex items-center justify-between">
-        <h3 className="text-sm font-semibold tracking-wide text-zinc-100">
-          Record Kill Raid Comps — Rank #2
-        </h3>
-      </div>
-
-      <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4 items-stretch">
-        {bosses.map((boss, i) => (
-          <BossCompTable
-            key={`c2-${raid.title}-${i}-${boss}`}
-            bossName={boss}
-            rows={comp2[boss] ?? null}
-            rankLabel="#2"
-          />
+            <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1.6fr 1.6fr" }}>
+              {/* Fastest kills */}
+              <div>
+                <BossFastestTable bossName={boss.bossName} rows={boss.fastest} />
+              </div>
+              {/* Comps */}
+              <div>
+                <BossCompTable bossName={boss.bossName} rows={boss.comp1} rankLabel="#1" runId={boss.fastest[0]?.runId ?? ""} />
+              </div>
+              <div>
+                <BossCompTable bossName={boss.bossName} rows={boss.comp2} rankLabel="#2" runId={boss.fastest[1]?.runId ?? ""} />
+              </div>
+            </div>
+          </div>
         ))}
       </div>
     </section>

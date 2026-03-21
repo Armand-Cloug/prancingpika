@@ -26,6 +26,7 @@ pub fn build_router(pool: MySqlPool) -> Router {
 
         // ── Upload / Preview ─────────────────────────────────────────────
         .route("/api/upload",         post(upload_log))
+        .route("/parse",              post(parse_file))   // appelé par le frontend Next.js
         .route("/api/parse-preview",  post(parse_preview))
 
         // ── Référentiels ─────────────────────────────────────────────────

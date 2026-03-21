@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UploadLogForm } from "@/components/forms/UploadLogForm";
+import UploadLogForm from "@/components/forms/UploadLogForm";
 
 type GuildOption = { id: string; name: string; tag: string };
 

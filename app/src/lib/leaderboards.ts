@@ -6,23 +6,32 @@ import { normalizeRoleLabel, roleCategoryFromDbOrInfer } from "@/lib/rift-role-m
 export type RaidDef = {
   key: string;
   title: string;
-  bosses: string[]; // must match Boss.name in DB
+  bosses: string[];
+};
+
+// Log names vary by client language (FR/EN/DE). Maps canonical leaderboard name
+// → all possible names that may exist in the DB from older imports.
+const BOSS_DB_ALIASES: Record<string, string[]> = {
+  "Vindicator MK1":      ["Vengeur I", "Vergelter Ausf. 1", "Vindicator", "Vengeur", "Vergelter"],
+  "Commandant Isiel":    ["Commander Isiel", "Kommandant Isiel"],
+  "Grand-Prêtre Arakhurn": ["Grand-prêtre Arakhurn", "High Priest Arakhurn"],
+  "Général Silgen":      ["General Silgen", "Général Silgen (Intrepid)"],
 };
 
 export const RAIDS: RaidDef[] = [
   {
     key: "BOS",
-    title: "Raid BOS",
-    bosses: ["Azranel", "Vengeur", "Commandant Isiel", "Titan X"],
+    title: "Bastion of Steel",
+    bosses: ["Azranel", "Vindicator MK1", "Commandant Isiel", "Titan X"],
   },
   {
     key: "TDNM",
-    title: "Raid TDNM",
+    title: "The Deep Night March",
     bosses: ["Beligosh", "Tarjulia", "Le Concile du Destin", "Malannon"],
   },
   {
     key: "IROTP",
-    title: "Raid IROTP",
+    title: "Intrepid Rise of the Phoenix",
     bosses: ["Ereandorn", "Beruhast", "Général Silgen", "Grand-Prêtre Arakhurn"],
   },
 ];
@@ -30,44 +39,35 @@ export const RAIDS: RaidDef[] = [
 export type FastestEntry = {
   guildName: string;
   guildTag?: string | null;
-
   durationS: number;
   bossDurationS?: number | null;
-
   dpsGroup?: number | null;
-  runId: string; // BigInt -> string
+  apsGroup?: number | null;
+  runId: string;
 };
 
 export type CompEntry = {
-  /** Category used for colors in UI (dps/heal/tank/support) */
   role: Role;
-  /** Raw role from DB (Rift-specific) shown in UI */
   roleLabel: string;
-
+  spec?: string | null;
   player: string;
   playerClass?: string | null;
   dps: number;
   hps: number;
+  aps: number;
 };
 
 export type BossLeaderboard = {
   bossName: string;
-  fastest: FastestEntry[]; // top 10 distinct guilds
-  comp1: CompEntry[] | null; // from rank #1 run
-  comp2: CompEntry[] | null; // from rank #2 run
+  fastest: FastestEntry[];
+  comp1: CompEntry[] | null;
+  comp2: CompEntry[] | null;
 };
 
 export type RaidLeaderboard = {
   raid: RaidDef;
   bosses: BossLeaderboard[];
 };
-
-function fmtTime(sec: number) {
-  const s = Math.max(0, Math.floor(sec));
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return `${m}:${String(r).padStart(2, "0")}`;
-}
 
 function pickTopDistinctGuildRuns<T extends { guildId: bigint }>(runs: T[], limit = 10) {
   const seen = new Set<string>();
@@ -85,13 +85,24 @@ function pickTopDistinctGuildRuns<T extends { guildId: bigint }>(runs: T[], limi
 export async function getLeaderboards(): Promise<RaidLeaderboard[]> {
   const allBossNames = Array.from(new Set(RAIDS.flatMap((r) => r.bosses)));
 
+  // Expand query to include all language aliases for each canonical boss name
+  const expandedNames = allBossNames.flatMap((n) => [n, ...(BOSS_DB_ALIASES[n] ?? [])]);
+
   const bosses = await prisma.boss.findMany({
-    where: { name: { in: allBossNames } },
+    where: { name: { in: expandedNames } },
     select: { id: true, name: true },
   });
 
-  const bossIdByName = new Map<string, bigint>();
-  for (const b of bosses) bossIdByName.set(b.name, b.id);
+  // Map every DB name (canonical or alias) → list of boss IDs under that canonical name
+  const bossIdsByCanonical = new Map<string, bigint[]>();
+  for (const b of bosses) {
+    const canonical = allBossNames.find(
+      (n) => n === b.name || (BOSS_DB_ALIASES[n] ?? []).includes(b.name)
+    ) ?? b.name;
+    const list = bossIdsByCanonical.get(canonical) ?? [];
+    list.push(b.id);
+    bossIdsByCanonical.set(canonical, list);
+  }
 
   const raidResults: RaidLeaderboard[] = [];
 
@@ -99,16 +110,15 @@ export async function getLeaderboards(): Promise<RaidLeaderboard[]> {
     const bossResults: BossLeaderboard[] = [];
 
     for (const bossName of raid.bosses) {
-      const bossId = bossIdByName.get(bossName);
+      const bossIds = bossIdsByCanonical.get(bossName) ?? [];
 
-      if (!bossId) {
+      if (bossIds.length === 0) {
         bossResults.push({ bossName, fastest: [], comp1: null, comp2: null });
         continue;
       }
 
-      // Get many fastest runs then keep first per guild until 10
       const runs = await prisma.run.findMany({
-        where: { bossId },
+        where: { bossId: { in: bossIds } },
         orderBy: { durationTotalS: "asc" },
         take: 300,
         select: {
@@ -116,6 +126,7 @@ export async function getLeaderboards(): Promise<RaidLeaderboard[]> {
           durationTotalS: true,
           bossDurationS: true,
           dpsGroup: true,
+          apsGroup: true,
           guildId: true,
           guild: { select: { name: true, tag: true } },
         },
@@ -124,41 +135,50 @@ export async function getLeaderboards(): Promise<RaidLeaderboard[]> {
       const distinct = pickTopDistinctGuildRuns(runs, 10);
 
       const fastest: FastestEntry[] = distinct.map((r) => ({
-        guildName: r.guild?.name ?? "Unknown",
-        guildTag: r.guild?.tag ?? null,
-        durationS: r.durationTotalS,
+        guildName:    r.guild?.name ?? "Unknown",
+        guildTag:     r.guild?.tag ?? null,
+        durationS:    r.durationTotalS,
         bossDurationS: r.bossDurationS ?? null,
-        dpsGroup: r.dpsGroup ?? null,
-        runId: r.id.toString(),
+        dpsGroup:     r.dpsGroup ?? null,
+        apsGroup:     r.apsGroup ?? null,
+        runId:        r.id.toString(),
       }));
-
-      const run1 = distinct[0]?.id ?? null;
-      const run2 = distinct[1]?.id ?? null;
 
       async function loadComp(runId: bigint | null): Promise<CompEntry[] | null> {
         if (!runId) return null;
 
         const players = await prisma.runPlayer.findMany({
           where: { runId },
-          include: { player: { select: { name: true, class: true } } },
+          select: {
+            dps: true,
+            hps: true,
+            role: true,
+            spec: true,
+            player: { select: { name: true, class: true } },
+          },
           orderBy: { dps: "desc" },
         });
 
         return players.slice(0, 12).map((p) => {
           const dps = Math.round(p.dps ?? 0);
           const hps = Math.round(p.hps ?? 0);
+          const aps = Math.round((p as any).aps ?? 0);
 
           return {
-            roleLabel: normalizeRoleLabel(p.role),
-            role: roleCategoryFromDbOrInfer(p.role, dps, hps),
-            player: p.player.name,
+            roleLabel:   normalizeRoleLabel(p.role),
+            role:        roleCategoryFromDbOrInfer(p.role, dps, hps),
+            spec:        p.spec ?? null,
+            player:      p.player.name,
             playerClass: p.player.class ?? null,
             dps,
             hps,
+            aps,
           };
         });
       }
 
+      const run1 = distinct[0]?.id ?? null;
+      const run2 = distinct[1]?.id ?? null;
       const [comp1, comp2] = await Promise.all([loadComp(run1), loadComp(run2)]);
       bossResults.push({ bossName, fastest, comp1, comp2 });
     }
@@ -168,6 +188,3 @@ export async function getLeaderboards(): Promise<RaidLeaderboard[]> {
 
   return raidResults;
 }
-
-// export helper for UI formatting
-export const formatTime = fmtTime;

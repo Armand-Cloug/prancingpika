@@ -5,16 +5,13 @@ export const dynamic = "force-dynamic";
 
 export default function LookupPage() {
   return (
-    <main className="min-h-screen bg-[#1F2B3A] text-zinc-100">
-      {/* Background */}
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_15%_10%,rgba(56,189,248,0.10),transparent_55%),radial-gradient(1000px_circle_at_85%_15%,rgba(167,139,250,0.10),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(31,43,58,0.45),rgba(31,43,58,0.95))]" />
+    <div className="mx-auto max-w-5xl px-6 py-10">
+      <div className="mb-8">
+        <p className="text-[10px] tracking-[0.2em] text-sky-400/70 font-medium uppercase mb-2">Search</p>
+        <h1 className="text-4xl font-bold text-gradient tracking-tight">Player Lookup</h1>
+        <p className="mt-2 text-[13px] text-zinc-500">Search a player's full run history</p>
       </div>
-
-      <section className="w-full px-4 sm:px-6 lg:px-10 pt-24 pb-14">
-        <LookupClient />
-      </section>
-    </main>
+      <LookupClient />
+    </div>
   );
 }

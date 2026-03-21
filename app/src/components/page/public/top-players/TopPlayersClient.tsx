@@ -12,7 +12,7 @@ const ORDER: CallingKey[] = ["rogue", "cleric", "warrior", "primalist", "mage"];
 // ✅ Manual list: label shown in UI -> exact DB boss name
 const BOSS_LABEL_TO_DB: Array<{ label: string; db: string }> = [
   { label: "[BOS] Azranel", db: "Azranel" },
-  { label: "[BOS] Vindicator", db: "Vengeur" },
+  { label: "[BOS] Vindicator", db: "Vindicator MK1" },
   { label: "[BOS] Commander Isiel", db: "Commandant Isiel" },
   { label: "[BOS] Titan X", db: "Titan X" },
   { label: "[TDNM] Beligosh", db: "Beligosh" },
@@ -196,10 +196,7 @@ export default function TopPlayersClient({
           <ClassTopTable
             key={k}
             calling={k}
-            // ✅ keep passing DB boss name to tables (they likely use it for links / titles / etc.)
-            boss={bossDb}
             rows={data?.classes?.[k] ?? []}
-            loading={loading}
           />
         ))}
       </div>

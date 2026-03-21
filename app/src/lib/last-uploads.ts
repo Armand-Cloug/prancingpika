@@ -6,36 +6,29 @@ import { normalizeRoleLabel, roleCategoryFromDbOrInfer } from "@/lib/rift-role-m
 export type LastUploadPlayerRow = {
   player: string;
   playerClass?: string | null;
-
-  /** Category used for colors */
   role: Role;
-  /** Raw role from DB (Rift-specific) */
   roleLabel: string;
-
+  spec?: string | null;
   dps: number;
   hps: number;
+  aps: number;
+  deaths?: number | null;
 };
 
 export type LastUploadRun = {
   runId: string;
-
   groupId: string;
-
-  createdAt: string; // ISO
+  createdAt: string;
   bossName: string;
-
   guildName: string;
   guildTag?: string | null;
-
   uploaderPseudo: string;
   uploaderProvider: "google" | "discord";
-
   durationS: number;
   bossDurationS?: number | null;
-
   dpsGroup?: number | null;
   hpsGroup?: number | null;
-
+  apsGroup?: number | null;
   players: LastUploadPlayerRow[];
 };
 
@@ -46,16 +39,15 @@ export async function getLastUploads(limit = 10): Promise<LastUploadRun[]> {
     select: {
       id: true,
       groupId: true,
-
       createdAt: true,
       durationTotalS: true,
       bossDurationS: true,
       dpsGroup: true,
       hpsGroup: true,
-      boss: { select: { name: true } },
-      guild: { select: { name: true, tag: true } },
+      apsGroup: true,
+      boss:     { select: { name: true } },
+      guild:    { select: { name: true, tag: true } },
       uploader: { select: { pseudo: true, provider: true } },
-
       players: {
         take: 12,
         orderBy: { dps: "desc" },
@@ -63,6 +55,7 @@ export async function getLastUploads(limit = 10): Promise<LastUploadRun[]> {
           dps: true,
           hps: true,
           role: true,
+          spec: true,
           player: { select: { name: true, class: true } },
         },
       },
@@ -75,31 +68,32 @@ export async function getLastUploads(limit = 10): Promise<LastUploadRun[]> {
       const hps = Math.round(p.hps ?? 0);
 
       return {
-        player: p.player.name,
+        player:      p.player.name,
         playerClass: p.player.class ?? null,
-
-        roleLabel: normalizeRoleLabel(p.role),
-        role: roleCategoryFromDbOrInfer(p.role, dps, hps),
-
+        roleLabel:   normalizeRoleLabel(p.role),
+        role:        roleCategoryFromDbOrInfer(p.role, dps, hps),
+        spec:        p.spec ?? null,
         dps,
         hps,
+        aps:         Math.round((p as any).aps ?? 0),
+        deaths:      null,
       };
     });
 
     return {
-      runId: r.id.toString(),
-      groupId: r.groupId.toString(),
-
-      createdAt: r.createdAt.toISOString(),
-      bossName: r.boss?.name ?? "Unknown",
-      guildName: r.guild?.name ?? "Unknown",
-      guildTag: r.guild?.tag ?? null,
-      uploaderPseudo: r.uploader?.pseudo ?? "Unknown",
+      runId:            r.id.toString(),
+      groupId:          r.groupId.toString(),
+      createdAt:        r.createdAt.toISOString(),
+      bossName:         r.boss?.name ?? "Unknown",
+      guildName:        r.guild?.name ?? "Unknown",
+      guildTag:         r.guild?.tag ?? null,
+      uploaderPseudo:   r.uploader?.pseudo ?? "Unknown",
       uploaderProvider: (r.uploader?.provider ?? "google") as "google" | "discord",
-      durationS: r.durationTotalS,
-      bossDurationS: r.bossDurationS ?? null,
-      dpsGroup: r.dpsGroup ?? null,
-      hpsGroup: r.hpsGroup ?? null,
+      durationS:        r.durationTotalS,
+      bossDurationS:    r.bossDurationS ?? null,
+      dpsGroup:         r.dpsGroup ?? null,
+      hpsGroup:         r.hpsGroup ?? null,
+      apsGroup:         r.apsGroup ?? null,
       players,
     };
   });

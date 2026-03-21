@@ -1,165 +1,122 @@
 // src/components/page/public/top-players/ClassTopTable.tsx
 "use client";
+import { useState } from "react";
+import PlayerDpsDialog from "@/components/forms/PlayerDpsDialog";
+import type { TopPlayerRow } from "@/lib/top-players";
 
-import type { CallingKey, TopPlayerRow } from "@/lib/top-players";
-import GroupDpsDialog from "@/components/forms/GroupDpsDialog";
+type Calling = "rogue" | "cleric" | "warrior" | "primalist" | "mage";
 
-function formatTime(s: number) {
-  const sec = Math.max(0, Math.floor(s));
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const r = sec % 60;
+const CLASS_COLORS: Record<Calling, { bg: string; text: string; dot: string }> = {
+  rogue:     { bg: "bg-amber-400/10",  text: "text-amber-300",  dot: "bg-amber-400"   },
+  cleric:    { bg: "bg-emerald-400/10",text: "text-emerald-300",dot: "bg-emerald-400" },
+  warrior:   { bg: "bg-red-400/10",    text: "text-red-300",    dot: "bg-red-400"     },
+  primalist: { bg: "bg-sky-400/10",    text: "text-sky-300",    dot: "bg-sky-400"     },
+  mage:      { bg: "bg-violet-400/10", text: "text-violet-300", dot: "bg-violet-400"  },
+};
 
-  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${r.toString().padStart(2, "0")}`;
-  return `${m}:${r.toString().padStart(2, "0")}`;
-}
-
-function headerStyle(c: CallingKey) {
-  // Rogue yellow, Cleric green, Warrior red, Primalist sky, Mage purple
-  switch (c) {
-    case "rogue":
-      return "bg-[#b08a14] text-black";
-    case "cleric":
-      return "bg-[#0b6b14] text-white";
-    case "warrior":
-      return "bg-[#c10000] text-white";
-    case "primalist":
-      return "bg-[#0b67a8] text-white";
-    case "mage":
-      return "bg-[#6a0a85] text-white";
-  }
-}
-
-function title(c: CallingKey) {
-  switch (c) {
-    case "rogue":
-      return "Rogue";
-    case "cleric":
-      return "Cleric";
-    case "warrior":
-      return "Warrior";
-    case "primalist":
-      return "Primalist";
-    case "mage":
-      return "Mage";
-  }
+function fmtTime(s: number) {
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
 export default function ClassTopTable({
   calling,
-  boss,
   rows,
-  loading,
+  limit = 10,
 }: {
-  calling: CallingKey;
-  boss: string;
+  calling: Calling;
   rows: TopPlayerRow[];
-  loading: boolean;
+  limit?: number;
 }) {
-  return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-[0_18px_55px_rgba(0,0,0,0.35)]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+  const [expanded, setExpanded] = useState(false);
+  const col = CLASS_COLORS[calling];
+  const display = expanded ? rows : rows.slice(0, limit);
 
-      {/* Title bar */}
-      <div className={`flex items-center justify-between px-3 py-2 ${headerStyle(calling)}`}>
-        <div className="text-sm font-semibold">{title(calling)}</div>
-        <div className="text-[11px] opacity-90">ST DPS</div>
+  return (
+    <div className="relative overflow-hidden rounded-2xl glass">
+      {/* Class color top bar */}
+      <div className={`absolute inset-x-0 top-0 h-0.5 ${col.dot} opacity-60`} />
+
+      {/* Header */}
+      <div className={`flex items-center gap-2 px-4 pt-4 pb-3`}>
+        <span className={`h-2 w-2 rounded-full ${col.dot}`} />
+        <h3
+          className={`text-[13px] font-bold capitalize ${col.text}`}
+          style={{ fontFamily: "'Syne', sans-serif" }}
+        >
+          {calling}
+        </h3>
+        <span className="ml-auto mono text-[10px] text-zinc-600">
+          {rows.length} entries
+        </span>
       </div>
 
-      {/* Table
-          Objectif:
-          - "Player" reste lisible sur petits écrans
-          - "Date" disparaît en dessous de lg (au lieu de rogner Player)
-      */}
-      <table className="w-full table-fixed text-[12px]">
-        <colgroup>
-          <col className="w-[46px]" /> {/* rank */}
-          <col className="hidden lg:table-column w-[86px]" /> {/* date (hide < lg) */}
-          <col /> {/* player */}
-          <col className="w-[82px] sm:w-[92px]" /> {/* dps */}
-          <col className="w-[52px] sm:w-[60px]" /> {/* time */}
-        </colgroup>
-
-        <thead className="bg-[#0b1220]/50 text-[11px] text-zinc-300/75">
-          <tr>
-            <th colSpan={5} className="px-3 pt-2 pb-1 text-left font-medium">
-              <div className="truncate" title={boss}>
-                {boss} — Top 100
-              </div>
-            </th>
-          </tr>
-
-          <tr className="border-t border-white/10">
-            <th className="py-2 pl-3 text-left font-medium">#</th>
-            <th className="hidden lg:table-cell py-2 text-left font-medium">Date</th>
-            <th className="py-2 text-left font-medium">Player</th>
-            <th className="py-2 pr-3 text-right font-medium whitespace-nowrap">ST DPS</th>
-            <th className="py-2 pr-3 text-right font-medium">Time</th>
-          </tr>
-        </thead>
-
-        <tbody className="text-zinc-100">
-          {loading && rows.length === 0 ? (
-            Array.from({ length: 10 }).map((_, i) => (
-              <tr key={i} className="border-t border-white/5">
-                <td className="py-2 pl-3 text-zinc-300/50 tabular-nums">{i + 1}</td>
-                <td className="hidden lg:table-cell py-2 text-zinc-300/30">----</td>
-                <td className="py-2 text-zinc-300/30">
-                  <div className="min-w-[120px] truncate whitespace-nowrap">Loading…</div>
-                </td>
-                <td className="py-2 pr-3 text-right text-zinc-300/30">—</td>
-                <td className="py-2 pr-3 text-right text-zinc-300/30">—</td>
+      {/* Table */}
+      <div className="px-3 pb-3">
+        <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-black/20">
+          <table className="w-full table-fixed text-[11.5px]">
+            <colgroup>
+              <col className="w-9" />     {/* # */}
+              <col />                      {/* Player */}
+              <col className="w-[88px]" /> {/* DPS */}
+              <col className="w-[64px]" /> {/* Time */}
+            </colgroup>
+            <thead>
+              <tr className="border-b border-white/[0.07] bg-black/20">
+                <th className="py-2 pl-4 pr-1 text-left text-[10px] font-medium text-zinc-600">#</th>
+                <th className="py-2 px-2 text-left text-[10px] font-medium text-zinc-500 tracking-wide uppercase">Player</th>
+                <th className="py-2 px-3 text-right text-[10px] font-medium text-zinc-500 tracking-wide uppercase">DPS</th>
+                <th className="py-2 pl-3 pr-4 text-right text-[10px] font-medium text-zinc-500 tracking-wide uppercase">Time</th>
               </tr>
-            ))
-          ) : rows.length === 0 ? (
-            <tr className="border-t border-white/10">
-              <td className="py-3 px-3 text-zinc-300/60" colSpan={5}>
-                No data
-              </td>
-            </tr>
-          ) : (
-            rows.map((r, idx) => (
-              <tr key={`${r.player}-${r.date}-${idx}`} className="border-t border-white/5">
-                <td className="py-2 pl-3 tabular-nums text-zinc-200/85">{idx + 1}</td>
+            </thead>
+            <tbody>
+              {display.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-5 pl-4 text-[11px] text-zinc-600">No data</td>
+                </tr>
+              ) : (
+                display.map((r, i) => (
+                  <tr key={`${r.runId}-${r.player}`} className="tr-hover border-b border-white/[0.04] last:border-0">
+                    <td className="py-2 pl-4 pr-1">
+                      <span className="mono text-[10px] text-zinc-600">{i + 1}</span>
+                    </td>
+                    <td className="py-2 px-2 min-w-0">
+                      <PlayerDpsDialog
+                        runId={r.runId}
+                        playerName={r.player}
+                        trigger={
+                          <button type="button" className="text-left w-full min-w-0">
+                            <span className={`truncate text-[12px] font-medium ${col.text} hover:underline`}>
+                              {r.player}
+                            </span>
+                          </button>
+                        }
+                      />
+                    </td>
+                    <td className="py-2 px-3 text-right mono whitespace-nowrap">
+                      <span className="text-zinc-200 font-semibold">
+                        {r.dps.toLocaleString("en-US")}
+                      </span>
+                    </td>
+                    <td className="py-2 pl-3 pr-4 text-right mono text-zinc-400 whitespace-nowrap">
+                      {fmtTime(r.timeS)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-                <td className="hidden lg:table-cell py-2 tabular-nums text-zinc-200/85 whitespace-nowrap">
-                  {r.date}
-                </td>
-
-                <td className="py-2 pr-2">
-                  <GroupDpsDialog
-                    runId={r.runId}
-                    bossLabel={boss}
-                    dateLabel={r.date}
-                    trigger={
-                      <button
-                        type="button"
-                        className="block w-full min-w-0 text-left"
-                        title={r.player}
-                      >
-                        <span className="block w-full min-w-0 truncate whitespace-nowrap text-sky-200/90 hover:text-sky-200">
-                          {r.player}
-                        </span>
-                      </button>
-                    }
-                  />
-                </td>
-
-                <td className="py-2 pr-3 text-right tabular-nums whitespace-nowrap">
-                  {r.dps.toLocaleString("en-US")}
-                </td>
-
-                <td className="py-2 pr-3 text-right tabular-nums whitespace-nowrap">
-                  {formatTime(r.timeS)}
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-
-      {/* subtle bottom fade */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-b from-transparent to-[#1F2B3A]/70" />
+        {rows.length > limit && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-2 w-full text-center text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors py-1"
+          >
+            {expanded ? "▲ Show less" : `▼ Show all ${rows.length}`}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

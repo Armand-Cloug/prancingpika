@@ -45,7 +45,7 @@ services:
       db:
         condition: service_healthy
       parser:
-        condition: service_started
+        condition: service_healthy
     environment:
       - PORT=3000
       - HOSTNAME=0.0.0.0
@@ -90,7 +90,32 @@ services:
       - internal
 
   parser:
-    # Rust Docker conf to in future
+    build:
+      context: ./rust
+      dockerfile: Dockerfile
+    container_name: ptpika_parser
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Construit l'URL DB à partir des variables du .env racine
+      # (utilise le hostname docker "db" au lieu de localhost)
+      - DATABASE_URL=mysql://${MARIADB_USER}:${DB_PASSWORD}@db:3306/${MARIADB_DATABASE}
+    expose:
+      - "8080"
+    volumes:
+      - combatlogs:/data/combat.log
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/api/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - internal
 
   db:
     image: mariadb:11.4

@@ -15,3 +15,6 @@ auto-import.sh
 /app/.env
 /target/
 /rust/target/
+/.claude/
+CLAUDE.md
+fix_deploy.sh

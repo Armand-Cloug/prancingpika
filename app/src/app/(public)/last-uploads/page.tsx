@@ -1,41 +1,37 @@
-import UploadRunRow from "@/components/page/public/last-uploads/UploadRunRow";
+// src/app/(public)/last-uploads/page.tsx
 import { getLastUploads } from "@/lib/last-uploads";
+import UploadRunRow from "@/components/page/public/last-uploads/UploadRunRow";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 30;
 
 export default async function LastUploadsPage() {
   const runs = await getLastUploads(20);
 
   return (
-    <main className="min-h-screen bg-[#1F2B3A] text-zinc-100">
-      {/* Background (same as leaderboards) */}
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_15%_10%,rgba(56,189,248,0.10),transparent_55%),radial-gradient(1000px_circle_at_85%_15%,rgba(167,139,250,0.10),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(31,43,58,0.45),rgba(31,43,58,0.95))]" />
+    <div className="mx-auto max-w-7xl px-6 py-10">
+      <div className="mb-8">
+        <p className="text-[10px] tracking-[0.2em] text-sky-400/70 font-medium uppercase mb-2">
+          Activity
+        </p>
+        <h1 className="text-4xl font-bold text-gradient tracking-tight">
+          Last Uploads
+        </h1>
+        <p className="mt-2 text-[13px] text-zinc-500">
+          Most recently parsed boss kills — click to expand roster
+        </p>
       </div>
 
-      <section className="w-full px-4 sm:px-6 lg:px-10 pt-24 pb-14 space-y-8">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h1 className="text-base font-semibold tracking-wide text-zinc-100">Latest Uploads</h1>
-            <p className="mt-1 text-[12px] text-zinc-300/70">Last 20 boss parses uploaded by players.</p>
-          </div>
+      {runs.length === 0 ? (
+        <div className="glass rounded-2xl px-6 py-12 text-center">
+          <p className="text-zinc-500">No runs uploaded yet.</p>
         </div>
-
-        {runs.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-zinc-300/70">
-            No uploads yet.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {runs.map((run) => (
-              <UploadRunRow key={run.runId} run={run} />
-            ))}
-          </div>
-        )}
-      </section>
-    </main>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {runs.map((run) => (
+            <UploadRunRow key={run.runId} run={run} />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

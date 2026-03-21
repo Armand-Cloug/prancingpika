@@ -1,25 +1,17 @@
 // src/components/page/public/leaderboards/BossFastestTable.tsx
 import GroupDpsDialog from "@/components/forms/GroupDpsDialog";
-import { formatTime, type FastestEntry } from "@/lib/leaderboards";
+import { formatTime } from "@/lib/format";
+import type { FastestEntry } from "@/lib/leaderboards";
 
-function parseRegionAndName(guildNameRaw: string): { flag: string; name: string } {
-  // Certaines valeurs ont des espaces / chars invisibles au début
-  const s = (guildNameRaw ?? "").trimStart();
-
-  // Match: [EU] Name ... / [NA] Name ... / [DEV] Name ...
+function parseGuildName(raw: string): { flag: string; name: string; tag?: string } {
+  const s = (raw ?? "").trimStart();
   const m = s.match(/^\[([^\]]+)\]\s*(.*)$/);
-  if (!m) return { flag: "🌐", name: s || guildNameRaw };
-
-  // Normalise le tag (supprime les caractères invisibles/non A-Z)
-  const tag = String(m[1] ?? "")
-    .toUpperCase()
-    .replace(/[^A-Z]/g, "");
-
-  const rest = String(m[2] ?? "").trim() || s;
-
-  if (tag === "EU") return { flag: "🇪🇺", name: rest };
-  if (tag === "NA") return { flag: "🇺🇸", name: rest };
-  return { flag: "🌐", name: rest };
+  if (!m) return { flag: "🌐", name: s };
+  const tag = String(m[1] ?? "").toUpperCase().replace(/[^A-Z]/g, "");
+  const name = String(m[2] ?? "").trim() || s;
+  if (tag === "EU") return { flag: "🇪🇺", name, tag };
+  if (tag === "NA") return { flag: "🇺🇸", name, tag };
+  return { flag: "🌐", name };
 }
 
 export default function BossFastestTable({
@@ -29,84 +21,86 @@ export default function BossFastestTable({
   bossName: string;
   rows: FastestEntry[];
 }) {
-  const showBossTime = rows.some((r) => r.bossDurationS != null);
+  const hasBossTime = rows.some((r) => r.bossDurationS != null);
 
   return (
-    <div className="relative h-full overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-[0_18px_55px_rgba(0,0,0,0.35)]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-[radial-gradient(700px_circle_at_20%_0%,rgba(56,189,248,0.14),transparent_55%)]" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+    <div className="relative overflow-hidden rounded-2xl glass h-full">
+      {/* Top accent */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-20
+                      bg-[radial-gradient(ellipse_600px_circle_at_30%_0%,rgba(56,189,248,0.1),transparent_60%)]" />
 
-      <div className="flex items-center justify-between px-4 pt-5 pb-7">
-        <div className="text-sm font-semibold text-zinc-100">{bossName}</div>
-        <div className="text-[11px] text-zinc-300/65">Fastest kills</div>
+      {/* Header */}
+      <div className="flex items-baseline justify-between px-5 pt-5 pb-2">
+        <h3 className="text-[13px] font-bold text-zinc-100" style={{ fontFamily: "'Syne', sans-serif" }}>
+          {bossName}
+        </h3>
+        <span className="text-[10px] text-zinc-500 tracking-wide uppercase">Fastest kills</span>
       </div>
 
-      <div className="px-3 pb-3">
-        <div className="overflow-hidden rounded-xl border border-white/10 bg-black/20">
-          <table className="w-full table-fixed text-[12px]">
+      {/* Table */}
+      <div className="px-3 pb-4">
+        <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-black/20">
+          <table className="w-full table-fixed text-[11.5px]">
             <colgroup>
               <col />
-              <col className="w-[130px]" />
-              <col className={showBossTime ? "w-[132px]" : "w-[76px]"} />
+              <col className="w-[110px]" />
+              <col className={hasBossTime ? "w-[130px]" : "w-[72px]"} />
             </colgroup>
-
-            <thead className="bg-white/[0.03] text-[11px] text-zinc-300/60">
-              <tr className="border-b border-white/10">
-                <th className="py-2 pl-3 pr-2 text-left font-medium">Guild</th>
-                <th className="whitespace-nowrap py-2 px-3 text-right font-medium">Raid DPS</th>
-                <th className="whitespace-nowrap py-2 pl-3 pr-4 text-right font-medium">
-                  Time{showBossTime ? " (Total | Boss)" : ""}
+            <thead>
+              <tr className="border-b border-white/[0.07] bg-black/20">
+                <th className="py-2 pl-4 pr-2 text-left text-[10px] font-medium text-zinc-500 tracking-wide uppercase">
+                  Guild
+                </th>
+                <th className="py-2 px-3 text-right text-[10px] font-medium text-zinc-500 tracking-wide uppercase whitespace-nowrap">
+                  Raid DPS
+                </th>
+                <th className="py-2 pl-3 pr-4 text-right text-[10px] font-medium text-zinc-500 tracking-wide uppercase whitespace-nowrap">
+                  {hasBossTime ? "Total | Boss" : "Time"}
                 </th>
               </tr>
             </thead>
-
-            <tbody className="text-zinc-100">
+            <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td className="py-3 pl-3 text-zinc-300/60" colSpan={3}>
-                    No data
+                  <td colSpan={3} className="py-6 pl-4 text-[11px] text-zinc-600">
+                    No data yet
                   </td>
                 </tr>
               ) : (
-                rows.map((r, idx) => {
-                  const total = formatTime(r.durationS);
+                rows.map((r, i) => {
+                  const { flag, name, tag } = parseGuildName(String(r.guildName ?? ""));
+                  const total    = formatTime(r.durationS);
                   const bossOnly = r.bossDurationS != null ? formatTime(r.bossDurationS) : null;
 
-                  const { flag, name } = parseRegionAndName(String(r.guildName ?? ""));
-
                   return (
-                    <tr key={`${r.runId}-${idx}`} className="border-b border-white/5 last:border-0">
-                      <td className="min-w-0 py-2 pl-3 pr-2">
+                    <tr key={`${r.runId}-${i}`} className="tr-hover border-b border-white/[0.05] last:border-0">
+                      <td className="py-2 pl-4 pr-2 min-w-0">
                         <GroupDpsDialog
                           runId={String(r.runId)}
                           trigger={
-                            <button type="button" className="block w-full min-w-0 text-left">
-                              <div className="truncate">
-                                <span className="text-sky-200/90 hover:text-sky-200 hover:underline">
-                                  <span className="mr-1.5" aria-hidden="true">
-                                    {flag}
-                                  </span>
+                            <button type="button" className="w-full text-left min-w-0 block">
+                              <span className="truncate flex items-center gap-1.5">
+                                <span className="text-xs" aria-hidden>{flag}</span>
+                                <span className="text-sky-300/90 hover:text-sky-200 hover:underline truncate">
                                   {name}
                                 </span>
-                                {r.guildTag ? (
-                                  <span className="text-zinc-300/60"> [{r.guildTag}]</span>
-                                ) : null}
-                              </div>
+                                {tag && (
+                                  <span className="text-zinc-600 text-[10px]">[{tag}]</span>
+                                )}
+                              </span>
                             </button>
                           }
                         />
                       </td>
-
-                      <td className="whitespace-nowrap py-2 px-3 text-right tabular-nums text-zinc-200/90">
+                      <td className="py-2 px-3 text-right mono text-zinc-300 whitespace-nowrap">
                         {r.dpsGroup != null ? Math.round(r.dpsGroup).toLocaleString("en-US") : "—"}
                       </td>
-
-                      <td className="whitespace-nowrap py-2 pl-3 pr-4 text-right tabular-nums">
-                        <span className="text-zinc-100">{total}</span>
+                      <td className="py-2 pl-3 pr-4 text-right mono whitespace-nowrap">
+                        <span className="text-zinc-200">{total}</span>
                         {bossOnly && (
                           <>
-                            <span className="mx-1 text-zinc-400/80">|</span>
-                            <span className="text-zinc-200/90">{bossOnly}</span>
+                            <span className="mx-1 text-zinc-600">|</span>
+                            <span className="text-sky-300/80">{bossOnly}</span>
                           </>
                         )}
                       </td>
@@ -117,8 +111,7 @@ export default function BossFastestTable({
             </tbody>
           </table>
         </div>
-
-        <div className="mt-2 text-[11px] text-zinc-400/70">Top 10 — 1 entry per guild</div>
+        <p className="mt-2 text-[10px] text-zinc-600">1 entry per guild · Top 10</p>
       </div>
     </div>
   );

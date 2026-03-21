@@ -166,7 +166,7 @@ async fn import_fight(
 
         if opts.dry_run {
             let sample: Vec<String> = roster.iter().take(6)
-                .map(|p| format!("{}:{}", p, roles_map.get(p).map(|s| s.as_str()).unwrap_or(DEFAULT_ROLE)))
+                .map(|p| format!("{}:{}/{}", p, roles_map.get(p).map(|r| r.role.as_str()).unwrap_or(DEFAULT_ROLE), roles_map.get(p).and_then(|r| r.spec.as_deref()).unwrap_or("-")))
                 .collect();
             println!(
                 "[DRY] boss='{}' started={} ended={} durTotal={}s durStats={}s \
@@ -227,7 +227,9 @@ async fn import_fight(
             let dps = d as f64 / dur_s as f64;
             let hps = h as f64 / dur_s as f64;
             let aps = a as f64 / dur_s as f64;
-            let role = roles_map.get(player).map(|s| s.as_str()).unwrap_or(DEFAULT_ROLE);
+            let rs   = roles_map.get(player);
+            let role = rs.map(|r| r.role.as_str()).unwrap_or(DEFAULT_ROLE);
+            let spec = rs.and_then(|r| r.spec.as_deref());
             let cls  = classes.get(player).map(|s| s.as_str()).unwrap_or(DEFAULT_CLASS);
 
             let player_id = ensure_player(pool, player, Some(cls)).await?;
@@ -235,8 +237,8 @@ async fn import_fight(
             sqlx::query(
                 r#"INSERT INTO run_players
                    (runId, playerId, damage, healing, absorbed,
-                    dps, hps, aps, overheal, blocked, role)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?)"#
+                    dps, hps, aps, overheal, blocked, role, spec)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"#
             )
             .bind(run_id)
             .bind(player_id)
@@ -249,6 +251,7 @@ async fn import_fight(
             .bind(oh)
             .bind(bl)
             .bind(role)
+            .bind(spec)
             .execute(pool)
             .await
             .context("INSERT run_players")?;
