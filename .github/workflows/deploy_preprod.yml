@@ -288,18 +288,28 @@ jobs:
             sudo -n docker compose -p "$PROJECT" build web parser bot
 
             echo "[10/12] Prisma migrate deploy"
-            # Vérifie si la migration init est déjà enregistrée comme appliquée.
-            # La table peut exister sans que la migration y soit inscrite (DB pré-existante),
-            # auquel cas Prisma tenterait de recréer les tables → erreur "already exists".
+            # Stratégie :
+            #   1) Si la migration init est déjà enregistrée → rien à faire, migrate deploy suffit.
+            #   2) Si la table `runs` existe déjà (DB pré-existante sans Prisma) → baseline l'init
+            #      pour éviter "Table already exists", puis migrate deploy appliquera les suivantes.
+            #   3) DB fraîche (aucune table) → migrate deploy crée tout normalement.
             IS_BASELINED=$(sudo -n docker exec ptppika_mariadb mariadb -uroot -p"${DB_ROOT_PASSWORD}" \
               "${DB_NAME}" \
               -e "SELECT COUNT(*) FROM _prisma_migrations WHERE migration_name='20260320082017_init' AND finished_at IS NOT NULL;" \
               --skip-column-names 2>/dev/null | tr -d '[:space:]' || echo "0")
             echo "Migration init already recorded: ${IS_BASELINED}"
             if [ "${IS_BASELINED}" != "1" ]; then
-              echo "Baseline: marquage de l'init comme déjà appliqué (DB existante)"
-              sudo -n docker compose -p "$PROJECT" --env-file .env run --rm web \
-                npx prisma migrate resolve --applied 20260320082017_init
+              RUNS_EXISTS=$(sudo -n docker exec ptppika_mariadb mariadb -uroot -p"${DB_ROOT_PASSWORD}" \
+                -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${DB_NAME}' AND table_name='runs';" \
+                --skip-column-names 2>/dev/null | tr -d '[:space:]' || echo "0")
+              echo "Table runs exists: ${RUNS_EXISTS}"
+              if [ "${RUNS_EXISTS}" = "1" ]; then
+                echo "Baseline: DB pré-existante avec tables — marquage de l'init sans exécution"
+                sudo -n docker compose -p "$PROJECT" --env-file .env run --rm web \
+                  npx prisma migrate resolve --applied 20260320082017_init
+              else
+                echo "DB fraîche — migrate deploy créera toutes les tables"
+              fi
             fi
             sudo -n docker compose -p "$PROJECT" --env-file .env run --rm web npx prisma migrate deploy
 
