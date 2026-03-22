@@ -59,12 +59,14 @@ jobs:
           test -n "${DB_USER}" || (echo "Missing vars.DB_USER" && exit 1)
           test -n "${DB_NAME}" || (echo "Missing vars.DB_NAME" && exit 1)
           test -n "${NEXTAUTH_URL}" || (echo "Missing vars.NEXTAUTH_URL" && exit 1)
+          test -n "${DISCORD_BOT_CLIENT_ID}" || (echo "Missing vars.DISCORD_BOT_CLIENT_ID" && exit 1)
         env:
           APP_DOMAIN: ${{ vars.APP_DOMAIN }}
           TRAEFIK_ACME_EMAIL: ${{ vars.TRAEFIK_ACME_EMAIL }}
           DB_USER: ${{ vars.DB_USER }}
           DB_NAME: ${{ vars.DB_NAME }}
           NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
+          DISCORD_BOT_CLIENT_ID: ${{ vars.DISCORD_BOT_CLIENT_ID }}
 
       - name: Write SSH key file (normalize)
         run: |
@@ -142,11 +144,11 @@ jobs:
 
             cd "${SRC}"
 
-            echo "[1/11] Ensure shared networks exist (proxy/internal)"
+            echo "[1/13] Ensure shared networks exist (proxy/internal)"
             sudo -n docker network create proxy >/dev/null 2>&1 || true
             sudo -n docker network create internal >/dev/null 2>&1 || true
 
-            echo "[2/11] Ensure Traefik ACME is persistent"
+            echo "[2/13] Ensure Traefik ACME is persistent"
             sudo -n mkdir -p "${DATA}/traefik"
             if [ ! -f "${DATA}/traefik/acme.json" ]; then
               sudo -n install -m 600 /dev/null "${DATA}/traefik/acme.json" || true
@@ -157,7 +159,7 @@ jobs:
             cp "${DATA}/traefik/acme.json" traefik/acme.json
             chmod 600 traefik/acme.json || true
 
-            echo "[3/11] Write .env (single source of truth)"
+            echo "[3/13] Write .env (single source of truth)"
             rm -f .env
 
             # Preprod domain (new var; fallback to hardcoded)
@@ -251,21 +253,32 @@ jobs:
             BOT_URL=http://bot:8081
             EOF
 
-            echo "[4/11] Write bot/.env"
+            echo "[4/13] Write bot/.env"
+            DISCORD_BOT_CLIENT_ID="${{ vars.DISCORD_BOT_CLIENT_ID }}"
+            BOT_NOTIFY_CHANNEL_ID="${{ vars.BOT_NOTIFY_CHANNEL_ID }}"
+            BOT_RECORDS_CHANNEL_ID="${{ vars.BOT_RECORDS_CHANNEL_ID }}"
+            BOT_WEEKLY_CHANNEL_ID="${{ vars.BOT_WEEKLY_CHANNEL_ID }}"
+
             mkdir -p bot
             cat > bot/.env <<EOF
             PORT=8081
             DISCORD_TOKEN=${DISCORD_BOT_TOKEN}
+            CLIENT_ID=${DISCORD_BOT_CLIENT_ID}
+            DATABASE_URL=${DATABASE_URL}
+            PARSER_URL=http://parser:8080
+            NOTIFY_CHANNEL_ID=${BOT_NOTIFY_CHANNEL_ID}
+            RECORDS_CHANNEL_ID=${BOT_RECORDS_CHANNEL_ID}
+            WEEKLY_CHANNEL_ID=${BOT_WEEKLY_CHANNEL_ID}
             EOF
 
-            echo "[5/11] Stop previous stack"
+            echo "[5/13] Stop previous stack"
             sudo -n docker compose -p "$PROJECT" down --remove-orphans || true
             sudo -n docker rm -f ptpika_traefik ptppika_mariadb ptpika_parser ptpika_web ptpika_bot >/dev/null 2>&1 || true
 
-            echo "[6/11] Start base services (traefik + db)"
+            echo "[6/13] Start base services (traefik + db)"
             sudo -n docker compose -p "$PROJECT" up -d traefik db
 
-            echo "[7/11] Wait MariaDB healthy (container_name: ptppika_mariadb)"
+            echo "[7/13] Wait MariaDB healthy (container_name: ptppika_mariadb)"
             for i in {1..90}; do
               state=$(sudo -n docker inspect --format='{{json .State.Health.Status}}' ptppika_mariadb 2>/dev/null || echo "null")
               echo "Health db: $state"
@@ -275,7 +288,7 @@ jobs:
             state=$(sudo -n docker inspect --format='{{json .State.Health.Status}}' ptppika_mariadb 2>/dev/null || echo "null")
             [ "$state" = "\"healthy\"" ] || { echo "DB never became healthy"; sudo -n docker logs --tail=200 ptppika_mariadb || true; exit 1; }
 
-            echo "[8/11] Ensure DB user/db exist (idempotent)"
+            echo "[8/13] Ensure DB user/db exist (idempotent)"
             sudo -n docker exec -i ptppika_mariadb mariadb -uroot -p"${DB_ROOT_PASSWORD}" <<SQL
             CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;
             CREATE USER IF NOT EXISTS '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
@@ -284,10 +297,10 @@ jobs:
             FLUSH PRIVILEGES;
             SQL
 
-            echo "[9/12] Build web + parser + bot images"
+            echo "[9/13] Build web + parser + bot images"
             sudo -n docker compose -p "$PROJECT" build web parser bot
 
-            echo "[10/12] Prisma migrate deploy"
+            echo "[10/13] Prisma migrate deploy"
             # Stratégie :
             #   1) Si la migration init est déjà enregistrée → rien à faire, migrate deploy suffit.
             #   2) Si la table `runs` existe déjà (DB pré-existante sans Prisma) → baseline l'init
@@ -313,15 +326,19 @@ jobs:
             fi
             sudo -n docker compose -p "$PROJECT" --env-file .env run --rm web npx prisma migrate deploy
 
-            echo "[11/12] Start web + parser + bot"
+            echo "[11/13] Start web + parser + bot"
             sudo -n docker compose -p "$PROJECT" up -d web parser bot
 
-            echo "[12/12] Fix volume permissions (combatlogs ACL)"
+            echo "[12/13] Fix volume permissions (combatlogs ACL)"
             if [ -f "${SRC}/fix_deploy.sh" ]; then
               bash "${SRC}/fix_deploy.sh"
             else
               echo "fix_deploy.sh not found at ${SRC}, skipping ACL setup"
             fi
+
+            echo "[13/13] Register Discord slash commands"
+            sudo -n docker exec ptpika_bot node src/deploy-commands.js \
+              || echo "[warn] Enregistrement des slash commands echoue (non-fatal)"
 
             echo "Containers:"
             sudo -n docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'

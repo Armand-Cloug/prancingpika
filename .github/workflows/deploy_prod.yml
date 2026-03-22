@@ -37,6 +37,7 @@ jobs:
           test -n "${GOOGLE_CLIENT_SECRET}" || (echo "Missing GOOGLE_CLIENT_SECRET" && exit 1)
           test -n "${DISCORD_CLIENT_ID}" || (echo "Missing DISCORD_CLIENT_ID" && exit 1)
           test -n "${DISCORD_CLIENT_SECRET}" || (echo "Missing DISCORD_CLIENT_SECRET" && exit 1)
+          test -n "${DISCORD_BOT_TOKEN}" || (echo "Missing DISCORD_BOT_TOKEN" && exit 1)
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
@@ -48,6 +49,7 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
           DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
 
       - name: Check required vars
         run: |
@@ -57,12 +59,14 @@ jobs:
           test -n "${DB_USER}" || (echo "Missing vars.DB_USER" && exit 1)
           test -n "${DB_NAME}" || (echo "Missing vars.DB_NAME" && exit 1)
           test -n "${NEXTAUTH_URL}" || (echo "Missing vars.NEXTAUTH_URL" && exit 1)
+          test -n "${DISCORD_BOT_CLIENT_ID}" || (echo "Missing vars.DISCORD_BOT_CLIENT_ID" && exit 1)
         env:
           APP_DOMAIN: ${{ vars.APP_DOMAIN }}
           TRAEFIK_ACME_EMAIL: ${{ vars.TRAEFIK_ACME_EMAIL }}
           DB_USER: ${{ vars.DB_USER }}
           DB_NAME: ${{ vars.DB_NAME }}
           NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
+          DISCORD_BOT_CLIENT_ID: ${{ vars.DISCORD_BOT_CLIENT_ID }}
 
       - name: Write SSH key file (normalize)
         run: |
@@ -137,11 +141,11 @@ jobs:
 
             cd "${SRC}"
 
-            echo "[1/10] Ensure shared networks exist (proxy/internal)"
+            echo "[1/13] Ensure shared networks exist (proxy/internal)"
             sudo -n docker network create proxy >/dev/null 2>&1 || true
             sudo -n docker network create internal >/dev/null 2>&1 || true
 
-            echo "[2/10] Ensure Traefik ACME is persistent"
+            echo "[2/13] Ensure Traefik ACME is persistent"
             sudo -n mkdir -p "${DATA}/traefik"
             if [ ! -f "${DATA}/traefik/acme.json" ]; then
               sudo -n install -m 600 /dev/null "${DATA}/traefik/acme.json" || true
@@ -152,7 +156,7 @@ jobs:
             cp "${DATA}/traefik/acme.json" traefik/acme.json
             chmod 600 traefik/acme.json || true
 
-            echo "[3/10] Write .env (single source of truth)"
+            echo "[3/13] Write .env (single source of truth)"
             rm -f .env
 
             APP_DOMAIN="${{ vars.APP_DOMAIN }}"
@@ -231,16 +235,36 @@ jobs:
             PARSER_URL=http://parser:8080
             PARSER_WORKDIR=/workspace
             PARSER_TIMEOUT_S=600
+            BOT_URL=http://bot:8081
             EOF
 
-            echo "[4/11] Stop previous stack"
-            sudo -n docker compose -p "$PROJECT" down --remove-orphans || true
-            sudo -n docker rm -f ptpika_traefik ptppika_mariadb ptpika_parser ptpika_web >/dev/null 2>&1 || true
+            echo "[4/13] Write bot/.env"
+            DISCORD_BOT_TOKEN="${{ secrets.DISCORD_BOT_TOKEN }}"
+            DISCORD_BOT_CLIENT_ID="${{ vars.DISCORD_BOT_CLIENT_ID }}"
+            BOT_NOTIFY_CHANNEL_ID="${{ vars.BOT_NOTIFY_CHANNEL_ID }}"
+            BOT_RECORDS_CHANNEL_ID="${{ vars.BOT_RECORDS_CHANNEL_ID }}"
+            BOT_WEEKLY_CHANNEL_ID="${{ vars.BOT_WEEKLY_CHANNEL_ID }}"
 
-            echo "[5/11] Start base services (traefik + db)"
+            mkdir -p bot
+            cat > bot/.env <<EOF
+            PORT=8081
+            DISCORD_TOKEN=${DISCORD_BOT_TOKEN}
+            CLIENT_ID=${DISCORD_BOT_CLIENT_ID}
+            DATABASE_URL=${DATABASE_URL}
+            PARSER_URL=http://parser:8080
+            NOTIFY_CHANNEL_ID=${BOT_NOTIFY_CHANNEL_ID}
+            RECORDS_CHANNEL_ID=${BOT_RECORDS_CHANNEL_ID}
+            WEEKLY_CHANNEL_ID=${BOT_WEEKLY_CHANNEL_ID}
+            EOF
+
+            echo "[5/13] Stop previous stack"
+            sudo -n docker compose -p "$PROJECT" down --remove-orphans || true
+            sudo -n docker rm -f ptpika_traefik ptppika_mariadb ptpika_parser ptpika_web ptpika_bot >/dev/null 2>&1 || true
+
+            echo "[6/13] Start base services (traefik + db)"
             sudo -n docker compose -p "$PROJECT" up -d traefik db
 
-            echo "[6/11] Wait MariaDB healthy (container_name: ptppika_mariadb)"
+            echo "[7/13] Wait MariaDB healthy (container_name: ptppika_mariadb)"
             for i in {1..90}; do
               state=$(sudo -n docker inspect --format='{{json .State.Health.Status}}' ptppika_mariadb 2>/dev/null || echo "null")
               echo "Health db: $state"
@@ -250,7 +274,7 @@ jobs:
             state=$(sudo -n docker inspect --format='{{json .State.Health.Status}}' ptppika_mariadb 2>/dev/null || echo "null")
             [ "$state" = "\"healthy\"" ] || { echo "DB never became healthy"; sudo -n docker logs --tail=200 ptppika_mariadb || true; exit 1; }
 
-            echo "[7/11] Ensure DB user/db exist (idempotent)"
+            echo "[8/13] Ensure DB user/db exist (idempotent)"
             # Important: avec un volume, MariaDB ne recrée pas automatiquement l'utilisateur à chaque run.
             sudo -n docker exec -i ptppika_mariadb mariadb -uroot -p"${DB_ROOT_PASSWORD}" <<SQL
             CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;
@@ -260,10 +284,10 @@ jobs:
             FLUSH PRIVILEGES;
             SQL
 
-            echo "[8/11] Build web + parser images"
-            sudo -n docker compose -p "$PROJECT" build web parser
+            echo "[9/13] Build web + parser + bot images"
+            sudo -n docker compose -p "$PROJECT" build web parser bot
 
-            echo "[9/11] Prisma migrate deploy"
+            echo "[10/13] Prisma migrate deploy"
             # Si _prisma_migrations n'existe pas (DB pré-existante sans Prisma),
             # on baseline l'init pour éviter "Table already exists".
             HAS_MIG=$(sudo -n docker exec ptppika_mariadb mariadb -uroot -p"${DB_ROOT_PASSWORD}" \
@@ -277,11 +301,15 @@ jobs:
             fi
             sudo -n docker compose -p "$PROJECT" --env-file .env run --rm web npx prisma migrate deploy
 
-            echo "[10/11] Start web + parser"
-            sudo -n docker compose -p "$PROJECT" up -d web parser
+            echo "[11/13] Start web + parser + bot"
+            sudo -n docker compose -p "$PROJECT" up -d web parser bot
 
-            echo "[11/11] Fix volume permissions (combatlogs ACL)"
+            echo "[12/13] Fix volume permissions (combatlogs ACL)"
             bash "${SRC}/fix_deploy.sh"
+
+            echo "[13/13] Register Discord slash commands"
+            sudo -n docker exec ptpika_bot node src/deploy-commands.js \
+              || echo "[warn] Enregistrement des slash commands echoue (non-fatal)"
 
             echo "Containers:"
             sudo -n docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
