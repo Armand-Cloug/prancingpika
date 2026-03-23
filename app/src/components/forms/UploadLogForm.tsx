@@ -1,6 +1,6 @@
 // src/components/forms/UploadLogForm.tsx
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type GuildOption = { id: string; name: string; tag: string };
 
@@ -30,6 +30,13 @@ export default function UploadLogForm({
 }) {
   const [selectedGuildId, setSelectedGuildId] = useState(guilds[0]?.id ?? "");
   const [file, setFile]     = useState<File | null>(null);
+
+  // Sync selectedGuildId when guilds load asynchronously after initial mount
+  useEffect(() => {
+    if (guilds.length > 0 && !guilds.find((g) => g.id === selectedGuildId)) {
+      setSelectedGuildId(guilds[0].id);
+    }
+  }, [guilds]);
   const [date, setDate]     = useState("");
   const [label, setLabel]   = useState("");
   const [loading, setLoading] = useState(false);

@@ -131,7 +131,8 @@ export function buildWeeklyEmbed(summary) {
 
 // ─── Logique de poll ──────────────────────────────────────────────────────────
 
-let _client = null;
+let _client  = null;
+let _polling = false;
 
 export async function triggerPoll() {
   if (_client) await poll(_client).catch(err =>
@@ -140,6 +141,17 @@ export async function triggerPoll() {
 }
 
 async function poll(client) {
+  if (_polling) return;
+  _polling = true;
+
+  try {
+    await doPoll(client);
+  } finally {
+    _polling = false;
+  }
+}
+
+async function doPoll(client) {
   let state = await loadState();
 
   // Initialisation : memoriser le dernier run connu sans notifier
