@@ -3,7 +3,7 @@
 //
 //   NOTIFY_CHANNEL_ID  — nouveaux runs + records de guilde
 //   RECORDS_CHANNEL_ID — records personnels des joueurs
-//   WEEKLY_CHANNEL_ID  — resume hebdomadaire (lundi 8h)
+//   WEEKLY_CHANNEL_ID  — resume hebdomadaire (mercredi 9h)
 //
 // Mecanisme : polling toutes les 30 secondes sur la table `runs`.
 // Un fichier data/state.json stocke le dernier run_id traite.
@@ -258,13 +258,13 @@ export function startNotifications(client) {
     console.error('[notifications] Erreur premier poll:', err)
   );
 
-  // Resume hebdomadaire : lundi a 08:00 (heure locale du serveur)
-  cron.schedule('0 8 * * 1', () => {
+  // Resume hebdomadaire : mercredi a 09:00 (heure locale du serveur)
+  cron.schedule('0 9 * * 3', () => {
     console.log('[notifications] Lancement resume hebdomadaire...');
     sendWeeklySummary(client).catch(err =>
       console.error('[notifications] Erreur cron hebdo:', err)
     );
   });
 
-  console.log('[notifications] Polling actif (30s) + cron hebdo lundi 08:00.');
+  console.log('[notifications] Polling actif (30s) + cron hebdo mercredi 09:00.');
 }

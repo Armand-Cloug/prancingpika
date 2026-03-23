@@ -220,7 +220,10 @@ export async function getWeeklySummary() {
     JOIN runs    r ON rp.runId    = r.id
     JOIN players p ON rp.playerId = p.id
     JOIN bosses  b ON r.bossId    = b.id
-    WHERE r.startedAt >= DATE_SUB(NOW(), INTERVAL 7 DAY)`
+    WHERE r.startedAt >= DATE_ADD(
+      CONCAT(DATE_SUB(CURDATE(), INTERVAL ((DAYOFWEEK(CURDATE()) - 4 + 7) % 7) DAY), ' 09:00:00'),
+      INTERVAL CASE WHEN ((DAYOFWEEK(CURDATE()) - 4 + 7) % 7) = 0 AND TIME(NOW()) < '09:00:00' THEN 7 ELSE 0 END DAY
+    )`
   );
 
   // Agreger par boss+joueur (meilleur score de la semaine par joueur)
