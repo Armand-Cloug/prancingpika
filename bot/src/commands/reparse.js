@@ -8,10 +8,10 @@ import { isOfficerOrOwner } from '../db.js';
 
 export const data = new SlashCommandBuilder()
   .setName('reparse')
-  .setDescription('[Admin] Relance le parser sur un fichier de log existant')
+  .setDescription('[Admin] Re-run the parser on an existing log file')
   .addStringOption(opt =>
     opt.setName('filename')
-      .setDescription('Nom du fichier de log (ex: combat_20260322.log)')
+      .setDescription('Log file name (e.g.: combat_20260322.log)')
       .setRequired(true));
 
 export async function execute(interaction) {
@@ -21,7 +21,7 @@ export async function execute(interaction) {
   const member = await isOfficerOrOwner(interaction.user.id);
   if (!member) {
     return interaction.editReply(
-      'Permission refusee. Cette commande necessite le role **Officer** ou **Owner** d\'une guilde.'
+      'Permission denied. This command requires the **Officer** or **Owner** role of a guild.'
     );
   }
 
@@ -59,21 +59,21 @@ export async function execute(interaction) {
     result = await res.json();
     if (!res.ok) {
       return interaction.editReply(
-        `Erreur du parser : ${result?.error ?? res.statusText}`
+        `Parser error: ${result?.error ?? res.statusText}`
       );
     }
   } catch (err) {
-    return interaction.editReply(`Impossible de contacter le parser : ${err.message}`);
+    return interaction.editReply(`Unable to contact the parser: ${err.message}`);
   }
 
   const embed = new EmbedBuilder()
     .setColor(0x00C853)
-    .setTitle('Parser relance avec succes')
+    .setTitle('Parser successfully re-run')
     .addFields(
-      { name: 'Fichier',           value: filename,                        inline: true },
-      { name: 'Fights detectes',   value: String(result.fightsDetected),   inline: true },
-      { name: 'Runs importes',     value: String(result.runsInserted),     inline: true },
-      { name: 'Runs ignores',      value: String(result.runsSkipped),      inline: true },
+      { name: 'File',              value: filename,                        inline: true },
+      { name: 'Fights detected',   value: String(result.fightsDetected),   inline: true },
+      { name: 'Runs imported',     value: String(result.runsInserted),     inline: true },
+      { name: 'Runs skipped',      value: String(result.runsSkipped),      inline: true },
     )
     .setFooter({ text: result.message ?? '' });
 

@@ -9,7 +9,7 @@ import { getWeeklySummary } from '../db.js';
 
 export const data = new SlashCommandBuilder()
   .setName('weeklysummary')
-  .setDescription('Resume hebdomadaire : top 3 joueurs par categorie sur chaque boss');
+  .setDescription('Weekly summary: top 3 players per category on each boss');
 
 export async function execute(interaction) {
   await interaction.deferReply();
@@ -18,7 +18,7 @@ export async function execute(interaction) {
   const bosses  = Object.keys(summary);
 
   if (!bosses.length) {
-    return interaction.editReply('Aucune activite cette semaine.');
+    return interaction.editReply('No activity this week.');
   }
 
   const embeds = buildWeeklyEmbed(summary);

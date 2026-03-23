@@ -11,11 +11,11 @@ import {
 
 export const data = new SlashCommandBuilder()
   .setName('personalbest')
-  .setDescription('Meilleur score d\'un joueur sur un boss')
+  .setDescription('Best score of a player on a boss')
   .addStringOption(opt =>
-    opt.setName('pseudo').setDescription('Nom du personnage').setRequired(true))
+    opt.setName('pseudo').setDescription('Character name').setRequired(true))
   .addStringOption(opt =>
-    opt.setName('boss').setDescription('Nom du boss').setRequired(true));
+    opt.setName('boss').setDescription('Boss name').setRequired(true));
 
 export async function execute(interaction) {
   await interaction.deferReply();
@@ -27,7 +27,7 @@ export async function execute(interaction) {
 
   if (!record) {
     return interaction.editReply(
-      `Aucun record trouve pour **${pseudo}** sur **${boss}**.`
+      `No record found for **${pseudo}** on **${boss}**.`
     );
   }
 
@@ -37,16 +37,16 @@ export async function execute(interaction) {
 
   const embed = new EmbedBuilder()
     .setColor(color)
-    .setTitle(`${clsEmoji} Record de ${record.player_name} sur ${record.boss_name}`)
+    .setTitle(`${clsEmoji} Record for ${record.player_name} on ${record.boss_name}`)
     .setFooter({ text: `Run #${record.run_id} — ${record.guild_name}` })
     .setTimestamp(new Date(record.startedAt))
     .addFields(
-      { name: '⚔️ DPS',   value: fmtNum(record.dps),      inline: true },
-      { name: '💚 HPS',   value: fmtNum(record.hps),      inline: true },
-      { name: '🛡️ APS',   value: fmtNum(record.aps) === '0' ? '—' : fmtNum(record.aps), inline: true },
-      { name: `${rEmoji} Role`,  value: record.role  ?? '—', inline: true },
-      { name: `${clsEmoji} Classe`, value: record.class ?? '—', inline: true },
-      { name: '⏱️ Temps', value: fmtDuration(record.duration_s), inline: true },
+      { name: '⚔️ DPS',      value: fmtNum(record.dps),      inline: true },
+      { name: '💚 HPS',      value: fmtNum(record.hps),      inline: true },
+      { name: '🛡️ APS',      value: fmtNum(record.aps) === '0' ? '—' : fmtNum(record.aps), inline: true },
+      { name: `${rEmoji} Role`,   value: record.role  ?? '—', inline: true },
+      { name: `${clsEmoji} Class`, value: record.class ?? '—', inline: true },
+      { name: '⏱️ Duration', value: fmtDuration(record.duration_s), inline: true },
     );
 
   return interaction.editReply({ embeds: [embed] });

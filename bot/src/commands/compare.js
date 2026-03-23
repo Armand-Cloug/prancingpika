@@ -11,23 +11,23 @@ import {
 
 export const data = new SlashCommandBuilder()
   .setName('compare')
-  .setDescription('Compare deux joueurs sur un boss')
+  .setDescription('Compare two players on a boss')
   .addStringOption(opt =>
-    opt.setName('pseudo1').setDescription('Premier joueur').setRequired(true))
+    opt.setName('pseudo1').setDescription('First player').setRequired(true))
   .addStringOption(opt =>
-    opt.setName('pseudo2').setDescription('Deuxieme joueur').setRequired(true))
+    opt.setName('pseudo2').setDescription('Second player').setRequired(true))
   .addStringOption(opt =>
-    opt.setName('boss').setDescription('Nom du boss').setRequired(true));
+    opt.setName('boss').setDescription('Boss name').setRequired(true));
 
 function playerField(record, label) {
-  if (!record) return `${label}\n*Aucun record*`;
+  if (!record) return `${label}\n*No record*`;
   const lines = [
-    `**DPS :** ${fmtNum(record.dps)}`,
-    `**HPS :** ${fmtNum(record.hps)}`,
-    record.aps > 0 ? `**APS :** ${fmtNum(record.aps)}` : null,
-    `**Role :** ${record.role ?? '—'} ${roleEmoji(record.role)}`,
-    `**Classe :** ${record.class ?? '—'} ${classEmoji(record.class)}`,
-    `**Temps :** ${fmtDuration(record.duration_s)}`,
+    `**DPS:** ${fmtNum(record.dps)}`,
+    `**HPS:** ${fmtNum(record.hps)}`,
+    record.aps > 0 ? `**APS:** ${fmtNum(record.aps)}` : null,
+    `**Role:** ${record.role ?? '—'} ${roleEmoji(record.role)}`,
+    `**Class:** ${record.class ?? '—'} ${classEmoji(record.class)}`,
+    `**Duration:** ${fmtDuration(record.duration_s)}`,
     `*${record.guild_name}*`,
   ].filter(Boolean);
   return lines.join('\n');
@@ -51,7 +51,7 @@ export async function execute(interaction) {
 
   if (!p1 && !p2) {
     return interaction.editReply(
-      `Aucun record trouve pour **${p1Name}** ni **${p2Name}** sur **${boss}**.`
+      `No record found for **${p1Name}** or **${p2Name}** on **${boss}**.`
     );
   }
 
@@ -80,7 +80,7 @@ export async function execute(interaction) {
   if (p1 && p2) {
     const diff = Math.abs(p1.dps - p2.dps);
     const who  = p1.dps >= p2.dps ? (p1.player_name ?? p1Name) : (p2.player_name ?? p2Name);
-    embed.setFooter({ text: `Ecart DPS : ${fmtNum(diff)} — avantage ${who}` });
+    embed.setFooter({ text: `DPS gap: ${fmtNum(diff)} — advantage ${who}` });
   }
 
   return interaction.editReply({ embeds: [embed] });

@@ -7,11 +7,11 @@ import { getTopDps, classEmoji, fmtNum, fmtDuration } from '../db.js';
 
 export const data = new SlashCommandBuilder()
   .setName('top')
-  .setDescription('Top 10 DPS sur un boss (toutes guildes)')
+  .setDescription('Top 10 DPS on a boss (all guilds)')
   .addStringOption(opt =>
-    opt.setName('boss').setDescription('Nom du boss').setRequired(true))
+    opt.setName('boss').setDescription('Boss name').setRequired(true))
   .addIntegerOption(opt =>
-    opt.setName('limit').setDescription('Nombre de joueurs (defaut 10, max 25)').setRequired(false));
+    opt.setName('limit').setDescription('Number of players (default 10, max 25)').setRequired(false));
 
 export async function execute(interaction) {
   await interaction.deferReply();
@@ -22,7 +22,7 @@ export async function execute(interaction) {
   const rows = await getTopDps(boss, limit);
 
   if (!rows.length) {
-    return interaction.editReply(`Aucun run trouve pour le boss **${boss}**.`);
+    return interaction.editReply(`No run found for boss **${boss}**.`);
   }
 
   const bossName = rows[0].player_name ? boss : boss;

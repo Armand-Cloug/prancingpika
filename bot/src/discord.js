@@ -50,7 +50,7 @@ export async function startDiscord() {
       await command.execute(interaction);
     } catch (err) {
       console.error(`[bot] Erreur dans /${interaction.commandName}:`, err);
-      const msg = { content: 'Une erreur est survenue lors de l\'execution de la commande.', ephemeral: true };
+      const msg = { content: 'An error occurred while executing this command.', ephemeral: true };
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply(msg).catch(() => {});
       } else {

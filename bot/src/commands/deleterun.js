@@ -8,10 +8,10 @@ import { isOfficerOrOwner, deleteRun, getDb } from '../db.js';
 
 export const data = new SlashCommandBuilder()
   .setName('deleterun')
-  .setDescription('[Admin] Supprime un run de la base de donnees')
+  .setDescription('[Admin] Delete a run from the database')
   .addIntegerOption(opt =>
     opt.setName('run_id')
-      .setDescription('ID du run a supprimer')
+      .setDescription('Run ID to delete')
       .setRequired(true));
 
 export async function execute(interaction) {
@@ -21,7 +21,7 @@ export async function execute(interaction) {
   const member = await isOfficerOrOwner(interaction.user.id);
   if (!member) {
     return interaction.editReply(
-      'Permission refusee. Cette commande necessite le role **Officer** ou **Owner** d\'une guilde.'
+      'Permission denied. This command requires the **Officer** or **Owner** role of a guild.'
     );
   }
 
@@ -45,24 +45,24 @@ export async function execute(interaction) {
   }
 
   if (!runInfo) {
-    return interaction.editReply(`Run #${runId} introuvable en base.`);
+    return interaction.editReply(`Run #${runId} not found in database.`);
   }
 
   const deleted = await deleteRun(runId);
 
   if (!deleted) {
-    return interaction.editReply(`Echec de la suppression du run #${runId}.`);
+    return interaction.editReply(`Failed to delete run #${runId}.`);
   }
 
   const embed = new EmbedBuilder()
     .setColor(0xE53935)
-    .setTitle('Run supprime')
+    .setTitle('Run deleted')
     .addFields(
-      { name: 'ID',      value: String(runId),                           inline: true },
-      { name: 'Boss',    value: runInfo.boss_name,                       inline: true },
-      { name: 'Guilde',  value: runInfo.guild_name,                      inline: true },
-      { name: 'Date',    value: new Date(runInfo.startedAt).toLocaleDateString('fr-FR'), inline: true },
-      { name: 'Supprime par', value: `<@${interaction.user.id}>`,       inline: true },
+      { name: 'ID',           value: String(runId),                                          inline: true },
+      { name: 'Boss',         value: runInfo.boss_name,                                      inline: true },
+      { name: 'Guild',        value: runInfo.guild_name,                                     inline: true },
+      { name: 'Date',         value: new Date(runInfo.startedAt).toLocaleDateString('en-US'), inline: true },
+      { name: 'Deleted by',   value: `<@${interaction.user.id}>`,                            inline: true },
     );
 
   return interaction.editReply({ embeds: [embed] });

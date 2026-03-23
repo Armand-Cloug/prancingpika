@@ -11,9 +11,9 @@ import {
 
 export const data = new SlashCommandBuilder()
   .setName('lookup')
-  .setDescription('Historique complet d\'un joueur (meilleur score par boss)')
+  .setDescription('Full player history (best score per boss)')
   .addStringOption(opt =>
-    opt.setName('pseudo').setDescription('Nom du personnage').setRequired(true));
+    opt.setName('pseudo').setDescription('Character name').setRequired(true));
 
 export async function execute(interaction) {
   await interaction.deferReply();
@@ -22,7 +22,7 @@ export async function execute(interaction) {
   const rows   = await getPlayerHistory(pseudo);
 
   if (!rows.length) {
-    return interaction.editReply(`Aucun run trouve pour **${pseudo}**.`);
+    return interaction.editReply(`No run found for **${pseudo}**.`);
   }
 
   const cls   = rows[0].class;
@@ -43,7 +43,7 @@ export async function execute(interaction) {
 
   const embed = new EmbedBuilder()
     .setColor(color)
-    .setTitle(`${clsEmoji} ${pseudo} — Historique`)
+    .setTitle(`${clsEmoji} ${pseudo} — History`)
     .setDescription(description);
 
   return interaction.editReply({ embeds: [embed] });

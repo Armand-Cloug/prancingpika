@@ -64,12 +64,12 @@ function buildRunEmbed(run, roster) {
 
   return new EmbedBuilder()
     .setColor(0x5865F2)
-    .setTitle(`📊 Nouveau run — ${run.guild_name} a kill ${run.boss_name}`)
+    .setTitle(`📊 New run — ${run.guild_name} killed ${run.boss_name}`)
     .addFields(
-      { name: '⏱️ Temps',       value: fmtDuration(run.duration_s), inline: true },
-      { name: '💥 DPS groupe',  value: fmtNum(run.dpsGroup),         inline: true },
-      { name: '💚 HPS groupe',  value: fmtNum(run.hpsGroup),         inline: true },
-      { name: '🏆 Top 5',       value: rosterLines.join('\n') || '—' },
+      { name: '⏱️ Duration',   value: fmtDuration(run.duration_s), inline: true },
+      { name: '💥 Group DPS',  value: fmtNum(run.dpsGroup),         inline: true },
+      { name: '💚 Group HPS',  value: fmtNum(run.hpsGroup),         inline: true },
+      { name: '🏆 Top 5',      value: rosterLines.join('\n') || '—' },
     )
     .setTimestamp();
 }
@@ -109,7 +109,7 @@ export function buildWeeklyEmbed(summary) {
     embeds.push(
       new EmbedBuilder()
         .setColor(0xFFD700)
-        .setTitle(`📅 Resume semaine — ${boss}`)
+        .setTitle(`📅 Weekly summary — ${boss}`)
         .setDescription(lines.join('\n'))
     );
   }
@@ -118,8 +118,8 @@ export function buildWeeklyEmbed(summary) {
     embeds.push(
       new EmbedBuilder()
         .setColor(0x90A4AE)
-        .setTitle('📅 Resume hebdomadaire')
-        .setDescription('Aucune activite cette semaine.')
+        .setTitle('📅 Weekly summary')
+        .setDescription('No activity this week.')
     );
   }
 
@@ -183,15 +183,15 @@ async function poll(client) {
           // Determiner la metrique la plus representative (eviter le doublon)
           if (newDps > prevDps && newDps > 0) {
             await recordsChannel.send(
-              `🏆 **${p.player_name}** vient de battre son record personnel sur **${run.boss_name}** — **${fmtNum(newDps)} DPS** (${p.class ?? p.role ?? '?'})`
+              `🏆 **${p.player_name}** just broke their personal record on **${run.boss_name}** — **${fmtNum(newDps)} DPS** (${p.class ?? p.role ?? '?'})`
             );
           } else if (newHps > prevHps && newHps > 0) {
             await recordsChannel.send(
-              `🏆 **${p.player_name}** vient de battre son record personnel sur **${run.boss_name}** — **${fmtNum(newHps)} HPS** (${p.class ?? p.role ?? '?'})`
+              `🏆 **${p.player_name}** just broke their personal record on **${run.boss_name}** — **${fmtNum(newHps)} HPS** (${p.class ?? p.role ?? '?'})`
             );
           } else if (newAps > prevAps && newAps > 0) {
             await recordsChannel.send(
-              `🏆 **${p.player_name}** vient de battre son record personnel sur **${run.boss_name}** — **${fmtNum(newAps)} APS** (${p.class ?? p.role ?? '?'})`
+              `🏆 **${p.player_name}** just broke their personal record on **${run.boss_name}** — **${fmtNum(newAps)} APS** (${p.class ?? p.role ?? '?'})`
             );
           }
         }
@@ -206,7 +206,7 @@ async function poll(client) {
         const prevRecord = await getPreviousGuildRecord(run.guild_id, run.boss_id, run.run_id);
         if (prevRecord != null && run.duration_s < Number(prevRecord)) {
           await notifyChannel.send(
-            `⚔️ La guilde **${run.guild_name}** vient de battre son record sur **${run.boss_name}** — ${fmtDuration(run.duration_s)} *(anciennement ${fmtDuration(Number(prevRecord))})*`
+            `⚔️ Guild **${run.guild_name}** just broke their record on **${run.boss_name}** — ${fmtDuration(run.duration_s)} *(previously ${fmtDuration(Number(prevRecord))})*`
           );
         }
       } catch (err) {

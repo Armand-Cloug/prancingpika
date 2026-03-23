@@ -7,14 +7,14 @@ import { getLastRun, getRunRoster, classEmoji, roleEmoji, fmtNum, fmtDuration } 
 
 export const data = new SlashCommandBuilder()
   .setName('lastrun')
-  .setDescription('Affiche le dernier run uploade');
+  .setDescription('Show the last uploaded run');
 
 export async function execute(interaction) {
   await interaction.deferReply();
 
   const run = await getLastRun();
   if (!run) {
-    return interaction.editReply('Aucun run trouve en base.');
+    return interaction.editReply('No run found in database.');
   }
 
   const roster = await getRunRoster(run.run_id, 5);
@@ -32,15 +32,15 @@ export async function execute(interaction) {
 
   const embed = new EmbedBuilder()
     .setColor(0x5865F2)
-    .setTitle(`📋 Dernier run — ${guildDisplay}`)
+    .setTitle(`📋 Last run — ${guildDisplay}`)
     .setTimestamp(new Date(run.createdAt))
     .addFields(
-      { name: '🐉 Boss',       value: run.boss_name,               inline: true },
-      { name: '⏱️ Temps',      value: fmtDuration(run.duration_s), inline: true },
-      { name: '💥 DPS groupe', value: fmtNum(run.dpsGroup),         inline: true },
-      { name: '💚 HPS groupe', value: fmtNum(run.hpsGroup),         inline: true },
+      { name: '🐉 Boss',        value: run.boss_name,               inline: true },
+      { name: '⏱️ Duration',    value: fmtDuration(run.duration_s), inline: true },
+      { name: '💥 Group DPS',   value: fmtNum(run.dpsGroup),        inline: true },
+      { name: '💚 Group HPS',   value: fmtNum(run.hpsGroup),        inline: true },
       run.apsGroup > 0
-        ? { name: '🛡️ APS groupe', value: fmtNum(run.apsGroup), inline: true }
+        ? { name: '🛡️ Group APS', value: fmtNum(run.apsGroup), inline: true }
         : { name: '\u200b', value: '\u200b', inline: true },
       { name: '🏆 Top 5', value: rosterLines.join('\n') || '—', inline: false },
     );
