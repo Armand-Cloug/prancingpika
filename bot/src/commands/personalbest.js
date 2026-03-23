@@ -38,7 +38,7 @@ export async function execute(interaction) {
   const embed = new EmbedBuilder()
     .setColor(color)
     .setTitle(`${clsEmoji} Record for ${record.player_name} on ${record.boss_name}`)
-    .setFooter({ text: `Run #${record.run_id} — ${record.guild_name}` })
+    .setFooter({ text: `Run #${record.run_id} — ${record.guild_name} | PTPika Bot - By Cloug` })
     .setTimestamp(new Date(record.startedAt))
     .addFields(
       { name: '⚔️ DPS',      value: fmtNum(record.dps),      inline: true },

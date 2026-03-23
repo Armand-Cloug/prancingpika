@@ -38,7 +38,8 @@ export async function execute(interaction) {
   const embed = new EmbedBuilder()
     .setColor(0xFFD700)
     .setTitle(`Top ${limit} DPS — ${boss}`)
-    .setDescription(lines.join('\n'));
+    .setDescription(lines.join('\n'))
+    .setFooter({ text: 'PTPika Bot - By Cloug' });
 
   return interaction.editReply({ embeds: [embed] });
 }

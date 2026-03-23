@@ -1,6 +1,6 @@
 // commands/presentation.js  [ADMIN]
-// /presentation title: <title> subtitle: <subtitle> content: <content>
-// Poste un embed de présentation du projet.
+// /presentation title: <title> section1_title: <s1t> section1_content: <s1c> ...
+// Poste un embed de présentation multi-sections.
 // Requiert le rôle Officer ou Owner.
 
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
@@ -11,16 +11,32 @@ export const data = new SlashCommandBuilder()
   .setDescription('[Admin] Poster un embed de présentation du projet')
   .addStringOption(opt =>
     opt.setName('title')
-      .setDescription('Titre principal de la présentation')
+      .setDescription('Titre principal')
       .setRequired(true))
   .addStringOption(opt =>
-    opt.setName('subtitle')
-      .setDescription('Sous-titre de la présentation')
+    opt.setName('section1_title')
+      .setDescription('Sous-titre de la 1ère section')
       .setRequired(true))
   .addStringOption(opt =>
-    opt.setName('content')
-      .setDescription('Contenu de la présentation (séparer les paragraphes avec |)')
-      .setRequired(true));
+    opt.setName('section1_content')
+      .setDescription('Contenu de la 1ère section (séparer les paragraphes avec |)')
+      .setRequired(true))
+  .addStringOption(opt =>
+    opt.setName('section2_title')
+      .setDescription('Sous-titre de la 2ème section (optionnel)')
+      .setRequired(false))
+  .addStringOption(opt =>
+    opt.setName('section2_content')
+      .setDescription('Contenu de la 2ème section (optionnel, séparer avec |)')
+      .setRequired(false))
+  .addStringOption(opt =>
+    opt.setName('section3_title')
+      .setDescription('Sous-titre de la 3ème section (optionnel)')
+      .setRequired(false))
+  .addStringOption(opt =>
+    opt.setName('section3_content')
+      .setDescription('Contenu de la 3ème section (optionnel, séparer avec |)')
+      .setRequired(false));
 
 export async function execute(interaction) {
   await interaction.deferReply({ ephemeral: false });
@@ -32,23 +48,24 @@ export async function execute(interaction) {
     );
   }
 
-  const title    = interaction.options.getString('title');
-  const subtitle = interaction.options.getString('subtitle');
-  const raw      = interaction.options.getString('content');
+  const title = interaction.options.getString('title');
 
-  const paragraphs = raw
-    .split('|')
-    .map(s => s.trim())
-    .filter(Boolean);
-
-  const description = paragraphs.join('\n\n');
+  const sections = [
+    { t: interaction.options.getString('section1_title'), c: interaction.options.getString('section1_content') },
+    { t: interaction.options.getString('section2_title'), c: interaction.options.getString('section2_content') },
+    { t: interaction.options.getString('section3_title'), c: interaction.options.getString('section3_content') },
+  ].filter(s => s.t && s.c);
 
   const embed = new EmbedBuilder()
     .setColor(0x5865F2)
     .setTitle(title)
-    .setDescription(`*${subtitle}*\n\n${description}`)
     .setFooter({ text: 'PTPika Bot - By Cloug' })
     .setTimestamp();
+
+  for (const section of sections) {
+    const paragraphs = section.c.split('|').map(s => s.trim()).filter(Boolean);
+    embed.addFields({ name: section.t, value: paragraphs.join('\n\n') });
+  }
 
   return interaction.editReply({ embeds: [embed] });
 }

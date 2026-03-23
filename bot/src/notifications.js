@@ -1,8 +1,8 @@
 // src/notifications.js
 // Notifications automatiques postees dans les channels configures.
 //
-//   NOTIFY_CHANNEL_ID  — nouveaux runs + records de guilde
-//   RECORDS_CHANNEL_ID — records personnels des joueurs
+//   NOTIFY_CHANNEL_ID  — nouveaux runs
+//   RECORDS_CHANNEL_ID — records personnels des joueurs + records de guilde
 //   WEEKLY_CHANNEL_ID  — resume hebdomadaire (mercredi 9h)
 //
 // Mecanisme : polling toutes les 30 secondes sur la table `runs`.
@@ -71,6 +71,7 @@ function buildRunEmbed(run, roster) {
       { name: '💚 Group HPS',  value: fmtNum(run.hpsGroup),         inline: true },
       { name: '🏆 Top 5',      value: rosterLines.join('\n') || '—' },
     )
+    .setFooter({ text: 'PTPika Bot - By Cloug' })
     .setTimestamp();
 }
 
@@ -111,6 +112,7 @@ export function buildWeeklyEmbed(summary) {
         .setColor(0xFFD700)
         .setTitle(`📅 Weekly summary — ${boss}`)
         .setDescription(lines.join('\n'))
+        .setFooter({ text: 'PTPika Bot - By Cloug' })
     );
   }
 
@@ -120,6 +122,7 @@ export function buildWeeklyEmbed(summary) {
         .setColor(0x90A4AE)
         .setTitle('📅 Weekly summary')
         .setDescription('No activity this week.')
+        .setFooter({ text: 'PTPika Bot - By Cloug' })
     );
   }
 
@@ -200,12 +203,12 @@ async function poll(client) {
       }
     }
 
-    // 3. Record de guilde (temps)
-    if (notifyChannel) {
+    // 3. Record de guilde (temps) — même channel que les records personnels
+    if (recordsChannel) {
       try {
         const prevRecord = await getPreviousGuildRecord(run.guild_id, run.boss_id, run.run_id);
         if (prevRecord != null && run.duration_s < Number(prevRecord)) {
-          await notifyChannel.send(
+          await recordsChannel.send(
             `⚔️ Guild **${run.guild_name}** just broke their record on **${run.boss_name}** — ${fmtDuration(run.duration_s)} *(previously ${fmtDuration(Number(prevRecord))})*`
           );
         }

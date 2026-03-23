@@ -44,7 +44,8 @@ export async function execute(interaction) {
   const embed = new EmbedBuilder()
     .setColor(color)
     .setTitle(`${clsEmoji} ${pseudo} — History`)
-    .setDescription(description);
+    .setDescription(description)
+    .setFooter({ text: 'PTPika Bot - By Cloug' });
 
   return interaction.editReply({ embeds: [embed] });
 }

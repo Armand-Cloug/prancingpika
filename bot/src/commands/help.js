@@ -38,7 +38,7 @@ export async function execute(interaction) {
         ].join('\n'),
       },
     )
-    .setFooter({ text: 'Admin commands require Officer or Owner role.' });
+    .setFooter({ text: 'Admin commands require Officer or Owner role. | PTPika Bot - By Cloug' });
 
   return interaction.reply({ embeds: [embed], ephemeral: false });
 }

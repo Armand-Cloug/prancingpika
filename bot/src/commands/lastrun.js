@@ -43,7 +43,8 @@ export async function execute(interaction) {
         ? { name: '🛡️ Group APS', value: fmtNum(run.apsGroup), inline: true }
         : { name: '\u200b', value: '\u200b', inline: true },
       { name: '🏆 Top 5', value: rosterLines.join('\n') || '—', inline: false },
-    );
+    )
+    .setFooter({ text: 'PTPika Bot - By Cloug' });
 
   return interaction.editReply({ embeds: [embed] });
 }

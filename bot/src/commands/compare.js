@@ -80,7 +80,9 @@ export async function execute(interaction) {
   if (p1 && p2) {
     const diff = Math.abs(p1.dps - p2.dps);
     const who  = p1.dps >= p2.dps ? (p1.player_name ?? p1Name) : (p2.player_name ?? p2Name);
-    embed.setFooter({ text: `DPS gap: ${fmtNum(diff)} — advantage ${who}` });
+    embed.setFooter({ text: `DPS gap: ${fmtNum(diff)} — advantage ${who} | PTPika Bot - By Cloug` });
+  } else {
+    embed.setFooter({ text: 'PTPika Bot - By Cloug' });
   }
 
   return interaction.editReply({ embeds: [embed] });

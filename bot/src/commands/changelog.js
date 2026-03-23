@@ -46,7 +46,7 @@ export async function execute(interaction) {
     .setColor(0x5865F2)
     .setTitle(`📋 ${title}`)
     .setDescription(description)
-    .setFooter({ text: `Posted by ${interaction.user.username}` })
+    .setFooter({ text: `Posted by ${interaction.user.username} | PTPika Bot - By Cloug` })
     .setTimestamp();
 
   return interaction.editReply({ embeds: [embed] });
