@@ -27,11 +27,15 @@ export async function execute(interaction) {
     .setColor(0x5865F2)
     .setTitle('Support — Tickets')
     .setDescription(
-      'Vous avez une question, un signalement ou besoin d\'aide ?\n' +
-      'Cliquez sur le bouton ci-dessous pour ouvrir un ticket privé.\n\n' +
-      'Un administrateur vous répondra dès que possible.'
+      'Need help or want to report something? Open a private ticket and an admin will get back to you.\n\n' +
+      '**You can open a ticket for:**\n' +
+      '• 🐛 Reporting a bug on the website or the bot\n' +
+      '• 📊 Reporting a suspicious or bugged parse\n' +
+      '• 🗑️ Requesting a run to be deleted or restored\n' +
+      '• 👤 Requesting account deletion or other account-related actions\n' +
+      '• 💬 Any general question or request about the app'
     )
-    .setFooter({ text: 'Un seul ticket actif par personne.' });
+    .setFooter({ text: 'One active ticket per person.' });
 
   const button = new ButtonBuilder()
     .setCustomId('ticket_create')
@@ -68,7 +72,7 @@ export async function handleTicketCreate(interaction) {
 
   await interaction.deferReply({ ephemeral: true });
 
-  const adminRoleId = process.env.ADMIN_ROLE_ID;
+  const adminRoleId  = process.env.ADMIN_ROLE_ID;
 
   const permissionOverwrites = [
     // Personne ne voit le channel par défaut
@@ -126,14 +130,13 @@ export async function handleTicketCreate(interaction) {
 
   const welcomeEmbed = new EmbedBuilder()
     .setColor(0x57F287)
-    .setTitle('Ticket ouvert')
+    .setTitle('Ticket opened')
     .setDescription(
-      `Bonjour <@${user.id}> !\n\n` +
-      'Votre ticket est ouvert. Décrivez votre problème ou votre question, ' +
-      'un administrateur vous répondra dès que possible.\n\n' +
-      'Pour fermer ce ticket, un admin peut utiliser `/closeticket`.'
+      `Hello <@${user.id}>!\n\n` +
+      'Your ticket has been created. Please describe your issue or request and an admin will respond as soon as possible.\n\n' +
+      'To close this ticket, an admin can use `/closeticket`.'
     )
-    .setFooter({ text: `Ticket de ${user.username}` })
+    .setFooter({ text: `Ticket by ${user.username}` })
     .setTimestamp();
 
   await channel.send({ content: `<@${user.id}>`, embeds: [welcomeEmbed] });
