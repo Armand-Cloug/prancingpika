@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import type { Role } from "@/lib/role";
 import type { RunPlayerDpsResponse } from "@/lib/run-player-dps";
-import { getAbilityIconKey, getAbilityIconUrl } from "@/lib/ability-icons";
+import { getAbilityIconKeyByIdOrName, getAbilityIconUrl, getEnglishAbilityName } from "@/lib/ability-icons";
 
 type Calling = "cleric" | "primalist" | "warrior" | "rogue" | "mage";
 
@@ -350,7 +350,8 @@ export default function GroupDpsDialog({
                   </thead>
                   <tbody>
                     {playerData.abilities.map((a, i) => {
-                      const iconKey = getAbilityIconKey(a.abilityName);
+                      const displayName = getEnglishAbilityName(a.abilityName, a.abilityId);
+                      const iconKey = getAbilityIconKeyByIdOrName(a.abilityId, a.abilityName);
                       const iconUrl = iconKey ? getAbilityIconUrl(iconKey) : null;
                       return (
                         <tr key={a.abilityId || i} className="border-b border-white/[0.04] last:border-0">
@@ -369,7 +370,7 @@ export default function GroupDpsDialog({
                             )}
                           </td>
                           <td className="py-1.5 pr-3 text-zinc-200 font-medium">
-                            <div className="truncate" title={a.abilityName}>{a.abilityName}</div>
+                            <div className="truncate" title={displayName}>{displayName}</div>
                             {a.abilityId > 0 && <div className="mono text-[9px] text-zinc-600">{a.abilityId}</div>}
                           </td>
                           <td className="py-1.5 px-2 text-right mono text-zinc-300 whitespace-nowrap">{fmtNum(a.total)}</td>

@@ -3,6 +3,7 @@
 export type AbilityIconRule = {
   key: string;
   aliases: string[];
+  ids?: number[];
 };
 
 export const ABILITY_ICON_RULES: AbilityIconRule[] = [
@@ -1227,8 +1228,56 @@ export function getAbilityIconKey(
   return null;
 }
 
+export function getAbilityIconKeyById(
+  abilityId: number,
+  rules: AbilityIconRule[] = ABILITY_ICON_RULES
+): string | null {
+  if (!abilityId) return null;
+  for (const rule of rules) {
+    if (rule.ids?.includes(abilityId)) return rule.key;
+  }
+  return null;
+}
+
 export function getAbilityIconUrl(key: string): string | null {
   const k = (key ?? "").trim();
   if (!k) return null;
   return `/abilities/${k}.jpg`;
+}
+
+const FRENCH_CHARS = /[àâäèéêëìîïòôùûüæœçÀÂÄÈÉÊËÌÎÏÒÔÙÛÜÆŒÇ']/;
+
+function ruleToEnglish(rule: AbilityIconRule, fallback: string): string {
+  return rule.aliases.find((a) => !FRENCH_CHARS.test(a)) ?? fallback;
+}
+
+/**
+ * Retourne le nom anglais d'une compétence.
+ * Cherche d'abord par ID (plus fiable), puis par nom localisé.
+ * Fallback : nom original.
+ */
+export function getEnglishAbilityName(abilityName: string, abilityId?: number): string {
+  if (abilityId) {
+    const keyById = getAbilityIconKeyById(abilityId);
+    if (keyById) {
+      const rule = ABILITY_ICON_RULES.find((r) => r.key === keyById);
+      if (rule) return ruleToEnglish(rule, abilityName);
+    }
+  }
+  const key = getAbilityIconKey(abilityName);
+  if (!key) return abilityName;
+  const rule = ABILITY_ICON_RULES.find((r) => r.key === key);
+  if (!rule) return abilityName;
+  return ruleToEnglish(rule, abilityName);
+}
+
+/**
+ * Retourne la clé d'icône pour une compétence, en cherchant par ID puis par nom.
+ */
+export function getAbilityIconKeyByIdOrName(abilityId: number | undefined, abilityName: string): string | null {
+  if (abilityId) {
+    const k = getAbilityIconKeyById(abilityId);
+    if (k) return k;
+  }
+  return getAbilityIconKey(abilityName);
 }

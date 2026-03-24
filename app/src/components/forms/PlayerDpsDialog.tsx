@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { RunPlayerDpsResponse } from "@/lib/run-player-dps";
 import { SpecBadge } from "@/components/ui/badges";
-import { getAbilityIconKey, getAbilityIconUrl } from "@/lib/ability-icons";
+import { getAbilityIconKeyByIdOrName, getAbilityIconUrl, getEnglishAbilityName } from "@/lib/ability-icons";
+import GroupDpsDialog from "@/components/forms/GroupDpsDialog";
 
 function fmtNum(n: number) { return Math.round(n).toLocaleString("en-US"); }
 function fmtPct(n: number) { return `${n.toFixed(1)}%`; }
@@ -39,10 +40,23 @@ export default function PlayerDpsDialog({
         >
           <div className="relative px-6 pt-5 pb-4 border-b border-white/[0.08]">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-[radial-gradient(ellipse_at_50%_0%,rgba(56,189,248,0.12),transparent_70%)]" />
-            <DialogTitle className="text-base font-bold text-zinc-100" style={{ fontFamily:"'Syne',sans-serif" }}>
-              {playerName}
-              {data?.player.spec && <span className="ml-2"><SpecBadge spec={data.player.spec} /></span>}
-            </DialogTitle>
+            <div className="flex items-center justify-between gap-3">
+              <DialogTitle className="text-base font-bold text-zinc-100" style={{ fontFamily:"'Syne',sans-serif" }}>
+                {playerName}
+                {data?.player.spec && <span className="ml-2"><SpecBadge spec={data.player.spec} /></span>}
+              </DialogTitle>
+              <GroupDpsDialog
+                runId={runId}
+                trigger={
+                  <button
+                    type="button"
+                    className="shrink-0 px-3 py-1 text-[11px] font-medium rounded-lg bg-white/[0.05] border border-white/[0.1] text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.09] transition-colors"
+                  >
+                    Group DPS
+                  </button>
+                }
+              />
+            </div>
             {data && (
               <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[11px]">
                 {[
@@ -94,7 +108,8 @@ export default function PlayerDpsDialog({
                   </thead>
                   <tbody>
                     {data.abilities.map((a, i) => {
-                      const iconKey = getAbilityIconKey(a.abilityName);
+                      const displayName = getEnglishAbilityName(a.abilityName, a.abilityId);
+                      const iconKey = getAbilityIconKeyByIdOrName(a.abilityId, a.abilityName);
                       const iconUrl = iconKey ? getAbilityIconUrl(iconKey) : null;
                       return (
                         <tr key={a.abilityId || i} className="tr-hover border-b border-white/[0.04] last:border-0">
@@ -113,7 +128,7 @@ export default function PlayerDpsDialog({
                             )}
                           </td>
                           <td className="py-1.5 pr-3 text-zinc-200 font-medium">
-                            <div className="truncate" title={a.abilityName}>{a.abilityName}</div>
+                            <div className="truncate" title={displayName}>{displayName}</div>
                             {a.abilityId > 0 && <div className="mono text-[9px] text-zinc-600">{a.abilityId}</div>}
                           </td>
                           <td className="py-1.5 px-2 text-right mono text-zinc-300 whitespace-nowrap">{fmtNum(a.total)}</td>
