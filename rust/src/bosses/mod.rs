@@ -27,14 +27,14 @@ pub struct BossDef {
 }
 
 impl BossDef {
-    /// Vérifie si un nom d'entité du log correspond à ce boss (case-insensitive, substring)
+    /// Vérifie si un nom d'entité du log correspond à ce boss (case-insensitive, égalité exacte)
     pub fn matches(&self, entity: &str) -> bool {
         let low = entity.to_lowercase();
-        if low.contains(&self.name.to_lowercase()) {
+        if low == self.name.to_lowercase() {
             return true;
         }
         for alias in self.aliases {
-            if low.contains(&alias.to_lowercase()) {
+            if low == alias.to_lowercase() {
                 return true;
             }
         }

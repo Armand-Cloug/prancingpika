@@ -4,7 +4,8 @@
 // Necessite le role Officer ou Owner de guilde.
 
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import { isOfficerOrOwner, deleteRun, getDb } from '../db.js';
+import { deleteRun, getDb } from '../db.js';
+import { isAdmin } from '../permissions.js';
 
 export const data = new SlashCommandBuilder()
   .setName('deleterun')
@@ -17,12 +18,8 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction) {
   await interaction.deferReply({ ephemeral: true });
 
-  // Verification du role
-  const member = await isOfficerOrOwner(interaction.user.id);
-  if (!member) {
-    return interaction.editReply(
-      'Permission denied. This command requires the **Officer** or **Owner** role of a guild.'
-    );
+  if (!isAdmin(interaction)) {
+    return interaction.editReply('Permission denied. This command is restricted to admins.');
   }
 
   const runId = interaction.options.getInteger('run_id');

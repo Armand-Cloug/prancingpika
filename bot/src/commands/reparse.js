@@ -4,7 +4,8 @@
 // Necessite le role Officer ou Owner de guilde (lie au compte Discord).
 
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import { isOfficerOrOwner } from '../db.js';
+import { getDb } from '../db.js';
+import { isAdmin } from '../permissions.js';
 
 export const data = new SlashCommandBuilder()
   .setName('reparse')
@@ -17,30 +18,30 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction) {
   await interaction.deferReply({ ephemeral: true });
 
-  // Verification du role
-  const member = await isOfficerOrOwner(interaction.user.id);
-  if (!member) {
-    return interaction.editReply(
-      'Permission denied. This command requires the **Officer** or **Owner** role of a guild.'
-    );
+  if (!isAdmin(interaction)) {
+    return interaction.editReply('Permission denied. This command is restricted to admins.');
   }
 
-  const filename   = interaction.options.getString('filename');
-  const parserUrl  = process.env.PARSER_URL ?? 'http://parser:3001';
-  const guildId    = String(member.guildId);
+  const filename  = interaction.options.getString('filename');
+  const parserUrl = process.env.PARSER_URL ?? 'http://parser:3001';
 
-  // Recuperer l'accountId Discord pour l'uploader
-  // (on reutilise le membre officer comme uploader)
-  let uploaderAccountId = '1'; // fallback
+  // Récupérer l'accountId et le guildId DB de l'utilisateur
+  let uploaderAccountId = '1';
+  let guildId           = '1';
   try {
-    const { getDb } = await import('../db.js');
     const db = getDb();
     const [rows] = await db.query(
-      `SELECT wa.id FROM web_accounts wa
-      WHERE wa.provider = 'discord' AND wa.providerAccountId = ? LIMIT 1`,
+      `SELECT wa.id AS accountId, gm.guildId
+       FROM web_accounts wa
+       LEFT JOIN guild_members gm ON gm.accountId = wa.id
+       WHERE wa.provider = 'discord' AND wa.providerAccountId = ?
+       LIMIT 1`,
       [String(interaction.user.id)]
     );
-    if (rows[0]) uploaderAccountId = String(rows[0].id);
+    if (rows[0]) {
+      uploaderAccountId = String(rows[0].accountId);
+      if (rows[0].guildId) guildId = String(rows[0].guildId);
+    }
   } catch {
     // non-fatal
   }

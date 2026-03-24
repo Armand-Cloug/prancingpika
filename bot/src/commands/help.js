@@ -33,12 +33,14 @@ export async function execute(interaction) {
         name: '🔒 Admin only',
         value: [
           '`/changelog <title> <updates>` — Post a changelog embed (separate updates with `|`)',
+          '`/rules <title> <section1_title> <section1_content> [...]` — Post a rules embed (up to 3 sections, separate entries with `|`)',
+          '`/presentation <title> <section1_title> <section1_content> [...]` — Post a presentation embed (up to 3 sections)',
           '`/reparse <filename>` — Re-run the parser on an existing log file',
           '`/deleterun <run_id>` — Delete a run from the database',
         ].join('\n'),
       },
     )
-    .setFooter({ text: 'Admin commands require Officer or Owner role. | PTPika Bot - By Cloug' });
+    .setFooter({ text: 'Admin commands: server owner or admin role only. | PTPika Bot - By Cloug' });
 
   return interaction.reply({ embeds: [embed], ephemeral: false });
 }

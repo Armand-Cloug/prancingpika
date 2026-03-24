@@ -4,7 +4,7 @@
 // Requires Officer or Owner role.
 
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import { isOfficerOrOwner } from '../db.js';
+import { isAdmin } from '../permissions.js';
 
 export const data = new SlashCommandBuilder()
   .setName('changelog')
@@ -21,11 +21,8 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction) {
   await interaction.deferReply({ ephemeral: false });
 
-  const member = await isOfficerOrOwner(interaction.user.id);
-  if (!member) {
-    return interaction.editReply(
-      'Permission denied. This command requires the **Officer** or **Owner** role of a guild.'
-    );
+  if (!isAdmin(interaction)) {
+    return interaction.editReply('Permission denied. This command is restricted to admins.');
   }
 
   const title   = interaction.options.getString('title');

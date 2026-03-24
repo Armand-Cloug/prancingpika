@@ -4,7 +4,7 @@
 // Requiert le rôle Officer ou Owner.
 
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import { isOfficerOrOwner } from '../db.js';
+import { isAdmin } from '../permissions.js';
 
 export const data = new SlashCommandBuilder()
   .setName('rules')
@@ -41,11 +41,8 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction) {
   await interaction.deferReply({ ephemeral: false });
 
-  const member = await isOfficerOrOwner(interaction.user.id);
-  if (!member) {
-    return interaction.editReply(
-      'Permission refusée. Cette commande requiert le rôle **Officer** ou **Owner** d\'une guilde.'
-    );
+  if (!isAdmin(interaction)) {
+    return interaction.editReply('Permission refusée. Cette commande est réservée aux admins.');
   }
 
   const title = interaction.options.getString('title');

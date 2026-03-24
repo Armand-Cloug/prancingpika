@@ -14,6 +14,7 @@ use crate::abilities::{collect_by_ability, to_lines, AbilityKind};
 use crate::db::ensure::{
     ensure_abilities_bulk, ensure_boss, ensure_group, ensure_player, run_exists,
 };
+use crate::anticheat::check_log;
 use crate::event_reader::read_events;
 use crate::fight_extractor::extract_kills;
 use crate::player_class::{infer_player_classes, DEFAULT_CLASS};
@@ -71,6 +72,19 @@ pub async fn import_log_file(
         .with_context(|| format!("Lecture du fichier {}", log_path.display()))?;
 
     let events = read_events(&content);
+
+    // ── Anticheat ─────────────────────────────────────────────────────────────
+    let ac_report = check_log(&events);
+    if !ac_report.is_clean() {
+        for v in &ac_report.violations {
+            eprintln!("[anticheat] Violation détectée : {:?} — {}", v.kind, v.message);
+        }
+        anyhow::bail!(
+            "Log refusé : {} violation(s) anticheat détectée(s).",
+            ac_report.violations.len()
+        );
+    }
+
     let fights = extract_kills(events.clone()); // clone car on a besoin des events pour classes
 
     if fights.is_empty() {
