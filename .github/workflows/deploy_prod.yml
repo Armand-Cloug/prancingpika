@@ -245,6 +245,7 @@ jobs:
             BOT_RECORDS_CHANNEL_ID="${{ vars.BOT_RECORDS_CHANNEL_ID }}"
             BOT_WEEKLY_CHANNEL_ID="${{ vars.BOT_WEEKLY_CHANNEL_ID }}"
             BOT_ADMIN_ROLE_ID="${{ vars.BOT_ADMIN_ROLE_ID }}"
+            BOT_TICKET_CATEGORY_ID="${{ vars.BOT_TICKET_CATEGORY_ID }}"
 
             mkdir -p bot
             cat > bot/.env <<EOF
@@ -257,6 +258,7 @@ jobs:
             RECORDS_CHANNEL_ID=${BOT_RECORDS_CHANNEL_ID}
             WEEKLY_CHANNEL_ID=${BOT_WEEKLY_CHANNEL_ID}
             ADMIN_ROLE_ID=${BOT_ADMIN_ROLE_ID}
+            TICKET_CATEGORY_ID=${BOT_TICKET_CATEGORY_ID}
             EOF
 
             echo "[5/13] Stop previous stack"
