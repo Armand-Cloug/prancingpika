@@ -71,10 +71,34 @@ function prettyBoss(name: string) {
   return canonical ?? name;
 }
 
+type SortKey = "newest" | "oldest" | "timer_desc" | "timer_asc" | "dps_desc" | "dps_asc";
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "newest",     label: "Newest → Oldest" },
+  { value: "oldest",     label: "Oldest → Newest" },
+  { value: "timer_desc", label: "Longest timer" },
+  { value: "timer_asc",  label: "Shortest timer" },
+  { value: "dps_desc",   label: "Highest DPS" },
+  { value: "dps_asc",    label: "Lowest DPS" },
+];
+
+function sortRuns(runs: RunRow[], sort: SortKey): RunRow[] {
+  const s = [...runs];
+  switch (sort) {
+    case "newest":     return s.sort((a, b) => +new Date(b.endedAt) - +new Date(a.endedAt));
+    case "oldest":     return s.sort((a, b) => +new Date(a.endedAt) - +new Date(b.endedAt));
+    case "timer_desc": return s.sort((a, b) => (b.bossDurationS ?? b.durationTotalS) - (a.bossDurationS ?? a.durationTotalS));
+    case "timer_asc":  return s.sort((a, b) => (a.bossDurationS ?? a.durationTotalS) - (b.bossDurationS ?? b.durationTotalS));
+    case "dps_desc":   return s.sort((a, b) => (b.raidDps ?? 0) - (a.raidDps ?? 0));
+    case "dps_asc":    return s.sort((a, b) => (a.raidDps ?? 0) - (b.raidDps ?? 0));
+  }
+}
+
 export default function GuildDetails({ guildId }: { guildId: string | null }) {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<GuildDetailsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sortByBoss, setSortByBoss] = useState<Record<string, SortKey>>({});
 
   useEffect(() => {
     if (!guildId) {
@@ -157,10 +181,8 @@ export default function GuildDetails({ guildId }: { guildId: string | null }) {
       groups.get(k)!.runs.push(r);
     }
 
-    // Sort each boss runs by most recent -> oldest
-    for (const g of groups.values()) {
-      g.runs.sort((a, b) => +new Date(b.endedAt) - +new Date(a.endedAt));
-    }
+    // Runs kept in insertion order; sorting applied at render time per boss
+
 
     // Ordered boss list: known order first, then anything else (alphabetical)
     const orderedKeys: string[] = [];
@@ -254,6 +276,21 @@ export default function GuildDetails({ guildId }: { guildId: string | null }) {
                       </summary>
 
                       <div className="border-t border-white/10 bg-black/10">
+                        {/* Sort control */}
+                        <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06]">
+                          <span className="text-[11px] text-zinc-400/70 shrink-0">Sort:</span>
+                          <select
+                            value={sortByBoss[k] ?? "newest"}
+                            onChange={(e) => setSortByBoss((prev) => ({ ...prev, [k]: e.target.value as SortKey }))}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[11px] bg-white/[0.06] border border-white/10 rounded-md px-2 py-1 text-zinc-200 cursor-pointer focus:outline-none hover:bg-white/[0.09] transition-colors"
+                          >
+                            {SORT_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+
                         <div className="overflow-x-auto">
                           <table className="w-full table-fixed text-[12px]">
                             <colgroup>
@@ -277,7 +314,7 @@ export default function GuildDetails({ guildId }: { guildId: string | null }) {
                             </thead>
 
                             <tbody className="text-zinc-100">
-                              {g.runs.map((r) => (
+                              {sortRuns(g.runs, sortByBoss[k] ?? "newest").map((r) => (
                                 <tr key={r.runId} className="border-b border-white/5 last:border-0">
                                   <td className="py-2 pl-3 pr-2 tabular-nums text-zinc-200/85 whitespace-nowrap">
                                     {ymd(r.endedAt)}
@@ -326,7 +363,7 @@ export default function GuildDetails({ guildId }: { guildId: string | null }) {
 
             <div className="px-3 pb-3 text-[11px] text-zinc-400/70">
               Bosses are ordered: Azranel / Vengeur / Isiel / Titan / Beligosh / Tarjulia / Concile / Malannon /
-              Ereandorn / Beruhast / Silgen / Arakhurn. Runs are newest → oldest.
+              Ereandorn / Beruhast / Silgen / Arakhurn.
             </div>
           </div>
         </div>
