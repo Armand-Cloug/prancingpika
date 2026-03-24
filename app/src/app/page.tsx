@@ -13,7 +13,7 @@ export default function HomePage() {
         <div className="pointer-events-none absolute top-40 right-10 w-72 h-72
                         bg-[radial-gradient(circle,rgba(45,212,191,0.06)_0%,transparent_60%)]" />
 
-        <div className="mx-auto max-w-7xl px-6 pt-20 pb-16">
+        <div className="mx-auto max-w-7xl 2xl:max-w-[1600px] px-6 pt-20 pb-16">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
 
             {/* Text block */}
@@ -72,7 +72,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Notices ───────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl px-6 pb-8">
+      <section className="mx-auto max-w-7xl 2xl:max-w-[1600px] px-6 pb-8">
         <div className="grid gap-3 sm:grid-cols-2">
           <Notice accent="sky">
             <strong className="text-zinc-100">Info:</strong>{" "}
@@ -88,7 +88,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Cards ─────────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl px-6 pb-20">
+      <section className="mx-auto max-w-7xl 2xl:max-w-[1600px] px-6 pb-20">
         <div className="grid gap-5 lg:grid-cols-2">
           <HowItWorksCard />
           <RulesCard />

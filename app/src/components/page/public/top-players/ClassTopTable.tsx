@@ -53,7 +53,7 @@ export default function ClassTopTable({
       {/* Table */}
       <div className="px-3 pb-3">
         <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-black/20">
-          <table className="w-full table-fixed text-[11.5px]">
+          <table className="w-full table-fixed text-[11.5px] 2xl:text-[13px]">
             <colgroup>
               <col className="w-9" />     {/* # */}
               <col />                      {/* Player */}

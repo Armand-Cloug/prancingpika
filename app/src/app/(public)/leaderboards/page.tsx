@@ -8,7 +8,7 @@ export default async function LeaderboardsPage() {
   const raids = await getLeaderboards();
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10">
+    <div className="mx-auto max-w-7xl 2xl:max-w-[1600px] px-6 py-10">
       {/* Page header */}
       <div className="mb-10">
         <p className="text-[10px] tracking-[0.2em] text-sky-400/70 font-medium uppercase mb-2">

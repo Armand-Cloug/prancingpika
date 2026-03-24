@@ -8,7 +8,7 @@ export default async function LastUploadsPage() {
   const runs = await getLastUploads(20);
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10">
+    <div className="mx-auto max-w-7xl 2xl:max-w-[1600px] px-6 py-10">
       <div className="mb-8">
         <p className="text-[10px] tracking-[0.2em] text-sky-400/70 font-medium uppercase mb-2">
           Activity

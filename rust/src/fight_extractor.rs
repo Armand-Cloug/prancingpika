@@ -43,6 +43,11 @@ const LOOKBACK_BEFORE_BEGIN_SEC  : u32 = 3;
 const GLOBAL_BUFFER_SEC          : u32 = 12;
 const MIN_COMBAT_INTERACTIONS    : usize = 2;
 
+/// Vérifie si l'événement implique n'importe quel boss (src ou dst)
+fn boss_involved_any(ev: &CombatEvent) -> bool {
+    match_boss_name(&ev.src).is_some() || match_boss_name(&ev.dst).is_some()
+}
+
 /// Mort pending (code 12 "est mort" — à confirmer)
 struct PendingDeath {
     boss_key    : String,
@@ -60,6 +65,9 @@ struct Extractor {
     kill_idx           : u32,
     last_combat_end    : Option<CombatEvent>,
     last_boss_seen_sec : Option<u32>,
+    /// Premier hit impliquant le boss dans ce pull (peut précéder Combat Begin
+    /// si le logger est entré en combat après le début effectif du fight)
+    first_boss_hit_sec : Option<u32>,
     pending            : Option<PendingDeath>,
     recent             : VecDeque<CombatEvent>,
     council_dead       : HashSet<String>,
@@ -74,6 +82,7 @@ impl Extractor {
             kill_idx           : 0,
             last_combat_end    : None,
             last_boss_seen_sec : None,
+            first_boss_hit_sec : None,
             pending            : None,
             recent             : VecDeque::new(),
             council_dead       : HashSet::new(),
@@ -83,10 +92,18 @@ impl Extractor {
     // ── Gestion de l'état ─────────────────────────────────────────────────
 
     fn reset_to_new_pull(&mut self, begin: CombatEvent) {
+        // Cherche dans le buffer récent le premier hit boss avant ce Begin
+        let begin_ts = begin.ts_sec;
+        let earliest = self.recent.iter()
+            .filter(|e| e.ts_sec <= begin_ts && boss_involved_any(e))
+            .map(|e| e.ts_sec)
+            .min();
+
         self.current_start      = Some(begin);
         self.current_events     = Vec::new();
         self.last_combat_end    = None;
         self.last_boss_seen_sec = None;
+        self.first_boss_hit_sec = earliest;
         self.council_dead.clear();
         self.pending            = None;
     }
@@ -96,6 +113,7 @@ impl Extractor {
         self.current_events     = Vec::new();
         self.last_combat_end    = None;
         self.last_boss_seen_sec = None;
+        self.first_boss_hit_sec = None;
         self.council_dead.clear();
         self.pending            = None;
     }
@@ -103,6 +121,16 @@ impl Extractor {
     fn note_boss_seen(&mut self, ev: &CombatEvent) {
         if match_boss_name(&ev.src).is_some() || match_boss_name(&ev.dst).is_some() {
             self.last_boss_seen_sec = Some(ev.ts_sec);
+        }
+    }
+
+    fn note_first_boss_hit(&mut self, ev: &CombatEvent) {
+        if boss_involved_any(ev) {
+            let t = ev.ts_sec;
+            self.first_boss_hit_sec = Some(match self.first_boss_hit_sec {
+                Some(prev) => prev.min(t),
+                None       => t,
+            });
         }
     }
 
@@ -114,11 +142,16 @@ impl Extractor {
             None    => return,
         };
 
+        // Utiliser le premier hit boss comme début réel (jamais après Combat Begin)
+        let real_start_sec = self.first_boss_hit_sec
+            .map(|t| t.min(start.ts_sec))
+            .unwrap_or(start.ts_sec);
+
         self.kill_idx += 1;
         let mut fight = Fight {
             encounter  : encounter.to_string(),
             kill_index : self.kill_idx,
-            start_sec  : start.ts_sec,
+            start_sec  : real_start_sec,
             end_sec    : end_ev.ts_sec,
             start_ts   : start.ts_str.clone(),
             end_ts     : end_ev.ts_str.clone(),
@@ -257,6 +290,7 @@ impl Extractor {
 
         self.current_events.push(ev.clone());
         self.note_boss_seen(&ev);
+        self.note_first_boss_hit(&ev);
 
         // ── Combat End ────────────────────────────────────────────────
         if ev.is_combat_end() {

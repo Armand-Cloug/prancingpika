@@ -10,8 +10,8 @@ export default function UploadRunTable({ run }: { run: LastUploadRun }) {
   const bossOnly = run.bossDurationS != null ? formatTime(run.bossDurationS) : null;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-black/20">
-      <table className="w-full table-fixed text-[11.5px]">
+    <div className="overflow-x-auto rounded-xl border border-white/[0.07] bg-black/20">
+      <table className="w-full table-fixed text-[11.5px] 2xl:text-[13px] min-w-[520px]">
         <colgroup>
           <col className="w-[110px]" />  {/* Spec */}
           <col />                         {/* Player */}
@@ -26,7 +26,7 @@ export default function UploadRunTable({ run }: { run: LastUploadRun }) {
             {["Spec", "Player", "DPS", "HPS", "APS", bossOnly ? "T | Boss" : "Time"].map((h, i) => (
               <th
                 key={h}
-                className={`py-2 text-[10px] font-medium text-zinc-500 tracking-wide uppercase whitespace-nowrap
+                className={`py-2 text-[10px] 2xl:text-[11px] font-medium text-zinc-500 tracking-wide uppercase whitespace-nowrap
                             ${i === 0 ? "pl-4 pr-2 text-left" : i === 1 ? "px-2 text-left" : i === 5 ? "pl-2 pr-4 text-right" : "px-2 text-right"}`}
               >
                 {h}

@@ -14,7 +14,7 @@ export default function Footer() {
 
   return (
     <footer className="mt-auto border-t border-white/[0.06] bg-[#0d1520]/60 backdrop-blur-sm">
-      <div className="mx-auto max-w-7xl px-6 py-8">
+      <div className="mx-auto max-w-7xl 2xl:max-w-[1600px] px-6 py-8">
         <div className="flex flex-col items-center gap-5">
 
           {/* Brand tiny */}

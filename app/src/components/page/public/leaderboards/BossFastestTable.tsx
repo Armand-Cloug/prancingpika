@@ -39,8 +39,8 @@ export default function BossFastestTable({
 
       {/* Table */}
       <div className="px-3 pb-4">
-        <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-black/20">
-          <table className="w-full table-fixed text-[11.5px]">
+        <div className="overflow-x-auto rounded-xl border border-white/[0.07] bg-black/20">
+          <table className="w-full table-fixed text-[11.5px] 2xl:text-[13px] min-w-[260px]">
             <colgroup>
               <col />
               <col className="w-[84px]" />
@@ -48,13 +48,13 @@ export default function BossFastestTable({
             </colgroup>
             <thead>
               <tr className="border-b border-white/[0.07] bg-black/20">
-                <th className="py-2 pl-4 pr-2 text-left text-[10px] font-medium text-zinc-500 tracking-wide uppercase">
+                <th className="py-2 pl-4 pr-2 text-left text-[10px] 2xl:text-[11px] font-medium text-zinc-500 tracking-wide uppercase">
                   Guild
                 </th>
-                <th className="py-2 px-3 text-right text-[10px] font-medium text-zinc-500 tracking-wide uppercase whitespace-nowrap">
+                <th className="py-2 px-3 text-right text-[10px] 2xl:text-[11px] font-medium text-zinc-500 tracking-wide uppercase whitespace-nowrap">
                   Raid DPS
                 </th>
-                <th className="py-2 pl-3 pr-4 text-right text-[10px] font-medium text-zinc-500 tracking-wide uppercase whitespace-nowrap">
+                <th className="py-2 pl-3 pr-4 text-right text-[10px] 2xl:text-[11px] font-medium text-zinc-500 tracking-wide uppercase whitespace-nowrap">
                   {hasBossTime ? "Total | Boss" : "Time"}
                 </th>
               </tr>

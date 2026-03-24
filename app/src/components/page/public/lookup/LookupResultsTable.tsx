@@ -47,15 +47,15 @@ export default function LookupResultsTable({
       </div>
 
       {/* Table */}
-      <div className="glass rounded-2xl overflow-hidden">
+      <div className="glass rounded-2xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-[12px]">
+          <table className="w-full text-[12px] 2xl:text-[13.5px] min-w-[520px]">
             <thead>
               <tr className="border-b border-white/[0.07] bg-black/20">
                 {["Date","Boss","DPS","HPS","Time","Guild"].map((h, i) => (
                   <th
                     key={h}
-                    className={`py-2.5 text-[10px] font-medium text-zinc-500 tracking-wide uppercase whitespace-nowrap
+                    className={`py-2.5 text-[10px] 2xl:text-[11px] font-medium text-zinc-500 tracking-wide uppercase whitespace-nowrap
                                 ${i === 0 ? "pl-5 pr-3 text-left" : i <= 1 ? "px-3 text-left" : i === 5 ? "px-5 text-left" : "px-3 text-right"}`}
                   >
                     {h}

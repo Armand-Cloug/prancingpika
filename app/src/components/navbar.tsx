@@ -40,7 +40,7 @@ export default function MainNav() {
       {/* Top accent line */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/30 to-transparent" />
 
-      <div className="relative h-full mx-auto max-w-7xl px-6 flex items-center justify-between gap-4">
+      <div className="relative h-full mx-auto max-w-7xl 2xl:max-w-[1600px] px-6 flex items-center justify-between gap-4">
 
         {/* Brand */}
         <Link href="/" className="flex items-center gap-3 shrink-0 group">
@@ -58,7 +58,7 @@ export default function MainNav() {
             <div className="text-[13px] font-bold text-zinc-50 tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
               PrancingPika
             </div>
-            <div className="text-[10px] text-zinc-500 group-hover:text-zinc-400 transition-colors">
+            <div className="hidden sm:block text-[10px] text-zinc-500 group-hover:text-zinc-400 transition-colors">
               Rift parser &amp; leaderboards
             </div>
           </div>
