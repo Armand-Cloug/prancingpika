@@ -37,6 +37,8 @@ export async function execute(interaction) {
           '`/presentation <title> <section1_title> <section1_content> [...]` — Post a presentation embed (up to 3 sections)',
           '`/reparse <filename>` — Re-run the parser on an existing log file',
           '`/deleterun <run_id>` — Delete a run from the database',
+          '`/ticket` — Post the ticket creation panel in the current channel',
+          '`/closeticket` — Close (delete) the current ticket channel',
         ].join('\n'),
       },
     )

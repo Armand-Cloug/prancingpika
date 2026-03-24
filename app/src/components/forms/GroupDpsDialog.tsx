@@ -163,8 +163,12 @@ export default function GroupDpsDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className="max-w-[920px] bg-[#0b1220] border-white/10 text-zinc-100 max-h-[90vh] overflow-y-auto">
-        <div className="-mx-6 -mt-6 mb-4 rounded-t-lg bg-gradient-to-b from-sky-500/15 via-sky-500/5 to-transparent px-6 pt-6 pb-4">
+      <DialogContent
+        className="max-w-[920px] bg-[#0b1220] border-white/10 text-zinc-100 flex flex-col overflow-hidden"
+        style={{ maxHeight: "min(90vh, 820px)" }}
+      >
+        {/* Header fixe */}
+        <div className="-mx-6 -mt-6 mb-4 rounded-t-lg bg-gradient-to-b from-sky-500/15 via-sky-500/5 to-transparent px-6 pt-6 pb-4 shrink-0">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold pr-10">{headerBoss}</DialogTitle>
             {headerDate ? <div className="mt-1 text-[12px] text-zinc-200/70">{headerDate}</div> : null}
@@ -174,7 +178,8 @@ export default function GroupDpsDialog({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-zinc-200/85">
+        {/* Méta run fixe */}
+        <div className="shrink-0 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-zinc-200/85">
           <span className="text-zinc-300/70">Run</span>
           <span className="tabular-nums">{runId}</span>
 
@@ -204,7 +209,7 @@ export default function GroupDpsDialog({
         </div>
 
         {data?.run.durationTotalS != null ? (
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-zinc-200/85">
+          <div className="shrink-0 mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-zinc-200/85">
             <span>
               <span className="text-zinc-300/70">Time</span>{" "}
               <span className="tabular-nums">{formatTime(data.run.durationTotalS)}</span>
@@ -229,6 +234,9 @@ export default function GroupDpsDialog({
             </span>
           </div>
         ) : null}
+
+        {/* Zone scrollable : tableau + détail joueur + footer */}
+        <div className="flex-1 overflow-y-auto min-h-0">
 
         {/* Group table */}
         <div className="relative mt-4 overflow-hidden rounded-xl border border-white/10 bg-black/25">
@@ -394,9 +402,11 @@ export default function GroupDpsDialog({
           </div>
         )}
 
-        <div className="mt-2 text-[11px] text-zinc-400/70">
+        <div className="mt-2 pb-4 text-[11px] text-zinc-400/70">
           Color = Calling (Cleric / Primalist / Warrior / Rogue / Mage) · Click a row to see ability breakdown
         </div>
+
+        </div>{/* fin zone scrollable */}
       </DialogContent>
     </Dialog>
   );

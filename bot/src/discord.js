@@ -7,6 +7,7 @@ import { pathToFileURL }  from 'url';
 import { join, dirname }  from 'path';
 import { fileURLToPath }  from 'url';
 import { startNotifications } from './notifications.js';
+import { handleTicketCreate } from './commands/ticket.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -39,8 +40,32 @@ export async function startDiscord() {
     console.log(`[bot] Commande chargee : /${command.data.name}`);
   }
 
-  // Handler des interactions slash
+  // Map des handlers de boutons
+  const buttonHandlers = {
+    ticket_create: handleTicketCreate,
+  };
+
+  // Handler des interactions (slash commands + boutons)
   client.on(Events.InteractionCreate, async interaction => {
+    // Boutons
+    if (interaction.isButton()) {
+      const handler = buttonHandlers[interaction.customId];
+      if (!handler) return;
+      try {
+        await handler(interaction);
+      } catch (err) {
+        console.error(`[bot] Erreur bouton ${interaction.customId}:`, err);
+        const msg = { content: 'Une erreur est survenue.', ephemeral: true };
+        if (interaction.deferred || interaction.replied) {
+          await interaction.editReply(msg).catch(() => {});
+        } else {
+          await interaction.reply(msg).catch(() => {});
+        }
+      }
+      return;
+    }
+
+    // Slash commands
     if (!interaction.isChatInputCommand()) return;
 
     const command = client.commands.get(interaction.commandName);
