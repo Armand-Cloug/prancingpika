@@ -320,5 +320,5 @@ Personal project with strong technical and community focus
 
 ## 📜 License
 
-Personal project – community and educational use.
-License to be defined depending on future code openness.
+This project is licensed under the **MIT License** — free to use, modify, and distribute with attribution.
+See the [LICENSE](./LICENSE) file for details.
