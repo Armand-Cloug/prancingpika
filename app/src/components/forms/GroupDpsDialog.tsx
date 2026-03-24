@@ -163,7 +163,7 @@ export default function GroupDpsDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className="max-w-[920px] bg-[#0b1220] border-white/10 text-zinc-100">
+      <DialogContent className="max-w-[920px] bg-[#0b1220] border-white/10 text-zinc-100 max-h-[90vh] overflow-y-auto">
         <div className="-mx-6 -mt-6 mb-4 rounded-t-lg bg-gradient-to-b from-sky-500/15 via-sky-500/5 to-transparent px-6 pt-6 pb-4">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold pr-10">{headerBoss}</DialogTitle>

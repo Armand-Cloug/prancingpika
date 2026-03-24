@@ -40,7 +40,7 @@ export default function PlayerDpsDialog({
         >
           <div className="relative px-6 pt-5 pb-4 border-b border-white/[0.08]">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-[radial-gradient(ellipse_at_50%_0%,rgba(56,189,248,0.12),transparent_70%)]" />
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center justify-between gap-3 pr-8">
               <DialogTitle className="text-base font-bold text-zinc-100" style={{ fontFamily:"'Syne',sans-serif" }}>
                 {playerName}
                 {data?.player.spec && <span className="ml-2"><SpecBadge spec={data.player.spec} /></span>}
