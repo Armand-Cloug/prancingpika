@@ -3,7 +3,7 @@
 // Relance le parser Rust via son API HTTP sur un fichier existant.
 // Necessite le role Officer ou Owner de guilde (lie au compte Discord).
 
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from 'discord.js';
 import { getDb } from '../db.js';
 import { isAdmin } from '../permissions.js';
 
@@ -16,7 +16,7 @@ export const data = new SlashCommandBuilder()
       .setRequired(true));
 
 export async function execute(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   if (!isAdmin(interaction)) {
     return interaction.editReply('Permission denied. This command is restricted to admins.');

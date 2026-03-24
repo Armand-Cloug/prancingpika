@@ -1,7 +1,7 @@
 // src/discord.js
 // Client Discord v14 : chargement des slash commands et dispatch des interactions.
 
-import { Client, GatewayIntentBits, Collection, Events } from 'discord.js';
+import { Client, GatewayIntentBits, Collection, Events, MessageFlags } from 'discord.js';
 import { readdirSync }    from 'fs';
 import { pathToFileURL }  from 'url';
 import { join, dirname }  from 'path';
@@ -55,7 +55,7 @@ export async function startDiscord() {
         await handler(interaction);
       } catch (err) {
         console.error(`[bot] Erreur bouton ${interaction.customId}:`, err);
-        const msg = { content: 'Une erreur est survenue.', ephemeral: true };
+        const msg = { content: 'Une erreur est survenue.', flags: MessageFlags.Ephemeral };
         if (interaction.deferred || interaction.replied) {
           await interaction.editReply(msg).catch(() => {});
         } else {
@@ -75,7 +75,7 @@ export async function startDiscord() {
       await command.execute(interaction);
     } catch (err) {
       console.error(`[bot] Erreur dans /${interaction.commandName}:`, err);
-      const msg = { content: 'An error occurred while executing this command.', ephemeral: true };
+      const msg = { content: 'An error occurred while executing this command.', flags: MessageFlags.Ephemeral };
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply(msg).catch(() => {});
       } else {

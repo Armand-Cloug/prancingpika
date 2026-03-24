@@ -2,7 +2,7 @@
 // /renameticket <name> — Renomme le salon ticket courant.
 // Ne fonctionne que dans un salon ticket (topic = ticket:<userId>).
 
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 
 export const data = new SlashCommandBuilder()
   .setName('renameticket')
@@ -26,9 +26,9 @@ export async function execute(interaction) {
 
   try {
     await channel.setName(newName);
-    return interaction.reply({ content: `Channel renamed to **${newName}**.`, ephemeral: true });
+    return interaction.reply({ content: `Channel renamed to **${newName}**.`, flags: MessageFlags.Ephemeral });
   } catch (err) {
     console.error('[renameticket] Erreur rename:', err);
-    return interaction.reply({ content: 'Failed to rename the channel.', ephemeral: true });
+    return interaction.reply({ content: 'Failed to rename the channel.', flags: MessageFlags.Ephemeral });
   }
 }

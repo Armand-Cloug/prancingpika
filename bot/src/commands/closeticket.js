@@ -2,7 +2,7 @@
 // /closeticket — Ferme (supprime) le ticket dans le salon courant.
 // Doit être utilisé depuis un channel ticket (topic = ticket:<userId>).
 
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { isAdmin } from '../permissions.js';
 
 export const data = new SlashCommandBuilder()
@@ -11,7 +11,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction) {
   if (!isAdmin(interaction)) {
-    return interaction.reply({ content: 'Commande réservée aux administrateurs.', ephemeral: true });
+    return interaction.reply({ content: 'Commande réservée aux administrateurs.', flags: MessageFlags.Ephemeral });
   }
 
   const { channel } = interaction;
@@ -22,7 +22,7 @@ export async function execute(interaction) {
   if (!isTicket) {
     return interaction.reply({
       content: 'Cette commande doit être utilisée dans un salon ticket.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 

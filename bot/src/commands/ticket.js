@@ -11,6 +11,7 @@ import {
   ActionRowBuilder,
   PermissionFlagsBits,
   ChannelType,
+  MessageFlags,
 } from 'discord.js';
 import { isAdmin } from '../permissions.js';
 
@@ -20,7 +21,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction) {
   if (!isAdmin(interaction)) {
-    return interaction.reply({ content: 'Commande réservée aux administrateurs.', ephemeral: true });
+    return interaction.reply({ content: 'Commande réservée aux administrateurs.', flags: MessageFlags.Ephemeral });
   }
 
   const embed = new EmbedBuilder()
@@ -55,7 +56,7 @@ export async function handleTicketCreate(interaction) {
   if (!categoryId) {
     return interaction.reply({
       content: 'La catégorie de tickets n\'est pas configurée (`TICKET_CATEGORY_ID` manquant).',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -66,11 +67,11 @@ export async function handleTicketCreate(interaction) {
   if (existing) {
     return interaction.reply({
       content: `Vous avez déjà un ticket ouvert : ${existing}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const adminRoleId  = process.env.ADMIN_ROLE_ID;
 

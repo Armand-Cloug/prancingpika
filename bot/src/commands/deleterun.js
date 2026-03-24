@@ -3,7 +3,7 @@
 // Supprime un run de la DB.
 // Necessite le role Officer ou Owner de guilde.
 
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from 'discord.js';
 import { deleteRun, getDb } from '../db.js';
 import { isAdmin } from '../permissions.js';
 
@@ -16,7 +16,7 @@ export const data = new SlashCommandBuilder()
       .setRequired(true));
 
 export async function execute(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   if (!isAdmin(interaction)) {
     return interaction.editReply('Permission denied. This command is restricted to admins.');
