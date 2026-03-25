@@ -5,9 +5,15 @@ import { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import SpecBossTable from "./SpecBossTable";
 import type { SpecDpsResponse } from "@/lib/specs-dps";
-import { RAIDS } from "@/lib/leaderboards";
+import type { RaidDef } from "@/lib/leaderboards";
 
-export default function SpecsDpsClient({ specs }: { specs: string[] }) {
+export default function SpecsDpsClient({
+  specs,
+  raids,
+}: {
+  specs: string[];
+  raids: RaidDef[];
+}) {
   const [spec, setSpec] = useState<string>("");
   const [raidKey, setRaidKey] = useState<string>("");
   const [data, setData] = useState<SpecDpsResponse | null>(null);
@@ -38,7 +44,7 @@ export default function SpecsDpsClient({ specs }: { specs: string[] }) {
     return () => { alive = false; };
   }, [spec, raidKey]);
 
-  const selectedRaid = RAIDS.find((r) => r.key === raidKey);
+  const selectedRaid = raids.find((r) => r.key === raidKey);
 
   return (
     <div className="w-full">
@@ -63,7 +69,7 @@ export default function SpecsDpsClient({ specs }: { specs: string[] }) {
               <SelectValue placeholder="Choose a raid…" />
             </SelectTrigger>
             <SelectContent className="bg-[#0b1220] border-white/10 text-zinc-100">
-              {RAIDS.map((r) => (
+              {raids.map((r) => (
                 <SelectItem key={r.key} value={r.key}>
                   [{r.key}] {r.title}
                 </SelectItem>

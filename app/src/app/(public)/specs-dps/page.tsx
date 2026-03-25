@@ -1,5 +1,6 @@
 // src/app/(public)/specs-dps/page.tsx
 import { getAvailableSpecs } from "@/lib/specs-dps";
+import { RAIDS } from "@/lib/leaderboards";
 import SpecsDpsClient from "@/components/page/public/specs-dps/SpecsDpsClient";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ export default async function SpecsDpsPage() {
           Top 10 DPS per boss for a given spec
         </p>
       </div>
-      <SpecsDpsClient specs={specs} />
+      <SpecsDpsClient specs={specs} raids={RAIDS} />
     </div>
   );
 }
