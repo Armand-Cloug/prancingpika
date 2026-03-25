@@ -57,7 +57,7 @@ export async function getSpecDpsForRaid(spec: string, raidKey: string): Promise<
     raid.bosses.map(async (bossName) => {
       const variants = bossVariants(bossName);
 
-      const rows = await prisma.runPlayer.findMany({
+      const raw = await prisma.runPlayer.findMany({
         where: {
           spec,
           run: { boss: { name: { in: variants } } },
@@ -75,12 +75,22 @@ export async function getSpecDpsForRaid(spec: string, raidKey: string): Promise<
           },
         },
         orderBy: { dps: "desc" },
-        take: 10,
+        take: 500,
       });
+
+      // Un seul score par joueur (meilleur DPS)
+      const seen = new Set<string>();
+      const deduped: typeof raw = [];
+      for (const r of raw) {
+        if (seen.has(r.player.name)) continue;
+        seen.add(r.player.name);
+        deduped.push(r);
+        if (deduped.length >= 10) break;
+      }
 
       return {
         bossName,
-        rows: rows.map((r) => ({
+        rows: deduped.map((r) => ({
           runId: r.run.id.toString(),
           player: r.player.name,
           dps: Math.round(r.dps),
