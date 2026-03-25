@@ -130,8 +130,8 @@ static SPELL_KEYS: Lazy<HashMap<String, &'static str>> = Lazy::new(|| {
         ("defile",                "SL"),
         ("explosion de cendres",  "CB"),    // Cinder Burst
         ("cinder burst",          "CB"),
-        ("tempête de feu",        "FST"),   // Fire Storm
-        ("fire storm",            "FST"),
+        ("tempête de feu légendaire",        "FST"),   // Fire Storm
+        ("Legendary fire storm",            "FST"),
         ("spores infâmes",        "SI"),    // Vile Spores
         ("vile spores",           "SI"),
         ("vent mordant",          "M_TAUNT"),// Biting Wind (Arbiter tank taunt)
