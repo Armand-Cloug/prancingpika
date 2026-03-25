@@ -119,6 +119,7 @@ static SPELL_KEYS: Lazy<HashMap<String, &'static str>> = Lazy::new(|| {
         // ── MAGE (mage.py) ────────────────────────────────────────────────────
         ("salve de granite",      "GS"),    // Granite Salvo
         ("granite salvo",         "GS"),
+        ("Barrage de Terre",      "GS"),
         ("forces élémentaires légendaires", "EF"), // Legendary Elemental Forces
         ("legendary elemental forces",      "EF"),
         ("tempête vivante",       "LS"),    // Living Storm
@@ -209,15 +210,17 @@ static SPECS: &[SpecDef] = &[
     spec("PseudoRange",    "DPS",     &["CA"]),
 
     // ── MAGE ──────────────────────────────────────────────────────────────────
-    spec("TankHeal",     "Tank",    &["M_TAUNT", "LS"]),
-    spec("HealTank",     "Tank",    &["M_TAUNT", "EF"]),
-    spec("MetaChont",    "Support", &["GS", "EF"]),
-    spec("ChloroChont",  "Support", &["GS", "LS"]),
-    spec("ElemChloro",   "Healer",  &["EF", "LS"]),
-    spec("MachinGun",    "DPS",     &["EF", "FST"]),
-    spec("Pyromancer",   "DPS",     &["FST", "CB"]),
-    spec("Harbinger",    "DPS",     &["MAG_VS"]),
-    spec("Warlock",      "DPS",     &["SL"]),
+    spec("TankHeal",        "Tank",    &["M_TAUNT", "LS"]),
+    spec("HealTank",        "Tank",    &["M_TAUNT", "EF"]),
+    spec("MetaChont",       "Support", &["GS", "EF"]),
+    spec("ElemChloroChont", "Support", &["SI", "EF"]),
+    spec("ChloroChont",     "Support", &["GS", "LS"]),
+    spec("ElemChloro",      "Healer",  &["EF", "LS"]),
+    spec("Chloro",          "Healer",  &["SI", "LS"]),
+    spec("MachinGun",       "DPS",     &["EF", "FST"]),
+    spec("Pyromancer",      "DPS",     &["FST", "CB"]),
+    spec("Harbinger",       "DPS",     &["MAG_VS"]),
+    spec("Warlock",         "DPS",     &["SL"]),
 
     // ── CLERIC ────────────────────────────────────────────────────────────────
     spec("DefiTank",    "Tank",    &["AM", "IDD", "C_TAUNT"]),

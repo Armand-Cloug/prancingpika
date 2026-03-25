@@ -191,7 +191,7 @@ export default function TopPlayersClient({
       </div>
 
       {/* Tables grid */}
-      <div className="mt-6 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
+      <div className="mt-6 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))] 2xl:grid-cols-5">
         {ORDER.map((k) => (
           <ClassTopTable
             key={k}
