@@ -61,13 +61,13 @@ export default function SpecBossTable({
                     <td className="py-2 pl-4 pr-1">
                       <span className="mono text-[10px] text-zinc-600">{i + 1}</span>
                     </td>
-                    <td className="py-2 px-2 min-w-0">
+                    <td className="py-2 px-2 max-w-0 w-full">
                       <PlayerDpsDialog
                         runId={r.runId}
                         playerName={r.player}
                         trigger={
                           <button type="button" className="text-left w-full min-w-0">
-                            <span className="truncate text-[12px] font-medium text-sky-300 hover:underline">
+                            <span className="block truncate text-[12px] font-medium text-sky-300 hover:underline">
                               {r.player}
                             </span>
                           </button>
