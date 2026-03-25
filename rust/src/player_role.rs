@@ -111,6 +111,7 @@ static SPELL_KEYS: Lazy<HashMap<String, &'static str>> = Lazy::new(|| {
         ("soul shroud",           "SSH"),
         ("avatar primitif : drake","APD"),  // Primal Avatar: Drake
         ("primal avatar: drake",  "APD"),
+        ("Infusion",  "APD"),
         ("coupe-air",             "CA"),    // Air Cutter
         ("air cutter",            "CA"),
         ("tape d'essence",        "P_TAUNT"),// Essence Tap
