@@ -141,17 +141,10 @@ export default function TopPlayersClient({
   return (
     <div className="w-full">
       {/* Header + controls */}
-      <div className="relative flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-xl font-semibold tracking-tight text-zinc-100">Top Players</h1>
           <p className="mt-1 text-sm text-zinc-200/75">Top 100 ST DPS by calling — pick a boss.</p>
-        </div>
-
-        {/* Boss name centered */}
-        <div className="pointer-events-none hidden sm:block absolute left-1/2 -translate-x-1/2 bottom-0">
-          <div className="max-w-[420px] truncate text-4xl font-semibold text-zinc-100/90" title={bossTitle}>
-            {bossTitle}
-          </div>
         </div>
 
         {/* Controls: checkbox + select on the right */}
@@ -166,7 +159,6 @@ export default function TopPlayersClient({
           </label>
 
           <div className="w-full sm:w-[220px] sm:shrink-0">
-            {/* ✅ Select now uses manual labels */}
             <Select value={bossLabel} onValueChange={setBossLabel}>
               <SelectTrigger className="bg-white/5 border-white/10 text-zinc-100">
                 <SelectValue placeholder="Choose a boss" />
@@ -180,13 +172,13 @@ export default function TopPlayersClient({
               </SelectContent>
             </Select>
           </div>
+        </div>
+      </div>
 
-          {/* Boss name centered (mobile) */}
-          <div className="sm:hidden text-center">
-            <div className="truncate text-base font-semibold text-zinc-100/90" title={bossTitle}>
-              {bossTitle}
-            </div>
-          </div>
+      {/* Boss name — ligne dédiée, centré */}
+      <div className="mt-3 text-center">
+        <div className="text-3xl font-semibold text-zinc-100/90" title={bossTitle}>
+          {bossTitle}
         </div>
       </div>
 

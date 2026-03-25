@@ -47,22 +47,28 @@ export default function LookupClient() {
       {/* Results */}
       {data && data.mode === "matches" && (
         <div className="glass rounded-2xl p-4">
-          <p className="text-[12px] text-zinc-500 mb-3">
-            Multiple players found for <span className="text-zinc-300">"{data.query}"</span> — click one:
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {data.players.map((p) => (
-              <button
-                key={p.name}
-                type="button"
-                onClick={() => { setQuery(p.name); }}
-                className="px-3 py-1.5 text-[12px] rounded-lg glass glass-hover text-zinc-300"
-              >
-                {p.name}
-                {p.class && <span className="ml-1.5 text-zinc-600">{p.class}</span>}
-              </button>
-            ))}
-          </div>
+          {data.players.length === 0 ? (
+            <p className="text-zinc-500 text-[13px] text-center py-6">No player found matching "{data.query}"</p>
+          ) : (
+            <>
+              <p className="text-[12px] text-zinc-500 mb-3">
+                Multiple players found for <span className="text-zinc-300">"{data.query}"</span> — click one:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {data.players.map((p) => (
+                  <button
+                    key={p.name}
+                    type="button"
+                    onClick={() => { setQuery(p.name); }}
+                    className="px-3 py-1.5 text-[12px] rounded-lg glass glass-hover text-zinc-300"
+                  >
+                    {p.name}
+                    {p.class && <span className="ml-1.5 text-zinc-600">{p.class}</span>}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
