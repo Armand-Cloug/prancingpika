@@ -309,7 +309,13 @@ jobs:
             sudo -n docker compose -p "$PROJECT" up -d web parser bot
 
             echo "[12/13] Fix volume permissions (combatlogs ACL)"
-            bash "${SRC}/fix_deploy.sh"
+            MP=$(sudo -n docker volume inspect ptpika_combatlogs -f '{{.Mountpoint}}')
+            sudo -n mkdir -p "${MP}/.tmp" || true
+            sudo -n chown -R 100:101 "${MP}" || true
+            sudo -n chmod -R u+rwX,g+rX "${MP}" || true
+            sudo -n chmod g+s "${MP}" || true
+            sudo -n setfacl -R -m u:10001:rwx "${MP}" || true
+            sudo -n setfacl -R -d -m u:10001:rwx "${MP}" || true
 
             echo "[13/13] Register Discord slash commands"
             sudo -n docker exec ptpika_bot node src/deploy-commands.js \
