@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: "/",              label: "Home"         },
   { href: "/leaderboards",  label: "Leaderboards" },
   { href: "/top-players",   label: "Top Players"  },
+  { href: "/specs-dps",     label: "Specs DPS"    },
   { href: "/guilds",        label: "Guilds"       },
   { href: "/lookup",        label: "Lookup"       },
   { href: "/last-uploads",  label: "Last Uploads" },

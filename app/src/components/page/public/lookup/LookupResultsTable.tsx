@@ -1,7 +1,31 @@
 // src/components/page/public/lookup/LookupResultsTable.tsx
 "use client";
+import { useMemo, useState } from "react";
 import PlayerDpsDialog from "@/components/forms/PlayerDpsDialog";
 import type { LookupRecord } from "@/lib/player-lookup";
+
+type SortKey = "newest" | "oldest" | "dps_desc" | "dps_asc" | "timer_desc" | "timer_asc";
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "newest",     label: "Newest → Oldest" },
+  { value: "oldest",     label: "Oldest → Newest" },
+  { value: "dps_desc",   label: "Highest DPS" },
+  { value: "dps_asc",    label: "Lowest DPS" },
+  { value: "timer_desc", label: "Longest timer" },
+  { value: "timer_asc",  label: "Shortest timer" },
+];
+
+function sortRecords(records: LookupRecord[], sort: SortKey): LookupRecord[] {
+  const s = [...records];
+  switch (sort) {
+    case "newest":     return s.sort((a, b) => +new Date(b.endedAt) - +new Date(a.endedAt));
+    case "oldest":     return s.sort((a, b) => +new Date(a.endedAt) - +new Date(b.endedAt));
+    case "dps_desc":   return s.sort((a, b) => b.dps - a.dps);
+    case "dps_asc":    return s.sort((a, b) => a.dps - b.dps);
+    case "timer_desc": return s.sort((a, b) => b.timeS - a.timeS);
+    case "timer_asc":  return s.sort((a, b) => a.timeS - b.timeS);
+  }
+}
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -24,6 +48,9 @@ export default function LookupResultsTable({
   records: LookupRecord[];
   truncated: boolean;
 }) {
+  const [sort, setSort] = useState<SortKey>("newest");
+  const sorted = useMemo(() => sortRecords(records, sort), [records, sort]);
+
   return (
     <div className="flex flex-col gap-3">
       {/* Player header */}
@@ -48,6 +75,20 @@ export default function LookupResultsTable({
 
       {/* Table */}
       <div className="glass rounded-2xl">
+        {/* Sort control */}
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.06]">
+          <span className="text-[11px] text-zinc-400/70 shrink-0">Sort:</span>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            className="text-[11px] bg-white/[0.06] border border-white/10 rounded-md px-2 py-1 text-zinc-200 cursor-pointer focus:outline-none hover:bg-white/[0.09] transition-colors"
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-[12px] 2xl:text-[13.5px] min-w-[520px]">
             <thead>
@@ -69,7 +110,7 @@ export default function LookupResultsTable({
                   <td colSpan={6} className="py-8 pl-5 text-[12px] text-zinc-600">No records found.</td>
                 </tr>
               ) : (
-                records.map((r) => (
+                sorted.map((r) => (
                   <tr key={r.runId} className="tr-hover border-b border-white/[0.04] last:border-0">
                     <td className="py-2 pl-5 pr-3 mono text-zinc-500 whitespace-nowrap">{fmtDate(r.endedAt)}</td>
                     <td className="py-2 px-3 text-zinc-200 font-medium whitespace-nowrap">
