@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { RunPlayerDpsResponse } from "@/lib/run-player-dps";
 import { SpecBadge } from "@/components/ui/badges";
-import { getAbilityIconKeyByIdOrName, getAbilityIconUrl, getEnglishAbilityName } from "@/lib/ability-icons";
+import { getAbilityIconKeyByIdOrName, getAbilityIconUrl } from "@/lib/ability-icons";
 import GroupDpsDialog from "@/components/forms/GroupDpsDialog";
 
 function fmtNum(n: number) { return Math.round(n).toLocaleString("en-US"); }
@@ -108,7 +108,6 @@ export default function PlayerDpsDialog({
                   </thead>
                   <tbody>
                     {data.abilities.map((a, i) => {
-                      const displayName = getEnglishAbilityName(a.abilityName, a.abilityId);
                       const iconKey = getAbilityIconKeyByIdOrName(a.abilityId, a.abilityName);
                       const iconUrl = iconKey ? getAbilityIconUrl(iconKey) : null;
                       return (
@@ -128,7 +127,7 @@ export default function PlayerDpsDialog({
                             )}
                           </td>
                           <td className="py-1.5 pr-3 text-zinc-200 font-medium">
-                            <div className="truncate" title={displayName}>{displayName}</div>
+                            <div className="truncate" title={a.abilityName}>{a.abilityName}</div>
                             {a.abilityId > 0 && <div className="mono text-[9px] text-zinc-600">{a.abilityId}</div>}
                           </td>
                           <td className="py-1.5 px-2 text-right mono text-zinc-300 whitespace-nowrap">{fmtNum(a.total)}</td>
