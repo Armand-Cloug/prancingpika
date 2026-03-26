@@ -25,6 +25,17 @@ use crate::player_class::infer_player_classes;
 pub type AppState = Arc<MySqlPool>;
 type ApiResult<T> = Result<Json<T>, (StatusCode, Json<ApiError>)>;
 
+// ─── Sécurité : limites et validation des fichiers uploadés ──────────────────
+
+/// Taille maximale d'un fichier uploadé : 50 Mo.
+const MAX_UPLOAD_BYTES: usize = 50 * 1024 * 1024;
+
+/// Nombre d'octets analysés pour la détection de contenu binaire.
+const SNIFF_BYTES: usize = 1024;
+
+/// Extensions de fichier autorisées (en minuscules, sans le point initial).
+const ALLOWED_EXTENSIONS: &[&str] = &["log", "txt"];
+
 fn db_err(e: impl std::fmt::Display) -> (StatusCode, Json<ApiError>) {
     eprintln!("[api] DB error: {}", e);
     (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiError::new("Internal server error")))
@@ -32,6 +43,106 @@ fn db_err(e: impl std::fmt::Display) -> (StatusCode, Json<ApiError>) {
 
 fn bad_req(msg: impl Into<String>) -> (StatusCode, Json<ApiError>) {
     (StatusCode::BAD_REQUEST, Json(ApiError::new(msg)))
+}
+
+/// Retourne `true` si les premiers `SNIFF_BYTES` octets contiennent un octet NUL.
+fn has_null_bytes(data: &[u8]) -> bool {
+    let check_len = data.len().min(SNIFF_BYTES);
+    data[..check_len].contains(&0u8)
+}
+
+/// Valide les octets bruts d'un upload : taille, contenu binaire, encodage UTF-8.
+/// Journalise et retourne une erreur HTTP 400 en cas de rejet.
+fn validate_upload_bytes(
+    body: &Bytes,
+    context: &str,
+) -> Result<(), (StatusCode, Json<ApiError>)> {
+    if body.len() > MAX_UPLOAD_BYTES {
+        eprintln!(
+            "[upload-rejected] ts={} context={} size={} reason=file_too_large",
+            chrono::Utc::now().to_rfc3339(),
+            context,
+            body.len()
+        );
+        return Err(bad_req(format!(
+            "File too large: maximum is {}MB.",
+            MAX_UPLOAD_BYTES / 1024 / 1024
+        )));
+    }
+
+    if has_null_bytes(body) {
+        eprintln!(
+            "[upload-rejected] ts={} context={} size={} reason=binary_content",
+            chrono::Utc::now().to_rfc3339(),
+            context,
+            body.len()
+        );
+        return Err(bad_req(
+            "Only plain text log files are accepted: binary content detected.",
+        ));
+    }
+
+    if std::str::from_utf8(body).is_err() {
+        eprintln!(
+            "[upload-rejected] ts={} context={} size={} reason=invalid_utf8",
+            chrono::Utc::now().to_rfc3339(),
+            context,
+            body.len()
+        );
+        return Err(bad_req(
+            "Only plain text log files are accepted: invalid UTF-8 encoding.",
+        ));
+    }
+
+    Ok(())
+}
+
+/// Valide un fichier déjà écrit sur disque : extension et contenu binaire.
+fn validate_log_file_on_disk(
+    file_path: &std::path::Path,
+    file_name: &str,
+) -> Result<(), (StatusCode, Json<ApiError>)> {
+    use std::io::Read;
+
+    // Vérification de l'extension
+    let ext = file_path
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+
+    if !ALLOWED_EXTENSIONS.contains(&ext.as_str()) {
+        eprintln!(
+            "[upload-rejected] ts={} file={} reason=disallowed_extension_{}",
+            chrono::Utc::now().to_rfc3339(),
+            file_name,
+            ext
+        );
+        return Err(bad_req(
+            "Only plain text log files are accepted (.log, .txt).",
+        ));
+    }
+
+    // Lecture des premiers SNIFF_BYTES octets pour détecter le contenu binaire
+    let mut f = std::fs::File::open(file_path)
+        .map_err(|e| bad_req(format!("Cannot read uploaded file: {}", e)))?;
+    let mut buf = [0u8; SNIFF_BYTES];
+    let n = f
+        .read(&mut buf)
+        .map_err(|e| bad_req(format!("Cannot read uploaded file: {}", e)))?;
+
+    if buf[..n].contains(&0u8) {
+        eprintln!(
+            "[upload-rejected] ts={} file={} reason=binary_content",
+            chrono::Utc::now().to_rfc3339(),
+            file_name
+        );
+        return Err(bad_req(
+            "Only plain text log files are accepted: binary content detected.",
+        ));
+    }
+
+    Ok(())
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -44,7 +155,13 @@ pub async fn upload_log(
     Query(q)    : Query<UploadQuery>,
     body        : Bytes,
 ) -> ApiResult<UploadResponse> {
-    let content = String::from_utf8_lossy(&body).to_string();
+    // Validation : taille, contenu binaire, encodage UTF-8
+    let context = format!("guild_id={}", q.guild_id);
+    validate_upload_bytes(&body, &context)?;
+
+    let content = std::str::from_utf8(&body)
+        .map_err(|_| bad_req("Only plain text log files are accepted: invalid UTF-8 encoding."))?
+        .to_string();
 
     // Écrire dans un fichier temporaire pour réutiliser import_log_file
     let nonce = std::time::SystemTime::now()
@@ -92,7 +209,12 @@ pub async fn upload_log(
 // Parse un log et retourne l'analyse en texte (sans DB)
 // ─────────────────────────────────────────────────────────────────────────────
 pub async fn parse_preview(body: Bytes) -> Result<String, (StatusCode, Json<ApiError>)> {
-    let content = String::from_utf8_lossy(&body).to_string();
+    // Validation : taille et contenu binaire (pas de journalisation IP ici — endpoint interne)
+    validate_upload_bytes(&body, "parse-preview")?;
+
+    let content = std::str::from_utf8(&body)
+        .map_err(|_| bad_req("Only plain text log files are accepted: invalid UTF-8 encoding."))?
+        .to_string();
     let events  = read_events(&content);
     let fights  = extract_kills(events.clone());
     let classes = infer_player_classes(&events);
@@ -520,6 +642,9 @@ pub async fn parse_file(
     if !file_path.exists() {
         return Err(bad_req(format!("Fichier introuvable sur le volume: {}", file_name)));
     }
+
+    // Validation du fichier sur disque : extension et contenu binaire
+    validate_log_file_on_disk(&file_path, &file_name)?;
 
     let opts = ImportOptions {
         base_date     : chrono::Local::now().date_naive(),

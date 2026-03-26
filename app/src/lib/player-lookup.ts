@@ -7,6 +7,7 @@ export type LookupRecord = {
   runId: string;
   endedAt: string;
   bossName: string;
+  spec: string | null;
   dps: number;
   hps: number;
   raidDps: number | null;
@@ -57,6 +58,7 @@ export async function lookupPlayer(queryRaw: string): Promise<PlayerLookupRespon
     select: {
       dps: true,
       hps: true,
+      spec: true,
       run: {
         select: {
           id: true,
@@ -82,6 +84,7 @@ export async function lookupPlayer(queryRaw: string): Promise<PlayerLookupRespon
     runId: r.run.id.toString(),
     endedAt: r.run.endedAt.toISOString(),
     bossName: r.run.boss.name,
+    spec: (r as any).spec ?? null,
     dps: r.dps,
     hps: r.hps,
     raidDps: r.run.dpsGroup ?? null,

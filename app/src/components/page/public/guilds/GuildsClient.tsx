@@ -42,7 +42,7 @@ export default function GuildsClient({ initialGuilds }: { initialGuilds: GuildLi
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[360px_1fr]">
         {/* Left panel */}
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-[0_18px_55px_rgba(0,0,0,0.35)]">
+        <div className="relative overflow-hidden rounded-2xl glass">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-[radial-gradient(700px_circle_at_20%_0%,rgba(56,189,248,0.14),transparent_55%)]" />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 

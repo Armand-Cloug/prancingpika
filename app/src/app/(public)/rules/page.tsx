@@ -1,7 +1,26 @@
 // src/app/(public)/rules/page.tsx
+import type { Metadata } from "next";
+import { buildMetadata, getSiteUrl, siteName } from "@/lib/seo";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Rules",
+  description:
+    "Logging requirements, fair play guidelines, and encounter detection rules for uploading RIFT combat logs to PrancingPika leaderboards.",
+  path: "/rules",
+});
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: `Rules – ${siteName}`,
+  url: `${getSiteUrl()}/rules`,
+  description: "Logging requirements, fair play guidelines, and encounter detection rules for PrancingPika.",
+};
+
 export default function RulesPage() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="mb-8">
         <p className="text-[10px] tracking-[0.2em] text-sky-400/70 font-medium uppercase mb-2">Guidelines</p>
         <h1 className="text-4xl font-bold text-gradient tracking-tight">Rules</h1>

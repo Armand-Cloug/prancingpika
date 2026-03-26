@@ -45,7 +45,7 @@ export function RolePill({ role, label, spec, size = "md" }: {
       className={`${cls[role]} ${size === "sm" ? "text-[10px] px-1.5" : ""}`}
       title={spec ? `${spec} (${role})` : `Role: ${role}`}
     >
-      {display}
+      <span style={{ overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>{display}</span>
     </span>
   );
 }

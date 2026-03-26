@@ -1,7 +1,16 @@
+import type { Metadata } from "next";
 import GuildsClient from "@/components/page/public/guilds/GuildsClient";
 import { prisma } from "@/lib/prisma";
+import { buildMetadata, getSiteUrl, siteName } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Guilds",
+  description:
+    "Browse all guilds registered on PrancingPika — view guild details, member rosters, and boss kill history sourced from community RIFT logs.",
+  path: "/guilds",
+});
 
 export default async function GuildsPage() {
   const guilds = await prisma.guild.findMany({
@@ -15,8 +24,22 @@ export default async function GuildsPage() {
     tag: g.tag ?? null,
   }));
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: `RIFT Guilds – ${siteName}`,
+    url: `${getSiteUrl()}/guilds`,
+    numberOfItems: items.length,
+    itemListElement: items.map((g, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: g.tag ? `${g.tag} ${g.name}` : g.name,
+    })),
+  };
+
   return (
     <main className="min-h-screen bg-[#1F2B3A] text-zinc-100">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {/* Background */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_15%_10%,rgba(56,189,248,0.10),transparent_55%),radial-gradient(1000px_circle_at_85%_15%,rgba(167,139,250,0.10),transparent_60%)]" />

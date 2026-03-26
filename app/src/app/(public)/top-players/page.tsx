@@ -1,7 +1,24 @@
 // src/app/(public)/top-players/page.tsx
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import TopPlayersClient from "@/components/page/public/top-players/TopPlayersClient";
 import { RAIDS } from "@/lib/leaderboards";
+import { buildMetadata, getSiteUrl, siteName } from "@/lib/seo";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Top Players",
+  description:
+    "Discover the best DPS players per boss encounter in RIFT — ranked by calling (Warrior, Rogue, Mage, Cleric) from community combat logs.",
+  path: "/top-players",
+});
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: `Top Players – ${siteName}`,
+  url: `${getSiteUrl()}/top-players`,
+  description: "Best DPS players per boss in RIFT, ranked by calling from community-uploaded combat logs.",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +48,7 @@ export default async function TopPlayersPage() {
 
   return (
     <div className="mx-auto max-w-7xl 2xl:max-w-[1600px] px-6 py-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="mb-8">
         <p className="text-[10px] tracking-[0.2em] text-sky-400/70 font-medium uppercase mb-2">
           Rankings

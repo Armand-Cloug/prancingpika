@@ -199,14 +199,14 @@ export default function GuildDetails({ guildId }: { guildId: string | null }) {
 
   if (!guildId) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] shadow-[0_18px_55px_rgba(0,0,0,0.35)] px-4 py-4">
+      <div className="rounded-2xl glass px-4 py-4">
         Select a guild
       </div>
     );
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-[0_18px_55px_rgba(0,0,0,0.35)]">
+    <div className="relative overflow-hidden rounded-2xl glass">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-[radial-gradient(700px_circle_at_20%_0%,rgba(56,189,248,0.14),transparent_55%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
@@ -283,7 +283,7 @@ export default function GuildDetails({ guildId }: { guildId: string | null }) {
                             value={sortByBoss[k] ?? "newest"}
                             onChange={(e) => setSortByBoss((prev) => ({ ...prev, [k]: e.target.value as SortKey }))}
                             onClick={(e) => e.stopPropagation()}
-                            className="text-[11px] bg-white/[0.06] border border-white/10 rounded-md px-2 py-1 text-zinc-200 cursor-pointer focus:outline-none hover:bg-white/[0.09] transition-colors"
+                            className="text-[11px] bg-white/[0.06] border border-white/10 rounded-md px-2 py-1 text-zinc-200 cursor-pointer focus:outline-none hover:bg-white/[0.09] transition-colors overscroll-contain"
                           >
                             {SORT_OPTIONS.map((opt) => (
                               <option key={opt.value} value={opt.value}>{opt.label}</option>

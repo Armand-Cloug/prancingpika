@@ -81,7 +81,7 @@ export default function LookupResultsTable({
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortKey)}
-            className="text-[11px] bg-white/[0.06] border border-white/10 rounded-md px-2 py-1 text-zinc-200 cursor-pointer focus:outline-none hover:bg-white/[0.09] transition-colors"
+            className="text-[11px] bg-white/[0.06] border border-white/10 rounded-md px-2 py-1 text-zinc-200 cursor-pointer focus:outline-none hover:bg-white/[0.09] transition-colors overscroll-contain"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -90,14 +90,14 @@ export default function LookupResultsTable({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-[12px] 2xl:text-[13.5px] min-w-[520px]">
+          <table className="w-full text-[12px] 2xl:text-[13.5px] min-w-[620px]">
             <thead>
               <tr className="border-b border-white/[0.07] bg-black/20">
-                {["Date","Boss","DPS","HPS","Time","Guild"].map((h, i) => (
+                {["Date","Boss","Spec","DPS","HPS","Time","Guild"].map((h, i) => (
                   <th
                     key={h}
                     className={`py-2.5 text-[10px] 2xl:text-[11px] font-medium text-zinc-500 tracking-wide uppercase whitespace-nowrap
-                                ${i === 0 ? "pl-5 pr-3 text-left" : i <= 1 ? "px-3 text-left" : i === 5 ? "px-5 text-left" : "px-3 text-right"}`}
+                                ${i === 0 ? "pl-5 pr-3 text-left" : i <= 2 ? "px-3 text-left" : i === 6 ? "px-5 text-left" : "px-3 text-right"}`}
                   >
                     {h}
                   </th>
@@ -107,7 +107,7 @@ export default function LookupResultsTable({
             <tbody>
               {records.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 pl-5 text-[12px] text-zinc-600">No records found.</td>
+                  <td colSpan={7} className="py-8 pl-5 text-[12px] text-zinc-600">No records found.</td>
                 </tr>
               ) : (
                 sorted.map((r) => (
@@ -123,6 +123,11 @@ export default function LookupResultsTable({
                           </span>
                         }
                       />
+                    </td>
+                    <td className="py-2 px-3 text-left whitespace-nowrap">
+                      {r.spec
+                        ? <span className="spec-badge">{r.spec}</span>
+                        : <span className="text-zinc-600 text-[11px]">—</span>}
                     </td>
                     <td className="py-2 px-3 text-right mono stat-sky whitespace-nowrap">
                       {Math.round(r.dps).toLocaleString("en-US")}

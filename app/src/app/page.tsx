@@ -1,9 +1,33 @@
 // src/app/page.tsx
+import type { Metadata } from "next";
 import Link from "next/link";
+import { buildMetadata, getSiteUrl, siteName } from "@/lib/seo";
+
+export const metadata: Metadata = buildMetadata({
+  title: "RIFT Combat Log Tracker",
+  description:
+    "Upload RIFT combat logs, parse sessions automatically, and compare DPS and HPS performance across boss fights with clean leaderboards and spec breakdowns.",
+  path: "/",
+});
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: siteName,
+  url: getSiteUrl(),
+  description:
+    "Community platform for RIFT MMORPG combat log analysis — DPS/HPS tracking, boss leaderboards, and guild management.",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: { "@type": "EntryPoint", urlTemplate: `${getSiteUrl()}/lookup?q={search_term_string}` },
+    "query-input": "required name=search_term_string",
+  },
+};
 
 export default function HomePage() {
   return (
     <main className="min-h-screen">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">

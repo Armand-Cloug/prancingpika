@@ -1,8 +1,11 @@
 // src/app/work-in-progress/page.tsx
 // Mini "Work in progress" page – dark slate theme, simple and clean.
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default function WorkInProgressPage() {
   return (

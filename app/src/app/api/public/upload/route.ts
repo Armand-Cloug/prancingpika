@@ -12,7 +12,18 @@ import { prisma } from "@/lib/prisma";
 import { getOrCreateWebAccount } from "@/lib/account";
 import { requireAuthIdentity } from "@/lib/auth-identity";
 
-const MAX_BYTES = 200 * 1024 * 1024;
+// ─── Limits & allowed values ──────────────────────────────────────────────────
+
+const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
+const MAX_MB    = 50;
+
+/** Extensions accepted on the client-supplied filename (case-insensitive). */
+const ALLOWED_EXTENSIONS = new Set([".log", ".txt"]);
+
+/** The only MIME type we accept for uploaded files. */
+const ALLOWED_MIME = "text/plain";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 // Minimal Busboy file info type (avoids relying on exact @types/busboy exports)
 type BusboyFileInfo = {
@@ -21,10 +32,41 @@ type BusboyFileInfo = {
   mimeType: string;
 };
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 function headersToObject(headers: Headers): Record<string, string> {
   const obj: Record<string, string> = {};
   headers.forEach((v, k) => (obj[k] = v));
   return obj;
+}
+
+/** Best-effort extraction of the client IP from common proxy headers. */
+function getClientIp(req: NextRequest): string {
+  return (
+    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+    req.headers.get("x-real-ip") ||
+    "unknown"
+  );
+}
+
+/**
+ * Log a rejected upload attempt.
+ * Fields: ISO timestamp, client IP, original filename, rejection reason.
+ */
+function logRejection(ip: string, filename: string, reason: string): void {
+  console.warn(
+    `[upload-rejected] ts=${new Date().toISOString()} ip=${ip} ` +
+    `file=${JSON.stringify(filename)} reason=${reason}`
+  );
+}
+
+/** Return true if the first 1 024 bytes of buf contain a NUL byte. */
+function hasNullBytes(buf: Buffer): boolean {
+  const limit = Math.min(buf.length, 1024);
+  for (let i = 0; i < limit; i++) {
+    if (buf[i] === 0) return true;
+  }
+  return false;
 }
 
 function sanitizeFileName(name: string) {
@@ -41,11 +83,14 @@ function sanitizeFileName(name: string) {
 
 function normalizeProvider(p: unknown): "google" | "discord" | null {
   if (p === "google" || p === "discord") return p;
-  // Some auth setups may yield "oauth" → refuse unless you map it properly in requireAuthIdentity()
   return null;
 }
 
+// ─── Route handler ────────────────────────────────────────────────────────────
+
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req);
+
   const auth = await requireAuthIdentity(req);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.message }, { status: auth.status });
@@ -60,25 +105,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const identityForAccount = {
-    ...(auth.identity as any),
-    provider,
-  };
-
+  const identityForAccount = { ...(auth.identity as any), provider };
   const account = await getOrCreateWebAccount(identityForAccount);
 
   const baseDir =
-    process.env.COMBATLOG_DIR || path.join(process.cwd(), "..", "combat.log"); // dev: /prancingpika/combat.log
+    process.env.COMBATLOG_DIR || path.join(process.cwd(), "..", "combat.log");
   const tmpDir = path.join(baseDir, ".tmp");
 
   await mkdir(baseDir, { recursive: true });
   await mkdir(tmpDir, { recursive: true });
 
-  let guildIdRaw = "";
-  let storedName = "";
-  let tmpPath = "";
-  let fileSize = 0;
-  let hadFile = false;
+  let guildIdRaw  = "";
+  let storedName  = "";
+  let tmpPath     = "";
+  let fileSize    = 0;
+  let hadFile     = false;
+  let fileRejected = false; // true once any file-level rejection has fired
 
   const bb = Busboy({
     headers: headersToObject(req.headers),
@@ -99,67 +141,133 @@ export async function POST(req: NextRequest) {
         }
 
         hadFile = true;
-
         const original = info.filename || "combat.log.txt";
-        storedName = sanitizeFileName(original);
 
-        // Authorized format: .txt (we enforce storedName ends with .txt)
-        if (!storedName.toLowerCase().endsWith(".txt")) {
+        // ── 1. Extension check (on the raw, unsanitised filename) ────────────
+        const ext = path.extname(original).toLowerCase();
+        if (!ALLOWED_EXTENSIONS.has(ext)) {
           file.resume();
+          fileRejected = true;
+          logRejection(ip, original, `disallowed extension: "${ext}"`);
           resolve(
             NextResponse.json(
-              { error: "BAD_REQUEST", message: "Only .txt files are allowed." },
+              { error: "BAD_REQUEST", message: "Only plain text log files are accepted (.log, .txt)." },
               { status: 400 }
             )
           );
           return;
         }
 
+        // ── 2. MIME type check (client-declared; do not trust alone) ─────────
+        const declaredMime = (info.mimeType || "").split(";")[0].trim().toLowerCase();
+        if (declaredMime !== "" && declaredMime !== ALLOWED_MIME) {
+          file.resume();
+          fileRejected = true;
+          logRejection(ip, original, `disallowed MIME type: "${declaredMime}"`);
+          resolve(
+            NextResponse.json(
+              { error: "BAD_REQUEST", message: "Only plain text log files are accepted: invalid MIME type." },
+              { status: 400 }
+            )
+          );
+          return;
+        }
+
+        storedName = sanitizeFileName(original);
+
         const id = crypto.randomUUID();
         tmpPath = path.join(tmpDir, `${id}.upload`);
-
         const ws = createWriteStream(tmpPath);
 
-        file.on("data", (chunk: Buffer) => {
+        // ── 3. Binary-content sniff (first 1 024 bytes) ──────────────────────
+        let sniffBuf  = Buffer.alloc(0);
+        let sniffDone = false;
+
+        const handleData = (chunk: Buffer) => {
+          if (fileRejected) return;
           fileSize += chunk.length;
-        });
 
-        file.on("limit", async () => {
-          ws.end();
-          try {
-            await rm(tmpPath, { force: true });
-          } catch {}
+          if (!sniffDone) {
+            sniffBuf = Buffer.concat([sniffBuf, chunk]);
+            if (sniffBuf.length >= 1024) {
+              sniffDone = true;
+              if (hasNullBytes(sniffBuf)) {
+                fileRejected = true;
+                ws.destroy();
+                rm(tmpPath, { force: true }).catch(() => {});
+                logRejection(ip, original, "binary content (null bytes in first 1KB)");
+                resolve(
+                  NextResponse.json(
+                    { error: "BAD_REQUEST", message: "Only plain text log files are accepted: binary content detected." },
+                    { status: 400 }
+                  )
+                );
+              }
+            }
+          }
+        };
+
+        const handleEnd = () => {
+          if (fileRejected) return;
+          // Final sniff for files smaller than 1 024 bytes
+          if (!sniffDone) {
+            sniffDone = true;
+            if (hasNullBytes(sniffBuf)) {
+              fileRejected = true;
+              ws.destroy();
+              rm(tmpPath, { force: true }).catch(() => {});
+              logRejection(ip, original, "binary content (null bytes in file < 1KB)");
+              resolve(
+                NextResponse.json(
+                  { error: "BAD_REQUEST", message: "Only plain text log files are accepted: binary content detected." },
+                  { status: 400 }
+                )
+              );
+            }
+          }
+        };
+
+        (file as any).on("data",  handleData);
+        (file as any).on("end",   handleEnd);
+
+        (file as any).on("limit", async () => {
+          ws.destroy();
+          try { await rm(tmpPath, { force: true }); } catch {}
+          fileRejected = true;
+          logRejection(ip, original, `file too large (limit: ${MAX_MB}MB)`);
           resolve(
             NextResponse.json(
-              { error: "BAD_REQUEST", message: "Max size is 200MB." },
+              { error: "BAD_REQUEST", message: `File too large: maximum is ${MAX_MB}MB.` },
               { status: 400 }
             )
           );
         });
 
-        file.on("error", async () => {
-          ws.end();
-          try {
-            await rm(tmpPath, { force: true });
-          } catch {}
-          resolve(
-            NextResponse.json(
-              { error: "BAD_REQUEST", message: "Upload stream error." },
-              { status: 400 }
-            )
-          );
+        (file as any).on("error", async () => {
+          ws.destroy();
+          try { await rm(tmpPath, { force: true }); } catch {}
+          if (!fileRejected) {
+            fileRejected = true;
+            resolve(
+              NextResponse.json(
+                { error: "BAD_REQUEST", message: "Upload stream error." },
+                { status: 400 }
+              )
+            );
+          }
         });
 
         ws.on("error", async () => {
-          try {
-            await rm(tmpPath, { force: true });
-          } catch {}
-          resolve(
-            NextResponse.json(
-              { error: "BAD_REQUEST", message: "Cannot write file." },
-              { status: 400 }
-            )
-          );
+          try { await rm(tmpPath, { force: true }); } catch {}
+          if (!fileRejected) {
+            fileRejected = true;
+            resolve(
+              NextResponse.json(
+                { error: "BAD_REQUEST", message: "Cannot write file." },
+                { status: 400 }
+              )
+            );
+          }
         });
 
         file.pipe(ws);
@@ -170,15 +278,20 @@ export async function POST(req: NextRequest) {
       try {
         if (tmpPath) await rm(tmpPath, { force: true });
       } catch {}
-      resolve(
-        NextResponse.json(
-          { error: "BAD_REQUEST", message: "Upload parse error." },
-          { status: 400 }
-        )
-      );
+      if (!fileRejected) {
+        resolve(
+          NextResponse.json(
+            { error: "BAD_REQUEST", message: "Upload parse error." },
+            { status: 400 }
+          )
+        );
+      }
     });
 
     bb.on("finish", async () => {
+      // Bail out if the file was already rejected during streaming
+      if (fileRejected) return;
+
       if (!hadFile || !tmpPath) {
         resolve(
           NextResponse.json(
@@ -190,9 +303,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (!guildIdRaw) {
-        try {
-          await rm(tmpPath, { force: true });
-        } catch {}
+        try { await rm(tmpPath, { force: true }); } catch {}
         resolve(
           NextResponse.json(
             { error: "BAD_REQUEST", message: "Missing guildId." },
@@ -207,9 +318,7 @@ export async function POST(req: NextRequest) {
       try {
         guildIdBig = BigInt(guildIdRaw);
       } catch {
-        try {
-          await rm(tmpPath, { force: true });
-        } catch {}
+        try { await rm(tmpPath, { force: true }); } catch {}
         resolve(
           NextResponse.json(
             { error: "BAD_REQUEST", message: "Invalid guildId." },
@@ -225,9 +334,7 @@ export async function POST(req: NextRequest) {
       });
 
       if (!membership) {
-        try {
-          await rm(tmpPath, { force: true });
-        } catch {}
+        try { await rm(tmpPath, { force: true }); } catch {}
         resolve(
           NextResponse.json(
             { error: "FORBIDDEN", message: "You must be a member of that guild." },
@@ -251,7 +358,7 @@ export async function POST(req: NextRequest) {
       await rename(tmpPath, finalPath);
 
       // Trigger parser service (best effort)
-      const parserUrl = process.env.PARSER_URL; // ex: http://parser:8080
+      const parserUrl = process.env.PARSER_URL;
       let parser: unknown = null;
 
       if (parserUrl) {
@@ -265,7 +372,6 @@ export async function POST(req: NextRequest) {
               uploaderAccountId: account.id.toString(),
             }),
           });
-
           parser = await r.json().catch(() => ({ ok: false, error: "BAD_JSON" }));
         } catch {
           parser = { ok: false, error: "PARSER_UNREACHABLE" };
@@ -273,7 +379,6 @@ export async function POST(req: NextRequest) {
       }
 
       // Notify Discord bot API (best effort)
-      // BOT_URL example: http://bot:3001
       const botUrl = process.env.BOT_URL;
       let bot: unknown = null;
 
@@ -299,7 +404,6 @@ export async function POST(req: NextRequest) {
               at: new Date().toISOString(),
             }),
           });
-
           bot = await r.json().catch(() => ({ ok: false, error: "BAD_JSON" }));
         } catch {
           bot = { ok: false, error: "BOT_UNREACHABLE" };
@@ -317,7 +421,7 @@ export async function POST(req: NextRequest) {
           file: {
             fileName: finalName,
             fileSize,
-            path: `combat.log/${finalName}`, // relative for parser command
+            path: `combat.log/${finalName}`,
           },
           parser,
           bot,

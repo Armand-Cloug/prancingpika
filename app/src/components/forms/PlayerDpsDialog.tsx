@@ -62,6 +62,7 @@ export default function PlayerDpsDialog({
                 {[
                   { label:"Boss",  value:data.run.bossName },
                   { label:"DPS",   value:fmtNum(data.player.dps),  accent:"sky" as const },
+                  { label:"Dmg",   value:fmtNum(data.player.totalDamage) },
                   { label:"HPS",   value:fmtNum(data.player.hps),  accent:"teal" as const },
                   ...(data.player.aps > 0 ? [{ label:"APS", value:fmtNum(data.player.aps), accent:"amber" as const }] : []),
                   { label:"Class", value:data.player.class ?? "—" },

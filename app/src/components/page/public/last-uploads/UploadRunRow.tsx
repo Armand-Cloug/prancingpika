@@ -15,7 +15,7 @@ function fmtTime12(iso: string) {
   return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
 
-export default function UploadRunRow({ run }: { run: LastUploadRun }) {
+export default function UploadRunRow({ run, shade = 0 }: { run: LastUploadRun; shade?: number }) {
   const [open, setOpen] = useState(false);
   const total    = formatTime(run.durationS);
   const bossOnly = run.bossDurationS != null ? formatTime(run.bossDurationS) : null;
@@ -25,7 +25,7 @@ export default function UploadRunRow({ run }: { run: LastUploadRun }) {
     ? Math.round(run.apsGroup).toLocaleString("en-US") : null;
 
   return (
-    <div className="glass rounded-2xl overflow-hidden glass-hover">
+    <div className={`${shade % 2 === 1 ? "glass-alt" : "glass"} rounded-2xl overflow-hidden glass-hover`}>
       {/* Card header — clickable to expand */}
       <button
         type="button"

@@ -1,5 +1,8 @@
 // src/app/sign-in/page.tsx
+import type { Metadata } from "next";
 import { Suspense } from "react";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 import SignInClient from "@/components/page/auth/sign-in/SignInClient";
 
 export const dynamic = "force-dynamic";
