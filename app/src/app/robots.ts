@@ -10,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: ["/", "/leaderboards", "/top-players", "/lookup", "/specs-dps", "/guilds", "/last-uploads", "/rules"],
-        disallow: ["/api/", "/account", "/sign-in", "/abilities", "/oldschool", "/wip", "/legal-notice", "/privacy-policy", "/accessibility"],
+        disallow: ["/api/", "/account", "/sign-in", "/abilities", "/oldschool", "/wip", "/legal-notice", "/privacy-policy", "/accessibility", "/site-map"],
       },
     ],
     sitemap: `${base}/sitemap.xml`,
