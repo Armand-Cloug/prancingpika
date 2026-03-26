@@ -13,7 +13,7 @@ export function getSiteUrl(): string {
   const raw =
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.NEXTAUTH_URL ||
-    "https://prancingpika.fr";
+    "https://prancingpika.cloug.fr";
   try {
     return new URL(raw).origin;
   } catch {
