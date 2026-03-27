@@ -27,8 +27,8 @@ type ApiResult<T> = Result<Json<T>, (StatusCode, Json<ApiError>)>;
 
 // ─── Sécurité : limites et validation des fichiers uploadés ──────────────────
 
-/// Taille maximale d'un fichier uploadé : 50 Mo.
-const MAX_UPLOAD_BYTES: usize = 50 * 1024 * 1024;
+/// Taille maximale d'un fichier uploadé : 150 Mo.
+const MAX_UPLOAD_BYTES: usize = 150 * 1024 * 1024;
 
 /// Nombre d'octets analysés pour la détection de contenu binaire.
 const SNIFF_BYTES: usize = 1024;
