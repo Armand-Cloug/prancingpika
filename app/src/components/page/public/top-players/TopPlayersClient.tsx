@@ -158,7 +158,7 @@ export default function TopPlayersClient({
             Best Score with no duplicates
           </label>
 
-          <div className="w-full sm:w-[220px] sm:shrink-0">
+          <div className="relative w-full sm:w-[220px] sm:shrink-0">
             <Select value={bossLabel} onValueChange={setBossLabel}>
               <SelectTrigger className="bg-white/5 border-white/10 text-zinc-100">
                 <SelectValue placeholder="Choose a boss" />

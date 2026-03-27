@@ -89,6 +89,20 @@
   ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
 }
 
+/* ── Dropdown / Select positioning ───────────────────────────────────────── */
+/* Force every SelectContent to float below its trigger via CSS absolute
+   positioning. The !important beats Radix's floating-ui inline styles so the
+   dropdown never grows the page height and never flips upward.
+   The parent trigger wrapper must carry position:relative (see usage sites). */
+[data-slot="select-content"] {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  transform: none !important;
+  min-width: 100%;
+  margin-top: 4px;
+}
+
 /* ── Component utilities ──────────────────────────────────────────────────── */
 @layer utilities {
 

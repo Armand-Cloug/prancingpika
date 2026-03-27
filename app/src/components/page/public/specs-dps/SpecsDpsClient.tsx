@@ -50,7 +50,7 @@ export default function SpecsDpsClient({
     <div className="w-full">
       {/* Controls */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 mb-8">
-        <div className="w-full sm:w-[240px] shrink-0">
+        <div className="relative w-full sm:w-[240px] shrink-0">
           <Select value={spec} onValueChange={setSpec}>
             <SelectTrigger className="bg-white/5 border-white/10 text-zinc-100">
               <SelectValue placeholder="Choose a spec…" />
@@ -63,7 +63,7 @@ export default function SpecsDpsClient({
           </Select>
         </div>
 
-        <div className="w-full sm:w-[220px] shrink-0">
+        <div className="relative w-full sm:w-[220px] shrink-0">
           <Select value={raidKey} onValueChange={setRaidKey}>
             <SelectTrigger className="bg-white/5 border-white/10 text-zinc-100">
               <SelectValue placeholder="Choose a raid…" />

@@ -14,8 +14,8 @@ import { requireAuthIdentity } from "@/lib/auth-identity";
 
 // ─── Limits & allowed values ──────────────────────────────────────────────────
 
-const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
-const MAX_MB    = 50;
+const MAX_BYTES = 150 * 1024 * 1024; // 50 MB
+const MAX_MB    = 150;
 
 /** Extensions accepted on the client-supplied filename (case-insensitive). */
 const ALLOWED_EXTENSIONS = new Set([".log", ".txt"]);
