@@ -213,8 +213,8 @@ static SPECS: &[SpecDef] = &[
     // ── MAGE ──────────────────────────────────────────────────────────────────
     spec("TankHeal",        "Tank",    &["M_TAUNT", "LS"]),
     spec("HealTank",        "Tank",    &["M_TAUNT", "EF"]),
-    spec("MetaChont",       "Support", &["GS", "EF"]),
     spec("ElemChloroChont", "Support", &["SI", "EF"]),
+    spec("MetaChont",       "Support", &["GS", "EF"]),
     spec("ChloroChont",     "Support", &["GS", "LS"]),
     spec("ElemChloro",      "Healer",  &["EF", "LS"]),
     spec("Chloro",          "Healer",  &["SI", "LS"]),

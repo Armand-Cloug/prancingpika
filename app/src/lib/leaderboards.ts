@@ -26,7 +26,7 @@ export const RAIDS: RaidDef[] = [
   },
   {
     key: "TDNM",
-    title: "The Deep Night March",
+    title: "Tartaric Depths Normal Mode",
     bosses: ["Beligosh", "Tarjulia", "Le Concile du Destin", "Malannon"],
   },
   {
