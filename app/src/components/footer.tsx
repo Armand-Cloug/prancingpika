@@ -3,10 +3,10 @@
 import Link from "next/link";
 
 const LINKS = [
-  { href: "/legal-notice",    label: "Legal notice"    },
-  { href: "/privacy-policy",  label: "Privacy policy"  },
-  { href: "/accessibility",   label: "Accessibility"   },
-  { href: "/sitemap",         label: "Sitemap"         },
+  { href: "/legal",          label: "Legal notice"   },
+  { href: "/privacy",        label: "Privacy policy" },
+  { href: "/accessibility",  label: "Accessibility"  },
+  { href: "/sitemap",        label: "Sitemap"        },
 ];
 
 export default function Footer() {
