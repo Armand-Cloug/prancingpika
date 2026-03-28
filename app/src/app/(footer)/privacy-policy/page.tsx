@@ -1,55 +1,241 @@
-// src/app/work-in-progress/page.tsx
-// Mini "Work in progress" page – dark slate theme, simple and clean.
-
+// src/app/(footer)/privacy-policy/page.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buildMetadata, getSiteUrl, siteName } from "@/lib/seo";
 
-export const metadata: Metadata = { robots: { index: false, follow: false } };
+export const metadata: Metadata = buildMetadata({
+  title: "Politique de confidentialité",
+  description:
+    "Politique de confidentialité de PrancingPika — données collectées, bases légales, durées de conservation et droits RGPD.",
+  path: "/privacy-policy",
+});
 
-export default function WorkInProgressPage() {
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: `Politique de confidentialité – ${siteName}`,
+  url: `${getSiteUrl()}/privacy-policy`,
+  description: "Politique de confidentialité conforme au RGPD (arts. 13–14).",
+};
+
+type TableRow = { data: string; basis: string; retention: string };
+
+const dataTable: TableRow[] = [
+  {
+    data: "Fichiers de combat log (téléversés)",
+    basis: "Exécution du service (art. 6.1.b RGPD)",
+    retention: "Supprimés après traitement (< 24 h)",
+  },
+  {
+    data: "Identifiant Discord (OAuth)",
+    basis: "Exécution du service / consentement",
+    retention: "Conservé tant que le compte est actif",
+  },
+  {
+    data: "Nom d'utilisateur (pseudo)",
+    basis: "Exécution du service",
+    retention: "Conservé tant que le compte est actif",
+  },
+  {
+    data: "Scores de classement (DPS/HPS)",
+    basis: "Intérêt légitime — classements publics",
+    retention: "Conservés tant que le compte est actif",
+  },
+  {
+    data: "Logs de connexion (adresse IP, horodatage)",
+    basis: "Intérêt légitime — sécurité du service",
+    retention: "30 jours glissants",
+  },
+];
+
+const sections: { id: string; title: string; items: string[] }[] = [
+  {
+    id: "responsable",
+    title: "Responsable du traitement",
+    items: [
+      "Le responsable du traitement des données personnelles est Armand Zireg (alias Cloug), personne physique non-professionnelle.",
+      "Contact : armandzireg@gmail.com — pour toute question relative à vos données personnelles.",
+    ],
+  },
+  {
+    id: "donnees",
+    title: "Données collectées",
+    items: [
+      "PrancingPika collecte uniquement les données strictement nécessaires au fonctionnement du service (principe de minimisation, art. 5.1.c RGPD).",
+      "Aucune donnée sensible (santé, origine ethnique, opinions politiques, etc.) n'est collectée.",
+      "Les fichiers de combat log sont traités côté serveur pour en extraire les statistiques, puis supprimés dans les 24 heures suivant le traitement.",
+    ],
+  },
+  {
+    id: "finalites",
+    title: "Finalités du traitement",
+    items: [
+      "Fourniture du service : analyse des journaux de combat et affichage des classements DPS/HPS.",
+      "Gestion des comptes : authentification via Discord OAuth, identification des joueurs dans les classements.",
+      "Sécurité : journaux de connexion pour détecter et prévenir les abus.",
+      "Aucun profilage comportemental, aucune publicité ciblée, aucune cession de données à des tiers à des fins commerciales.",
+    ],
+  },
+  {
+    id: "cookies",
+    title: "Cookies et traceurs",
+    items: [
+      "PrancingPika utilise uniquement un cookie de session strictement nécessaire au fonctionnement de l'authentification (NextAuth).",
+      "Aucun cookie de suivi, aucune analytics tierce (Google Analytics, etc.), aucun pixel publicitaire.",
+      "Le cookie de session est détruit à la fermeture du navigateur ou à la déconnexion.",
+    ],
+  },
+  {
+    id: "partage",
+    title: "Partage des données",
+    items: [
+      "Les données ne sont ni vendues, ni cédées, ni louées à des tiers.",
+      "L'hébergeur OVH SAS (2 rue Kellermann, 59100 Roubaix, France) accède techniquement aux données dans le cadre de la prestation d'hébergement, conformément au RGPD.",
+      "Discord peut recevoir des données lors de l'authentification OAuth ; leur traitement est soumis à la politique de confidentialité de Discord.",
+    ],
+  },
+  {
+    id: "droits",
+    title: "Vos droits (RGPD arts. 15–21)",
+    items: [
+      "Droit d'accès (art. 15) : obtenir une copie de vos données personnelles.",
+      "Droit de rectification (art. 16) : corriger des données inexactes.",
+      "Droit à l'effacement (art. 17) : demander la suppression de vos données.",
+      "Droit à la portabilité (art. 20) : recevoir vos données dans un format structuré.",
+      "Droit d'opposition (art. 21) : vous opposer à un traitement fondé sur l'intérêt légitime.",
+      "Droit à la limitation (art. 18) : demander la suspension temporaire d'un traitement.",
+      "Pour exercer ces droits, contactez : armandzireg@gmail.com — réponse sous 30 jours.",
+    ],
+  },
+  {
+    id: "cnil",
+    title: "Réclamation auprès de la CNIL",
+    items: [
+      "Si vous estimez que vos droits ne sont pas respectés, vous pouvez introduire une réclamation auprès de la Commission Nationale de l'Informatique et des Libertés (CNIL).",
+      "Site de la CNIL : https://www.cnil.fr",
+    ],
+  },
+];
+
+export default function PrivacyPolicyPage() {
   return (
-    <main className="min-h-screen bg-[#1F2B3A] text-zinc-100">
-      {/* Background */}
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(900px_circle_at_20%_10%,rgba(56,189,248,0.12),transparent_55%),radial-gradient(900px_circle_at_85%_20%,rgba(255,255,255,0.06),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(31,43,58,0.45),rgba(31,43,58,0.92))]" />
-      </div>
+    <div className="mx-auto max-w-3xl px-6 py-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
-      <section className="mx-auto flex min-h-screen max-w-6xl items-center px-6">
-        <div className="w-full">
-          <div className="mx-auto max-w-xl rounded-2xl border border-white/10 bg-[#253649]/70 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-200/90">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-              Work in progress
-            </div>
+      <header className="mb-8">
+        <p className="text-[10px] tracking-[0.2em] text-sky-400/70 font-medium uppercase mb-2">
+          Légal
+        </p>
+        <h1 className="text-4xl font-bold text-gradient tracking-tight">
+          Politique de confidentialité
+        </h1>
+        <p className="mt-2 text-[13px] text-zinc-500">
+          Conformément au Règlement Général sur la Protection des Données (RGPD — UE 2016/679, arts.&nbsp;13–14).
+        </p>
+      </header>
 
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight">
-              This page is being built
-            </h1>
-
-            <p className="mt-3 text-sm leading-relaxed text-zinc-200/85">
-              The feature exists on the roadmap but isn’t available yet. Check back soon.
-            </p>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button asChild className="bg-sky-500 text-white hover:bg-sky-400">
-                <Link href="/">Back to home</Link>
-              </Button>
-
-              <Button
-                asChild
-                variant="outline"
-                className="border-white/15 bg-white/5 text-zinc-100 hover:bg-white/10"
+      <main>
+        <div className="flex flex-col gap-5">
+          {sections.map(({ id, title, items }) => (
+            <section key={id} className="glass rounded-2xl p-5" aria-labelledby={`section-${id}`}>
+              <h2
+                id={`section-${id}`}
+                className="text-[15px] font-bold text-zinc-100 mb-3"
+                style={{ fontFamily: "'Syne', sans-serif" }}
               >
-                <Link href="/leaderboards">Leaderboards</Link>
-              </Button>
-            </div>
+                {title}
+              </h2>
+              <ul className="flex flex-col gap-2">
+                {items.map((item, i) => (
+                  <li key={i} className="flex items-start gap-3 text-[13px] text-zinc-400">
+                    <span
+                      className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400/50"
+                      aria-hidden="true"
+                    />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
 
-            <div className="pointer-events-none mx-auto mt-6 h-px w-2/3 bg-gradient-to-r from-transparent via-white/25 to-transparent" />
-          </div>
+          {/* Data table */}
+          <section className="glass rounded-2xl p-5 overflow-hidden" aria-labelledby="section-tableau">
+            <h2
+              id="section-tableau"
+              className="text-[15px] font-bold text-zinc-100 mb-4"
+              style={{ fontFamily: "'Syne', sans-serif" }}
+            >
+              Récapitulatif des traitements
+            </h2>
+            <div className="overflow-x-auto -mx-1">
+              <table className="w-full text-[12px] border-collapse" aria-label="Tableau des traitements de données personnelles">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th scope="col" className="text-left py-2 pr-4 text-zinc-300 font-semibold whitespace-nowrap">
+                      Donnée
+                    </th>
+                    <th scope="col" className="text-left py-2 pr-4 text-zinc-300 font-semibold whitespace-nowrap">
+                      Base légale
+                    </th>
+                    <th scope="col" className="text-left py-2 text-zinc-300 font-semibold whitespace-nowrap">
+                      Durée de conservation
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dataTable.map((row, i) => (
+                    <tr key={i} className="border-b border-white/[0.05] last:border-0">
+                      <td className="py-2 pr-4 text-zinc-400 align-top">{row.data}</td>
+                      <td className="py-2 pr-4 text-zinc-400 align-top">{row.basis}</td>
+                      <td className="py-2 text-zinc-400 align-top">{row.retention}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="glass rounded-2xl p-5" aria-labelledby="section-liens">
+            <h2
+              id="section-liens"
+              className="text-[15px] font-bold text-zinc-100 mb-3"
+              style={{ fontFamily: "'Syne', sans-serif" }}
+            >
+              Pages associées
+            </h2>
+            <ul className="flex flex-col gap-2">
+              <li className="flex items-start gap-3 text-[13px] text-zinc-400">
+                <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400/50" aria-hidden="true" />
+                <Link
+                  href="/legal-notice"
+                  className="text-sky-400/80 hover:text-sky-400 underline underline-offset-4 transition-colors"
+                >
+                  Mentions légales
+                </Link>
+              </li>
+              <li className="flex items-start gap-3 text-[13px] text-zinc-400">
+                <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400/50" aria-hidden="true" />
+                <Link
+                  href="https://www.cnil.fr"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sky-400/80 hover:text-sky-400 underline underline-offset-4 transition-colors"
+                >
+                  CNIL — Commission Nationale de l'Informatique et des Libertés
+                </Link>
+              </li>
+            </ul>
+          </section>
         </div>
-      </section>
-    </main>
+
+        <p className="mt-8 text-[11px] text-zinc-600 text-center">
+          Dernière mise à jour : mars 2025
+        </p>
+      </main>
+    </div>
   );
 }

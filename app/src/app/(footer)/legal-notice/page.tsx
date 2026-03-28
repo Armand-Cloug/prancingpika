@@ -1,55 +1,151 @@
-// src/app/work-in-progress/page.tsx
-// Mini "Work in progress" page – dark slate theme, simple and clean.
-
+// src/app/(footer)/legal-notice/page.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buildMetadata, getSiteUrl, siteName } from "@/lib/seo";
 
-export const metadata: Metadata = { robots: { index: false, follow: false } };
+export const metadata: Metadata = buildMetadata({
+  title: "Mentions légales",
+  description:
+    "Mentions légales de PrancingPika — éditeur, hébergeur, propriété intellectuelle et avertissement concernant RIFT.",
+  path: "/legal-notice",
+});
 
-export default function WorkInProgressPage() {
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: `Mentions légales – ${siteName}`,
+  url: `${getSiteUrl()}/legal-notice`,
+  description: "Mentions légales obligatoires au sens de la LCEN art. 6.",
+};
+
+const sections: { id: string; title: string; items: string[] }[] = [
+  {
+    id: "editeur",
+    title: "Éditeur du site",
+    items: [
+      "Le site PrancingPika est édité par une personne physique non-professionnelle au sens de l'article 6 III bis de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l'économie numérique (LCEN).",
+      "Conformément à ce régime, l'identité complète de l'éditeur est tenue confidentielle et conservée par l'hébergeur OVH SAS, qui peut la communiquer aux autorités compétentes sur requête.",
+      "Contact public de l'éditeur : armandzireg@gmail.com",
+    ],
+  },
+  {
+    id: "hebergeur",
+    title: "Hébergeur",
+    items: [
+      "OVH SAS — 2 rue Kellermann, 59100 Roubaix, France",
+      "Site web : https://www.ovh.com",
+      "OVH SAS est une société par actions simplifiée immatriculée au RCS de Lille Métropole sous le numéro 424 761 419.",
+    ],
+  },
+  {
+    id: "propriete-intellectuelle",
+    title: "Propriété intellectuelle",
+    items: [
+      "RIFT, RIFT: Planes of Telara, ainsi que tous les noms, marques, logos et éléments visuels associés sont la propriété exclusive de Gamigo AG et/ou de ses filiales. Tous droits réservés.",
+      "PrancingPika n'est affilié à Gamigo en aucune manière et n'est ni approuvé, ni sponsorisé, ni associé à Gamigo ou à ses produits. Ce site est un projet fan non-officiel, à but non-lucratif.",
+      "Le code source original de PrancingPika ainsi que son design spécifique sont © Armand Zireg (alias Cloug). Toute reproduction ou utilisation sans autorisation expresse est interdite.",
+      "Les données de classement (scores DPS/HPS, noms de personnages) sont issues des journaux de combat fournis par les utilisateurs et restent leur propriété.",
+    ],
+  },
+  {
+    id: "avertissement",
+    title: "Site fan non-officiel — avertissement",
+    items: [
+      "PrancingPika est un outil communautaire créé par des joueurs, pour des joueurs. Il ne constitue en aucun cas une publication officielle de Gamigo AG.",
+      "Les statistiques de combat et classements présentés sont générés à partir de journaux de jeu (combat logs) et peuvent contenir des imprécisions. Ils n'engagent pas Gamigo.",
+      "L'utilisation de ce site s'effectue sous la seule responsabilité de l'utilisateur. L'éditeur décline toute responsabilité quant aux erreurs d'interprétation des données affichées.",
+    ],
+  },
+  {
+    id: "droit-applicable",
+    title: "Droit applicable et juridiction",
+    items: [
+      "Le présent site est soumis au droit français. Tout litige relatif à son utilisation relève de la compétence exclusive des juridictions françaises compétentes.",
+      "En cas de litige, une solution amiable sera recherchée avant toute action judiciaire.",
+    ],
+  },
+];
+
+export default function LegalNoticePage() {
   return (
-    <main className="min-h-screen bg-[#1F2B3A] text-zinc-100">
-      {/* Background */}
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(900px_circle_at_20%_10%,rgba(56,189,248,0.12),transparent_55%),radial-gradient(900px_circle_at_85%_20%,rgba(255,255,255,0.06),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(31,43,58,0.45),rgba(31,43,58,0.92))]" />
-      </div>
+    <div className="mx-auto max-w-3xl px-6 py-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
-      <section className="mx-auto flex min-h-screen max-w-6xl items-center px-6">
-        <div className="w-full">
-          <div className="mx-auto max-w-xl rounded-2xl border border-white/10 bg-[#253649]/70 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-200/90">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-              Work in progress
-            </div>
+      <header className="mb-8">
+        <p className="text-[10px] tracking-[0.2em] text-sky-400/70 font-medium uppercase mb-2">
+          Légal
+        </p>
+        <h1 className="text-4xl font-bold text-gradient tracking-tight">
+          Mentions légales
+        </h1>
+        <p className="mt-2 text-[13px] text-zinc-500">
+          Conformément à la loi n°&nbsp;2004-575 du 21 juin 2004 (LCEN, art.&nbsp;6).
+        </p>
+      </header>
 
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight">
-              This page is being built
-            </h1>
-
-            <p className="mt-3 text-sm leading-relaxed text-zinc-200/85">
-              The feature exists on the roadmap but isn’t available yet. Check back soon.
-            </p>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button asChild className="bg-sky-500 text-white hover:bg-sky-400">
-                <Link href="/">Back to home</Link>
-              </Button>
-
-              <Button
-                asChild
-                variant="outline"
-                className="border-white/15 bg-white/5 text-zinc-100 hover:bg-white/10"
+      <main>
+        <div className="flex flex-col gap-5">
+          {sections.map(({ id, title, items }) => (
+            <section key={id} className="glass rounded-2xl p-5" aria-labelledby={`section-${id}`}>
+              <h2
+                id={`section-${id}`}
+                className="text-[15px] font-bold text-zinc-100 mb-3"
+                style={{ fontFamily: "'Syne', sans-serif" }}
               >
-                <Link href="/leaderboards">Leaderboards</Link>
-              </Button>
-            </div>
+                {title}
+              </h2>
+              <ul className="flex flex-col gap-2">
+                {items.map((item, i) => (
+                  <li key={i} className="flex items-start gap-3 text-[13px] text-zinc-400">
+                    <span
+                      className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400/50"
+                      aria-hidden="true"
+                    />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
 
-            <div className="pointer-events-none mx-auto mt-6 h-px w-2/3 bg-gradient-to-r from-transparent via-white/25 to-transparent" />
-          </div>
+          <section className="glass rounded-2xl p-5" aria-labelledby="section-liens">
+            <h2
+              id="section-liens"
+              className="text-[15px] font-bold text-zinc-100 mb-3"
+              style={{ fontFamily: "'Syne', sans-serif" }}
+            >
+              Pages associées
+            </h2>
+            <ul className="flex flex-col gap-2">
+              <li className="flex items-start gap-3 text-[13px] text-zinc-400">
+                <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400/50" aria-hidden="true" />
+                <Link
+                  href="/privacy-policy"
+                  className="text-sky-400/80 hover:text-sky-400 underline underline-offset-4 transition-colors"
+                >
+                  Politique de confidentialité
+                </Link>
+              </li>
+              <li className="flex items-start gap-3 text-[13px] text-zinc-400">
+                <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400/50" aria-hidden="true" />
+                <Link
+                  href="/accessibility"
+                  className="text-sky-400/80 hover:text-sky-400 underline underline-offset-4 transition-colors"
+                >
+                  Déclaration d'accessibilité (RGAA v4.1)
+                </Link>
+              </li>
+            </ul>
+          </section>
         </div>
-      </section>
-    </main>
+
+        <p className="mt-8 text-[11px] text-zinc-600 text-center">
+          Dernière mise à jour : mars 2025
+        </p>
+      </main>
+    </div>
   );
 }
