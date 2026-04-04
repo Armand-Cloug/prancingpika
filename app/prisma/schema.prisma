@@ -107,6 +107,8 @@ model WebAccount {
   riftLinkedAt   DateTime?                            // Date de liaison
   riftLocked     Boolean   @default(false)            // true = irréversible sans admin
 
+  displayName      String?     @unique @db.VarChar(32)
+
   guildMemberships GuildMember[]
   uploadedRuns     Run[]
   riftCharacters   RiftCharacter[]

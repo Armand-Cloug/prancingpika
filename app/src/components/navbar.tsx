@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 const NAV_LINKS = [
   { href: "/",              label: "Home"         },
   { href: "/leaderboards",  label: "Leaderboards" },
+  { href: "/profiles",      label: "Players"      },
   { href: "/top-players",   label: "Top Players"  },
   { href: "/specs-dps",     label: "Specs DPS"    },
   { href: "/guilds",        label: "Guilds"       },

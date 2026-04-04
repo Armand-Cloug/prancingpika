@@ -21,6 +21,7 @@ export async function GET() {
     prisma.webAccount.findUnique({
       where: { id: account.id },
       select: {
+        displayName: true,
         riftLocked: true,
         riftLinkedAt: true,
         riftCharacters: {
@@ -43,6 +44,7 @@ export async function GET() {
       id: account.id.toString(),
       pseudo: account.pseudo,
       provider: account.provider,
+      displayName: riftData?.displayName ?? null,
     },
     guilds: memberships.map((m) => ({
       id: m.guildId.toString(),

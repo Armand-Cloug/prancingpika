@@ -2,9 +2,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import GreetingCard from "./GreetingCard";
-import GuildPanel   from "./GuildPanel";
+import GreetingCard      from "./GreetingCard";
+import GuildPanel        from "./GuildPanel";
 import RiftPanel, { type RiftCharacterDTO } from "./RiftPanel";
+import DisplayNamePanel  from "./DisplayNamePanel";
 
 type GuildDTO = {
   id: string;
@@ -21,7 +22,7 @@ type RiftData = {
 };
 
 type AccountData = {
-  account: { id: string; pseudo: string; provider: string };
+  account: { id: string; pseudo: string; provider: string; displayName: string | null };
   guilds: GuildDTO[];
   rift: RiftData;
 };
@@ -47,10 +48,11 @@ export default function AccountPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const guilds    = data?.guilds ?? [];
-  const pseudo    = data?.account.pseudo ?? "";
-  const guildName = guilds[0]?.name ?? null;
-  const rift      = data?.rift ?? { locked: false, linkedAt: null, characters: [] };
+  const guilds      = data?.guilds ?? [];
+  const pseudo      = data?.account.pseudo ?? "";
+  const guildName   = guilds[0]?.name ?? null;
+  const rift        = data?.rift ?? { locked: false, linkedAt: null, characters: [] };
+  const displayName = data?.account.displayName ?? null;
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-10">
@@ -80,6 +82,18 @@ export default function AccountPage() {
             linkedAt={rift.linkedAt}
             characters={rift.characters}
             onImported={fetchData}
+          />
+        </div>
+        <div className="lg:col-span-2">
+          <DisplayNamePanel
+            currentDisplayName={displayName}
+            onSaved={(name) =>
+              setData((prev) =>
+                prev
+                  ? { ...prev, account: { ...prev.account, displayName: name } }
+                  : prev
+              )
+            }
           />
         </div>
       </div>
