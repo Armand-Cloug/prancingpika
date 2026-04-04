@@ -152,6 +152,7 @@ export async function POST(req: NextRequest) {
           lastSeenAt: now,
         },
         update: {
+          calling: c.calling,
           level: c.level,
           guild: c.guild ?? null,
           lastSeenAt: now,
