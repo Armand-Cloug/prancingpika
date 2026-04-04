@@ -14,14 +14,16 @@ type GuildDTO = {
   joinedAt: string;
 };
 
+type RiftData = {
+  locked: boolean;
+  linkedAt: string | null;
+  characters: RiftCharacterDTO[];
+};
+
 type AccountData = {
   account: { id: string; pseudo: string; provider: string };
   guilds: GuildDTO[];
-  rift: {
-    locked: boolean;
-    linkedAt: string | null;
-    characters: RiftCharacterDTO[];
-  };
+  rift: RiftData;
 };
 
 export default function AccountPage() {
@@ -72,12 +74,14 @@ export default function AccountPage() {
           error={error}
           onRefresh={fetchData}
         />
-        <RiftPanel
-          riftLocked={rift.locked}
-          riftLinkedAt={rift.linkedAt}
-          characters={rift.characters}
-          onRefresh={fetchData}
-        />
+        <div className="lg:col-span-2">
+          <RiftPanel
+            locked={rift.locked}
+            linkedAt={rift.linkedAt}
+            characters={rift.characters}
+            onImported={fetchData}
+          />
+        </div>
       </div>
     </div>
   );

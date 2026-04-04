@@ -103,14 +103,13 @@ model WebAccount {
   lastLogin         DateTime @default(now())
 
   // Liaison RIFT (nullable tant que non lié)
-  riftAccountId  String?   @unique @db.VarChar(64)  // UUID généré par l'addon, null si non lié
-  riftLinkedAt   DateTime?                           // Date de liaison
-  riftLocked     Boolean   @default(false)           // true = irréversible sans admin
+  riftAccountId  String?   @unique @db.VarChar(128)  // ID généré par l'addon, null si non lié
+  riftLinkedAt   DateTime?                            // Date de liaison
+  riftLocked     Boolean   @default(false)            // true = irréversible sans admin
 
   guildMemberships GuildMember[]
   uploadedRuns     Run[]
   riftCharacters   RiftCharacter[]
-  riftLinkCodes    RiftLinkCode[]
 
   @@unique([provider, providerAccountId])
   @@index([pseudo])
@@ -135,23 +134,6 @@ model RiftCharacter {
   @@unique([name, shard])
   @@index([webAccountId])
   @@map("rift_characters")
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// RiftLinkCode — codes à usage unique pour la liaison RIFT
-// ─────────────────────────────────────────────────────────────────────────────
-model RiftLinkCode {
-  id           BigInt   @id @default(autoincrement())
-  code         String   @unique @db.VarChar(16)  // ex: "PP-A3F7K9"
-  webAccountId BigInt
-  webAccount   WebAccount @relation(fields: [webAccountId], references: [id], onDelete: Cascade)
-
-  expiresAt    DateTime
-  used         Boolean  @default(false)
-  createdAt    DateTime @default(now())
-
-  @@index([webAccountId])
-  @@map("rift_link_codes")
 }
 
 enum AuthProvider {
