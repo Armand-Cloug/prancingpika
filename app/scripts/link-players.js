@@ -3,7 +3,15 @@
 // Ne modifie que les players dont webAccountId est encore null.
 
 const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const { PrismaMariaDb } = require("@prisma/adapter-mariadb");
+
+const url = process.env.DATABASE_URL;
+if (!url) {
+  console.error("[link-players] DATABASE_URL manquante — abandon.");
+  process.exit(1);
+}
+
+const prisma = new PrismaClient({ adapter: new PrismaMariaDb(url) });
 
 async function main() {
   const chars = await prisma.riftCharacter.findMany({

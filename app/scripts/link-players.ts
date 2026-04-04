@@ -2,7 +2,7 @@
 // Exécuté automatiquement à chaque deploy via le Dockerfile / entrypoint.
 // Idempotent : ne modifie que les players non encore liés (webAccountId IS NULL).
 
-import { prisma } from "../src/lib/prisma"
+import { prisma } from "@/lib/prisma"
 
 async function main() {
   const chars = await prisma.riftCharacter.findMany({
