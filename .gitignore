@@ -18,3 +18,4 @@ auto-import.sh
 /.claude/
 CLAUDE.md
 fix_deploy.sh
+addon.lua

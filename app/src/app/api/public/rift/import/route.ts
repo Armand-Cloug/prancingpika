@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
       !c.shard || typeof c.shard !== "string" ||
       !c.calling || typeof c.calling !== "string" ||
       typeof c.level !== "number" ||
-      c.level < 1 ||
+      c.level < 0 ||
       c.level > 100
     ) {
       return NextResponse.json(
