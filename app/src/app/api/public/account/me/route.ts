@@ -12,11 +12,31 @@ export async function GET() {
 
   const account = await getOrCreateWebAccount(session.user as any);
 
-  const memberships = await prisma.guildMember.findMany({
-    where: { accountId: account.id },
-    include: { guild: true },
-    orderBy: { joinedAt: "desc" },
-  });
+  const [memberships, riftData] = await Promise.all([
+    prisma.guildMember.findMany({
+      where: { accountId: account.id },
+      include: { guild: true },
+      orderBy: { joinedAt: "desc" },
+    }),
+    prisma.webAccount.findUnique({
+      where: { id: account.id },
+      select: {
+        riftLocked: true,
+        riftLinkedAt: true,
+        riftCharacters: {
+          select: {
+            name: true,
+            shard: true,
+            calling: true,
+            level: true,
+            guild: true,
+            lastSeenAt: true,
+          },
+          orderBy: { level: "desc" },
+        },
+      },
+    }),
+  ]);
 
   return NextResponse.json({
     account: {
@@ -31,5 +51,17 @@ export async function GET() {
       role: m.role,
       joinedAt: m.joinedAt,
     })),
+    rift: {
+      locked: riftData?.riftLocked ?? false,
+      linkedAt: riftData?.riftLinkedAt ?? null,
+      characters: (riftData?.riftCharacters ?? []).map((c) => ({
+        name: c.name,
+        shard: c.shard,
+        calling: c.calling,
+        level: c.level,
+        guild: c.guild,
+        lastSeenAt: c.lastSeenAt,
+      })),
+    },
   });
 }

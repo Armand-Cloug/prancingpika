@@ -38,6 +38,7 @@ jobs:
           test -n "${DISCORD_CLIENT_ID}" || (echo "Missing DISCORD_CLIENT_ID" && exit 1)
           test -n "${DISCORD_CLIENT_SECRET}" || (echo "Missing DISCORD_CLIENT_SECRET" && exit 1)
           test -n "${DISCORD_BOT_TOKEN}" || (echo "Missing DISCORD_BOT_TOKEN" && exit 1)
+          test -n "${ADDON_API_SECRET}" || (echo "Missing ADDON_API_SECRET" && exit 1)
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
@@ -50,6 +51,7 @@ jobs:
           DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
           DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          ADDON_API_SECRET: ${{ secrets.ADDON_API_SECRET }}
 
       - name: Check required vars
         run: |
@@ -188,8 +190,10 @@ jobs:
             DISCORD_CLIENT_SECRET="${{ secrets.DISCORD_CLIENT_SECRET }}"
 
             DISCORD_BOT_TOKEN="${{ secrets.DISCORD_BOT_TOKEN }}"
+            ADDON_API_SECRET="${{ secrets.ADDON_API_SECRET }}"
 
             [ -n "$DB_USER" ] || { echo "Missing vars.DB_USER"; exit 1; }
+            [ -n "$ADDON_API_SECRET" ] || { echo "Missing secrets.ADDON_API_SECRET"; exit 1; }
             [ -n "$DB_NAME" ] || { echo "Missing vars.DB_NAME"; exit 1; }
             [ -n "$DB_PASSWORD" ] || { echo "Missing secrets.DB_PASSWORD"; exit 1; }
             [ -n "$DB_ROOT_PASSWORD" ] || { echo "Missing secrets.DB_ROOT_PASSWORD"; exit 1; }
@@ -251,6 +255,11 @@ jobs:
             PARSER_WORKDIR=/workspace
             PARSER_TIMEOUT_S=600
             BOT_URL=http://bot:8081
+
+            ############################################################
+            # Addon RIFT
+            ############################################################
+            ADDON_API_SECRET=${ADDON_API_SECRET}
             EOF
 
             echo "[4/13] Write bot/.env"

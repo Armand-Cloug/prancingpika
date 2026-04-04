@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from "react";
 import GreetingCard from "./GreetingCard";
 import GuildPanel   from "./GuildPanel";
+import RiftPanel, { type RiftCharacterDTO } from "./RiftPanel";
 
 type GuildDTO = {
   id: string;
@@ -16,6 +17,11 @@ type GuildDTO = {
 type AccountData = {
   account: { id: string; pseudo: string; provider: string };
   guilds: GuildDTO[];
+  rift: {
+    locked: boolean;
+    linkedAt: string | null;
+    characters: RiftCharacterDTO[];
+  };
 };
 
 export default function AccountPage() {
@@ -39,9 +45,10 @@ export default function AccountPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const guilds   = data?.guilds ?? [];
-  const pseudo   = data?.account.pseudo ?? "";
+  const guilds    = data?.guilds ?? [];
+  const pseudo    = data?.account.pseudo ?? "";
   const guildName = guilds[0]?.name ?? null;
+  const rift      = data?.rift ?? { locked: false, linkedAt: null, characters: [] };
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-10">
@@ -63,6 +70,12 @@ export default function AccountPage() {
           guilds={guilds}
           loading={loading}
           error={error}
+          onRefresh={fetchData}
+        />
+        <RiftPanel
+          riftLocked={rift.locked}
+          riftLinkedAt={rift.linkedAt}
+          characters={rift.characters}
           onRefresh={fetchData}
         />
       </div>
