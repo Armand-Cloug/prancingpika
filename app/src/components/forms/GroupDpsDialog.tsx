@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import type { Role } from "@/lib/role";
 import type { RunPlayerDpsResponse } from "@/lib/run-player-dps";
 import { getAbilityIconKeyByIdOrName, getAbilityIconUrl, getEnglishAbilityName } from "@/lib/ability-icons";
+import { resolvePlayerName } from "@/lib/player-alias";
 
 type Calling = "cleric" | "primalist" | "warrior" | "rogue" | "mage";
 
@@ -70,6 +71,7 @@ type GroupDpsResponse = {
   rows: Array<{
     player: string;
     playerClass: string | null;
+    webAccount: { displayName: string | null } | null;
     role: Role;
     roleLabel: string;
     spec: string | null;
@@ -290,7 +292,10 @@ export default function GroupDpsDialog({
                         ].join(" ")}
                         title={r.player}
                       >
-                        {r.player}
+                        {resolvePlayerName({ name: r.player, webAccount: r.webAccount })}
+                        {r.webAccount?.displayName && r.webAccount.displayName !== r.player && (
+                          <span className="ml-1 text-[10px] text-zinc-500">({r.player})</span>
+                        )}
                         {selectedPlayer === r.player && <span className="ml-2 text-sky-300/70 text-[10px]">▼</span>}
                       </div>
                     </td>
@@ -311,7 +316,18 @@ export default function GroupDpsDialog({
         {selectedPlayer && (
           <div className="mt-4 rounded-xl border border-white/10 bg-black/20 overflow-hidden">
             <div className="px-4 py-3 border-b border-white/[0.07] bg-sky-500/5 flex items-center justify-between">
-              <span className="text-[13px] font-semibold text-zinc-100">{selectedPlayer}</span>
+              <span className="text-[13px] font-semibold text-zinc-100">
+                {(() => {
+                  const row = rows.find(r => r.player === selectedPlayer);
+                  return row ? resolvePlayerName({ name: row.player, webAccount: row.webAccount }) : selectedPlayer;
+                })()}
+                {(() => {
+                  const row = rows.find(r => r.player === selectedPlayer);
+                  return row?.webAccount?.displayName && row.webAccount.displayName !== row.player
+                    ? <span className="ml-1 text-xs font-normal text-zinc-500">({row.player})</span>
+                    : null;
+                })()}
+              </span>
               {playerData && (
                 <div className="flex gap-4 text-[11px]">
                   <span><span className="text-zinc-500">DPS </span><span className="text-sky-400 font-semibold mono">{fmtNum(playerData.player.dps)}</span></span>

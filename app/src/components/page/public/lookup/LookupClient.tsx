@@ -76,6 +76,7 @@ export default function LookupClient() {
         <LookupResultsTable
           player={data.player.name}
           playerClass={data.player.class}
+          playerWebAccount={data.player.webAccount}
           records={data.records}
           truncated={data.truncated}
         />

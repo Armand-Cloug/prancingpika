@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import PlayerDpsDialog from "@/components/forms/PlayerDpsDialog";
 import type { LookupRecord } from "@/lib/player-lookup";
+import { resolvePlayerName } from "@/lib/player-alias";
 
 type SortKey = "newest" | "oldest" | "dps_desc" | "dps_asc" | "timer_desc" | "timer_asc";
 
@@ -40,11 +41,13 @@ function fmtTime(s: number) {
 export default function LookupResultsTable({
   player,
   playerClass,
+  playerWebAccount,
   records,
   truncated,
 }: {
   player: string;
   playerClass: string | null;
+  playerWebAccount?: { displayName: string | null } | null;
   records: LookupRecord[];
   truncated: boolean;
 }) {
@@ -58,8 +61,11 @@ export default function LookupResultsTable({
         <div>
           <p className="text-[10px] text-zinc-600 tracking-wide uppercase mb-0.5">Player</p>
           <p className="text-lg font-bold text-zinc-100" style={{ fontFamily: "'Syne', sans-serif" }}>
-            {player}
+            {resolvePlayerName({ name: player, webAccount: playerWebAccount })}
           </p>
+          {playerWebAccount?.displayName && playerWebAccount.displayName !== player && (
+            <p className="text-xs text-zinc-500">({player})</p>
+          )}
         </div>
         {playerClass && (
           <div className="border-l border-white/[0.08] pl-4">

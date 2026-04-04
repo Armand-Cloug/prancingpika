@@ -82,9 +82,13 @@ model Player {
   name  String  @unique @db.VarChar(128)
   class String? @db.VarChar(32)                 // "Warrior", "Mage", etc.
 
+  webAccountId BigInt?
+  webAccount   WebAccount? @relation(fields: [webAccountId], references: [id], onDelete: SetNull)
+
   runPlayers         RunPlayer[]
   runDeaths          RunDeath[]
 
+  @@index([webAccountId])
   @@map("players")
 }
 
@@ -112,6 +116,7 @@ model WebAccount {
   guildMemberships GuildMember[]
   uploadedRuns     Run[]
   riftCharacters   RiftCharacter[]
+  players          Player[]
 
   @@unique([provider, providerAccountId])
   @@index([pseudo])

@@ -40,6 +40,7 @@ export type RunPlayerDpsResponse = {
     dps: number;
     hps: number;
     aps: number;
+    webAccount?: { displayName: string | null } | null;
   };
   abilities: RunPlayerAbilityRow[];
 };
@@ -73,7 +74,14 @@ export async function getRunPlayerDps(
       dps:      true,
       hps:      true,
       role:     true,
-      player:   { select: { id: true, name: true, class: true } },
+      player:   {
+        select: {
+          id: true,
+          name: true,
+          class: true,
+          webAccount: { select: { displayName: true } },
+        },
+      },
     },
   });
   if (!rp?.player) return null;
@@ -185,6 +193,7 @@ export async function getRunPlayerDps(
       dps:           playerDps,
       hps:           playerHps,
       aps:           safeNum(extra.aps, 0),
+      webAccount:    rp.player.webAccount ?? null,
     },
     abilities,
   };

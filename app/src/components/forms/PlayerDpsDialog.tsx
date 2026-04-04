@@ -6,6 +6,7 @@ import type { RunPlayerDpsResponse } from "@/lib/run-player-dps";
 import { SpecBadge } from "@/components/ui/badges";
 import { getAbilityIconKeyByIdOrName, getAbilityIconUrl } from "@/lib/ability-icons";
 import GroupDpsDialog from "@/components/forms/GroupDpsDialog";
+import { resolvePlayerName } from "@/lib/player-alias";
 
 function fmtNum(n: number) { return Math.round(n).toLocaleString("en-US"); }
 function fmtPct(n: number) { return `${n.toFixed(1)}%`; }
@@ -42,7 +43,10 @@ export default function PlayerDpsDialog({
             <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-[radial-gradient(ellipse_at_50%_0%,rgba(56,189,248,0.12),transparent_70%)]" />
             <div className="flex items-center justify-between gap-3 pr-8">
               <DialogTitle className="text-base font-bold text-zinc-100" style={{ fontFamily:"'Syne',sans-serif" }}>
-                {playerName}
+                {data ? resolvePlayerName(data.player) : playerName}
+                {data?.player.webAccount?.displayName && data.player.webAccount.displayName !== data.player.name && (
+                  <span className="ml-1 text-sm font-normal text-zinc-500">({data.player.name})</span>
+                )}
                 {data?.player.spec && <span className="ml-2"><SpecBadge spec={data.player.spec} /></span>}
               </DialogTitle>
               <GroupDpsDialog

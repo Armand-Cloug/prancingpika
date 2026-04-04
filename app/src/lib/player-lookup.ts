@@ -1,7 +1,11 @@
 // src/lib/player-lookup.ts
 import { prisma } from "@/lib/prisma";
 
-export type LookupMatchPlayer = { name: string; class: string | null };
+export type LookupMatchPlayer = {
+  name: string;
+  class: string | null;
+  webAccount?: { displayName: string | null } | null;
+};
 
 export type LookupRecord = {
   runId: string;
@@ -39,13 +43,22 @@ export async function lookupPlayer(queryRaw: string): Promise<PlayerLookupRespon
   // Try exact match first (MySQL collation is often case-insensitive, but not guaranteed)
   const exact = await prisma.player.findFirst({
     where: { name: query },
-    select: { id: true, name: true, class: true },
+    select: {
+      id: true,
+      name: true,
+      class: true,
+      webAccount: { select: { displayName: true } },
+    },
   });
 
   if (!exact) {
     const players = await prisma.player.findMany({
       where: { name: { contains: query } },
-      select: { name: true, class: true },
+      select: {
+        name: true,
+        class: true,
+        webAccount: { select: { displayName: true } },
+      },
       orderBy: { name: "asc" },
       take: MAX_MATCHES,
     });
@@ -98,7 +111,11 @@ export async function lookupPlayer(queryRaw: string): Promise<PlayerLookupRespon
   return {
     mode: "records",
     query,
-    player: { name: exact.name, class: exact.class ?? null },
+    player: {
+      name: exact.name,
+      class: exact.class ?? null,
+      webAccount: exact.webAccount ?? null,
+    },
     records,
     truncated,
   };

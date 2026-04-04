@@ -21,6 +21,7 @@ type GroupDpsResponse = {
   rows: Array<{
     player: string;
     playerClass: string | null;
+    webAccount: { displayName: string | null } | null;
 
     role: Role;
     roleLabel: string;
@@ -64,7 +65,13 @@ export async function GET(req: Request) {
           hps: true,
           role: true,
           spec: true,
-          player: { select: { name: true, class: true } },
+          player: {
+            select: {
+              name: true,
+              class: true,
+              webAccount: { select: { displayName: true } },
+            },
+          },
         },
       },
     },
@@ -81,6 +88,7 @@ export async function GET(req: Request) {
     return {
       player: p.player?.name ?? "Unknown",
       playerClass: p.player?.class ?? null,
+      webAccount: p.player?.webAccount ?? null,
 
       roleLabel: normalizeRoleLabel(p.role),
       role: roleCategoryFromDbOrInfer(p.role, dps, hps),

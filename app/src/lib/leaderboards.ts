@@ -52,6 +52,7 @@ export type CompEntry = {
   spec?: string | null;
   player: string;
   playerClass?: string | null;
+  webAccount?: { displayName: string | null } | null;
   dps: number;
   hps: number;
   aps: number;
@@ -154,7 +155,13 @@ export async function getLeaderboards(): Promise<RaidLeaderboard[]> {
             hps: true,
             role: true,
             spec: true,
-            player: { select: { name: true, class: true } },
+            player: {
+              select: {
+                name: true,
+                class: true,
+                webAccount: { select: { displayName: true } },
+              },
+            },
           },
           orderBy: { dps: "desc" },
         });
@@ -170,6 +177,7 @@ export async function getLeaderboards(): Promise<RaidLeaderboard[]> {
             spec:        p.spec ?? null,
             player:      p.player.name,
             playerClass: p.player.class ?? null,
+            webAccount:  p.player.webAccount ?? null,
             dps,
             hps,
             aps,

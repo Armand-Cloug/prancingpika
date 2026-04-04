@@ -3,6 +3,7 @@
 import { useState } from "react";
 import PlayerDpsDialog from "@/components/forms/PlayerDpsDialog";
 import type { TopPlayerRow } from "@/lib/top-players";
+import { resolvePlayerName } from "@/lib/player-alias";
 
 type Calling = "rogue" | "cleric" | "warrior" | "primalist" | "mage";
 
@@ -86,8 +87,11 @@ export default function ClassTopTable({
                         trigger={
                           <button type="button" className="text-left w-full min-w-0 overflow-hidden">
                             <span className={`block truncate text-[12px] font-medium ${col.text} hover:underline`}>
-                              {r.player}
+                              {resolvePlayerName({ name: r.player, webAccount: r.webAccount })}
                             </span>
+                            {r.webAccount?.displayName && r.webAccount.displayName !== r.player && (
+                              <span className="block truncate text-xs text-zinc-500">({r.player})</span>
+                            )}
                           </button>
                         }
                       />

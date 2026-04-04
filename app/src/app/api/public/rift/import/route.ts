@@ -161,6 +161,14 @@ export async function POST(req: NextRequest) {
     )
   );
 
+  // Lier immédiatement les players existants dont le nom correspond
+  for (const c of characters) {
+    await prisma.player.updateMany({
+      where: { name: c.name, webAccountId: null },
+      data:  { webAccountId: account.id },
+    });
+  }
+
   return NextResponse.json({
     success: true,
     linked,

@@ -19,6 +19,7 @@ export type TopPlayerRow = {
   runId: string; // BigInt serialized
   date: string; // yyyy-mm-dd
   player: string;
+  webAccount?: { displayName: string | null } | null;
   dps: number;
   timeS: number;
 };
@@ -61,7 +62,12 @@ async function topForClass(bossName: string, key: CallingKey): Promise<TopPlayer
     },
     select: {
       dps: true,
-      player: { select: { name: true } },
+      player: {
+        select: {
+          name: true,
+          webAccount: { select: { displayName: true } },
+        },
+      },
       run: { select: { id: true, endedAt: true, durationTotalS: true, bossDurationS: true } },
     },
     orderBy: [{ dps: "desc" }],
@@ -72,6 +78,7 @@ async function topForClass(bossName: string, key: CallingKey): Promise<TopPlayer
     runId: r.run.id.toString(),
     date: toYMD(r.run.endedAt),
     player: r.player.name,
+    webAccount: r.player.webAccount ?? null,
     dps: Math.round(r.dps),
     timeS: r.run.bossDurationS ?? r.run.durationTotalS,
   }));

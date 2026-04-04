@@ -18,6 +18,7 @@ export type RunGroupDpsResponse = {
   rows: Array<{
     player: string;
     playerClass: string | null;
+    webAccount?: { displayName: string | null } | null;
     dps: number;
     hps: number;
   }>;
@@ -46,7 +47,13 @@ export async function getRunGroupDps(runId: bigint): Promise<RunGroupDpsResponse
     select: {
       dps: true,
       hps: true,
-      player: { select: { name: true, class: true } },
+      player: {
+        select: {
+          name: true,
+          class: true,
+          webAccount: { select: { displayName: true } },
+        },
+      },
     },
   });
 
@@ -67,6 +74,7 @@ export async function getRunGroupDps(runId: bigint): Promise<RunGroupDpsResponse
     rows: players.map((p) => ({
       player: p.player.name,
       playerClass: p.player.class ?? null,
+      webAccount: p.player.webAccount ?? null,
       dps: p.dps,
       hps: p.hps,
     })),

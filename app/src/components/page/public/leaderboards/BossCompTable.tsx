@@ -3,6 +3,7 @@
 import { RolePill, classTintClass } from "@/components/ui/badges";
 import PlayerDpsDialog from "@/components/forms/PlayerDpsDialog";
 import type { CompEntry } from "@/lib/leaderboards";
+import { resolvePlayerName } from "@/lib/player-alias";
 
 export default function BossCompTable({
   bossName,
@@ -71,7 +72,10 @@ export default function BossCompTable({
                                         focus:outline-none ${classTintClass(r.playerClass)}`}
                             title={r.player}
                           >
-                            {r.player}
+                            {resolvePlayerName({ name: r.player, webAccount: r.webAccount })}
+                            {r.webAccount?.displayName && r.webAccount.displayName !== r.player && (
+                              <span className="text-xs text-zinc-500 ml-1">({r.player})</span>
+                            )}
                           </button>
                         }
                       />
