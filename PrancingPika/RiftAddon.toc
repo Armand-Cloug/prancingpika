@@ -1,0 +1,42 @@
+Identifier = "PrancingPika"
+Name =
+{
+	English = [[PrancingPika]],
+	French  = [[PrancingPika]],
+}
+Description =
+{
+	English = [[Link your RIFT account to PrancingPika and sync your characters. /pp help]],
+	French  = [[Lie ton compte RIFT a PrancingPika et synchronise tes personnages. /pp help]],
+}
+
+Author  = "Cloug"
+Website = "https://prancingpika.cloug.fr"
+Email   = "armandzireg@gmail.com"
+
+Version     = "2.0.0"
+Environment = "4.0"
+
+RunOnStartup =
+{
+	"Lib/Base64.lua",
+	"Core/Data.lua",
+	"Core/UI.lua",
+	"Core/Commands.lua",
+	"PrancingPika.lua",
+}
+
+Embed =
+{
+	LibExtendedWidgets = true,
+}
+
+Dependencies =
+{
+	LibExtendedWidgets = {"required", "before"},
+}
+
+SavedVariables =
+{
+	PrancingPikaData = "account",
+}

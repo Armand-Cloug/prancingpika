@@ -1,0 +1,7 @@
+Version 1.15 - Extended Widgets
+
+changed name to avoid collisions with older versions
+
+checkbox widget now accepts html 
+
+tooltip now accepts html
