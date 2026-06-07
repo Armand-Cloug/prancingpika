@@ -121,12 +121,12 @@ jobs:
             PROJECT="${{ env.COMPOSE_PROJECT }}"
 
             cd "${SRC}"
-            COMPOSE=(sudo -n docker compose -p "$PROJECT" -f docker-compose.yml -f docker-compose-traefik.yml)
+            COMPOSE=(sudo -n docker compose -p "$PROJECT" -f docker-compose.yml)
             COMPOSE_BASE=(sudo -n docker compose -p "$PROJECT" -f docker-compose.yml)
 
-            echo "[1/11] Ensure shared networks exist (proxy/internal)"
-            sudo -n docker network create proxy >/dev/null 2>&1 || true
-            sudo -n docker network create internal >/dev/null 2>&1 || true
+            echo "[1/11] Ensure shared networks exist (traefik_proxy/internal)"
+            sudo -n docker network create traefik_proxy >/dev/null 2>&1 || true
+            sudo -n docker network create ptpika_internal >/dev/null 2>&1 || true
 
             echo "[2/11] Write .env (single source of truth)"
             rm -f .env
