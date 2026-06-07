@@ -126,7 +126,6 @@ jobs:
 
             echo "[1/11] Ensure shared networks exist (traefik_proxy/internal)"
             sudo -n docker network create traefik_proxy >/dev/null 2>&1 || true
-            sudo -n docker network create ptpika_internal >/dev/null 2>&1 || true
 
             echo "[2/11] Write .env (single source of truth)"
             rm -f .env
