@@ -246,6 +246,7 @@ jobs:
             echo "[4/11] Stop previous stack"
             "${COMPOSE[@]}" down --remove-orphans || true
             sudo -n docker rm -f ptpika_traefik ptppika_mariadb ptpika_parser ptpika_web ptpika_bot >/dev/null 2>&1 || true
+            sudo -n docker network rm ptpika_internal >/dev/null 2>&1 || true
 
             echo "[5/11] Start database"
             "${COMPOSE_BASE[@]}" up -d db
