@@ -155,7 +155,7 @@ cargo run -- serve                    # Démarre le serveur HTTP (port 8080)
 * Matching des boss par **égalité exacte** (insensible à la casse) — évite les faux positifs sur les noms de joueurs contenant un nom de boss
 * Calculs strictement basés sur les timestamps
 * Séparation claire parsing / stockage / affichage
-* Déploiement via **Docker Compose** + **Traefik** (HTTPS Let's Encrypt)
+* Déploiement via **Docker Compose** + configuration pour **Traefik global**
 * CI/CD GitHub Actions (Prod + Preprod)
 
 ---
@@ -305,7 +305,7 @@ cargo run -- serve                    # Start HTTP server (port 8080)
 * Boss matching uses **exact equality** (case-insensitive) — prevents false positives from player names containing a boss name
 * Timestamp-based calculations only
 * Clear separation between parsing, storage, and display
-* Deployed via **Docker Compose** + **Traefik** (HTTPS via Let's Encrypt)
+* Deployed via **Docker Compose** + configuration for a **global Traefik**
 * GitHub Actions CI/CD (Prod + Preprod environments)
 
 ---

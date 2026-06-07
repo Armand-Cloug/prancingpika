@@ -1,38 +1,4 @@
 services:
-  traefik:
-    image: traefik:v3.1
-    container_name: ptpika_traefik
-    restart: unless-stopped
-    command:
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      # Entrypoints
-      - --entrypoints.web.address=:80
-      - --entrypoints.websecure.address=:443
-      # Redirection HTTP -> HTTPS
-      - --entrypoints.web.http.redirections.entrypoint.to=websecure
-      - --entrypoints.web.http.redirections.entrypoint.scheme=https
-      # Let's Encrypt (HTTP-01)
-      - --certificatesresolvers.le.acme.email=${TRAEFIK_ACME_EMAIL}
-      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
-      - --certificatesresolvers.le.acme.httpchallenge=true
-      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
-      # Debug utile au début
-      - --log.level=DEBUG
-      # Access log vers un fichier sur l’hôte
-      - --accesslog=true
-      - --accesslog.format=common
-      - --accesslog.filepath=/var/log/traefik/access.log
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./traefik/acme.json:/letsencrypt/acme.json
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /var/log/traefik:/var/log/traefik
-    networks:
-      - proxy
-
   web:
     build:
       context: ./app
@@ -59,26 +25,6 @@ services:
       - uploads:/app/public/upload
       # logs de combat partagés avec le parser
       - combatlogs:/data/combat.log
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=proxy
-      - traefik.http.services.app.loadbalancer.server.port=3000
-
-      # Domaine principal
-      - traefik.http.routers.app.rule=Host(`${APP_DOMAIN}`)
-      - traefik.http.routers.app.entrypoints=websecure
-      - traefik.http.routers.app.tls=true
-      - traefik.http.routers.app.tls.certresolver=le
-
-      # www -> apex
-      - traefik.http.routers.app-www.rule=Host(`www.${APP_DOMAIN}`)
-      - traefik.http.routers.app-www.entrypoints=websecure
-      - traefik.http.routers.app-www.tls=true
-      - traefik.http.routers.app-www.tls.certresolver=le
-      - traefik.http.routers.app-www.middlewares=redirect-to-apex
-      - traefik.http.middlewares.redirect-to-apex.redirectregex.regex=^https?://www\\.${APP_DOMAIN}(.*)
-      - traefik.http.middlewares.redirect-to-apex.redirectregex.replacement=https://${APP_DOMAIN}$$1
-      - traefik.http.middlewares.redirect-to-apex.redirectregex.permanent=true
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/ >/dev/null || exit 1"]
       interval: 30s
@@ -86,8 +32,7 @@ services:
       retries: 5
       start_period: 15s
     networks:
-      - proxy
-      - internal
+      internal:
 
   parser:
     build:
@@ -115,7 +60,7 @@ services:
       retries: 10
       start_period: 15s
     networks:
-      - internal
+      internal:
 
   db:
     image: mariadb:11.4
@@ -135,7 +80,7 @@ services:
     volumes:
       - dbdata:/var/lib/mysql
     networks:
-      - internal
+      internal:
 
   bot:
     build:
@@ -154,7 +99,7 @@ services:
       retries: 10
       start_period: 10s
     networks:
-      - internal
+      internal:
 
 volumes:
   dbdata:
@@ -162,10 +107,6 @@ volumes:
   combatlogs:
 
 networks:
-  proxy:
-    external: true
-    name: proxy
   internal:
     external: true
     name: internal
-

@@ -1,0 +1,29 @@
+services:
+  web:
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.services.ptpika-web.loadbalancer.server.port=3000
+
+      # Domaine principal
+      - traefik.http.routers.ptpika-web.rule=Host(`${APP_DOMAIN}`)
+      - traefik.http.routers.ptpika-web.entrypoints=websecure
+      - traefik.http.routers.ptpika-web.tls=true
+      - traefik.http.routers.ptpika-web.tls.certresolver=le
+
+      # www -> apex
+      - traefik.http.routers.ptpika-web-www.rule=Host(`www.${APP_DOMAIN}`)
+      - traefik.http.routers.ptpika-web-www.entrypoints=websecure
+      - traefik.http.routers.ptpika-web-www.tls=true
+      - traefik.http.routers.ptpika-web-www.tls.certresolver=le
+      - traefik.http.routers.ptpika-web-www.middlewares=ptpika-redirect-to-apex
+      - traefik.http.middlewares.ptpika-redirect-to-apex.redirectregex.regex=^https?://www\\.${APP_DOMAIN}(.*)
+      - traefik.http.middlewares.ptpika-redirect-to-apex.redirectregex.replacement=https://${APP_DOMAIN}$$1
+      - traefik.http.middlewares.ptpika-redirect-to-apex.redirectregex.permanent=true
+    networks:
+      proxy:
+
+networks:
+  proxy:
+    external: true
+    name: proxy
